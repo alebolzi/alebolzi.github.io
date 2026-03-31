@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gallina Crossy Road - Mappa Infinita</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; font-family: 'Courier New', Courier, monospace; background: #000; touch-action: none; }
+        canvas { display: block; }
+        #ui {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 10;
+        }
+        #score { background: rgba(0,0,0,0.4); padding: 8px 24px; border-radius: 12px; display: inline-block; }
+        #controls-hint {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85);
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            z-index: 20;
+            border: 3px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+        #game-over h1 { font-size: 48px; margin-bottom: 10px; color: #ff4444; }
+        #game-over p { font-size: 22px; margin-bottom: 20px; }
+        button {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            padding: 14px 40px;
+            font-size: 22px;
+            cursor: pointer;
+            color: white;
+            margin-top: 10px;
+            border-radius: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 4px 15px rgba(76,175,80,0.4);
+        }
+        button:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(76,175,80,0.6); }
+        button:active { transform: scale(0.98); }
+
+        /* Controlli touch per mobile */
+        #touch-controls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+        }
+        @media (pointer: coarse) {
+            #touch-controls { display: grid; }
+            #controls-hint { display: none; }
+        }
+        #touch-controls {
+            grid-template-columns: 70px 70px 70px;
+            grid-template-rows: 70px 70px;
+            gap: 5px;
+        }
+        .touch-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 14px;
+            color: white;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .touch-btn:active { background: rgba(255,255,255,0.4); }
+        #btn-up { grid-column: 2; grid-row: 1; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-down { grid-column: 2; grid-row: 2; }
+        #btn-right { grid-column: 3; grid-row: 2; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div id="score">0</div>
+    </div>
+
+    <div id="controls-hint">WASD o Freccie per muoverti</div>
+
+    <div id="touch-controls">
+        <div class="touch-btn" id="btn-up">&#9650;</div>
+        <div class="touch-btn" id="btn-left">&#9664;</div>
+        <div class="touch-btn" id="btn-down">&#9660;</div>
+        <div class="touch-btn" id="btn-right">&#9654;</div>
+    </div>
+
+    <div id="game-over">
+        <h1>SPLAT!</h1>
+        <p>Hai fatto <span id="final-score">0</span> punti</p>
+        <p id="death-reason" style="font-size:16px; color:#aaa; margin-bottom: 15px;"></p>
+        <button onclick="resetGame()">Riprova</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- CONFIGURAZIONE ---
+        let scene, camera, renderer;
+        let chicken;
+        let cars = [];
+        let rows = [];
+        let trees = [];
+        let trainRails = [];
+        let score = 0;
+        let maxRowReached = 0;
+        let isDead = false;
+        
+        const GRID_SIZE = 1;
+        const MAP_WIDTH = 9; 
+        const RENDER_DISTANCE = 35;
+        const DELETE_DISTANCE = 12;
+        let furthestRowZ = 0;
+
+        // Camera immersiva
+        let cameraAngle = 0;
+        const CAMERA_BASE_TILT = Math.PI / 5.5; // inclinazione base
+        const CAMERA_HEIGHT = 12;
+        const CAMERA_DISTANCE = 13;
+        const CAMERA_ROTATION_SPEED = 0.0003; // rotazione lenta
+
+        // --- INIZIALIZZAZIONE ---
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.FogExp2(0x87CEEB, 0.025);
+
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 200);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.1;
+            document.body.appendChild(renderer.domElement);
+
+            // Luci
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x55aa55, 0.4);
+            scene.add(hemiLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight.position.set(10, 25, 15);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 80;
+            dirLight.shadow.camera.left = -20;
+            dirLight.shadow.camera.right = 20;
+            dirLight.shadow.camera.top = 20;
+            dirLight.shadow.camera.bottom = -20;
+            scene.add(dirLight);
+
+            setupGame();
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', onKeyDown);
+            setupTouchControls();
+            animate();
+        }
+
+        function setupGame() {
+            createChicken();
+            for (let i = 2; i >= -RENDER_DISTANCE; i--) {
+                createRow(i);
+            }
+            furthestRowZ = -RENDER_DISTANCE;
+            maxRowReached = 0;
+        }
+
+        // --- CREAZIONE GALLINA ---
+        function createChicken() {
+            chicken = new THREE.Group();
+
+            // Corpo
+            const bodyGeo = new THREE.BoxGeometry(0.6, 0.55, 0.65);
+            const bodyMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.3;
+            body.castShadow = true;
+            chicken.add(body);
+
+            // Cresta
+            const combGeo = new THREE.BoxGeometry(0.15, 0.2, 0.15);
+            const combMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+            const comb = new THREE.Mesh(combGeo, combMat);
+            comb.position.set(0, 0.68, 0.1);
+            chicken.add(comb);
+
+            // Becco
+            const beakGeo = new THREE.BoxGeometry(0.12, 0.1, 0.2);
+            const beakMat = new THREE.MeshLambertMaterial({ color: 0xffa500 });
+            const beak = new THREE.Mesh(beakGeo, beakMat);
+            beak.position.set(0, 0.28, 0.38);
+            chicken.add(beak);
+
+            // Occhi
+            const eyeGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+            const eyeMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+            eyeL.position.set(-0.15, 0.4, 0.3);
+            chicken.add(eyeL);
+            const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+            eyeR.position.set(0.15, 0.4, 0.3);
+            chicken.add(eyeR);
+
+            // Ali
+            const wingGeo = new THREE.BoxGeometry(0.1, 0.3, 0.35);
+            const wingMat = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+            const wingL = new THREE.Mesh(wingGeo, wingMat);
+            wingL.position.set(-0.35, 0.3, -0.05);
+            chicken.add(wingL);
+            const wingR = new THREE.Mesh(wingGeo, wingMat);
+            wingR.position.set(0.35, 0.3, -0.05);
+            chicken.add(wingR);
+
+            chicken.position.set(0, 0, 0);
+            scene.add(chicken);
+        }
+
+        // --- GESTIONE MONDO INFINITO ---
+        function createRow(zIndex) {
+            const absZ = Math.abs(zIndex);
+            
+            // Aumentiamo gradualmente la difficolta
+            const roadChance = 0.25 + (absZ * 0.004);
+            const trainChance = 0.02 + (absZ * 0.001);
+            
+            let isRoad = false;
+            let isTrain = false;
+            
+            if (zIndex < -1) {
+                const roll = Math.random();
+                if (roll < Math.min(trainChance, 0.08)) {
+                    isTrain = true;
+                } else if (roll < Math.min(trainChance + roadChance, 0.65)) {
+                    isRoad = true;
+                }
+            }
+
+            // Garantiamo che non ci siano troppe strade di fila
+            let consecutiveRoads = 0;
+            for (let r of rows) {
+                if (r.userData.z === zIndex + 1 && r.userData.type === 'road') consecutiveRoads++;
+                else break;
+            }
+            if (consecutiveRoads >= 4 && isRoad) isRoad = false;
+            
+            // Garantiamo che non ci siano troppi prati di fila
+            let consecutiveGrass = 0;
+            for (let r of rows) {
+                if (r.userData.z === zIndex + 1 && r.userData.type === 'grass') consecutiveGrass++;
+                else break;
+            }
+            if (consecutiveGrass >= 4 && !isRoad && !isTrain) isRoad = true;
+
+            let color;
+            let type;
+            if (isTrain) {
+                color = 0x8B7355;
+                type = 'train';
+            } else if (isRoad) {
+                color = 0x444444;
+                type = 'road';
+            } else {
+                // Variazione colore prato
+                color = new THREE.Color().setHSL(0.3, 0.6, 0.35 + Math.random() * 0.1);
+                color = color.getHex();
+                type = 'grass';
+            }
+
+            const geo = new THREE.BoxGeometry(MAP_WIDTH + 2, 0.2, 1);
+            const mat = new THREE.MeshLambertMaterial({ color: color });
+            const row = new THREE.Mesh(geo, mat);
+            
+            row.position.set(0, -0.1, zIndex);
+            row.receiveShadow = true;
+            row.userData = { type: type, z: zIndex };
+            
+            scene.add(row);
+            rows.push(row);
+
+            if (isRoad) {
+                // Segnaletica stradale
+                const lineGeo = new THREE.BoxGeometry(MAP_WIDTH + 2, 0.22, 0.08);
+                const lineMat = new THREE.MeshLambertMaterial({ color: 0xffff00 });
+                const line = new THREE.Mesh(lineGeo, lineMat);
+                line.position.set(0, -0.09, zIndex);
+                scene.add(line);
+                row.userData.line = line;
+                
+                // Numero di macchine basato sulla larghezza
+                const numCars = 1 + Math.floor(Math.random() * 2);
+                for (let c = 0; c < numCars; c++) {
+                    addCar(zIndex, c, numCars);
+                }
+            } else if (isTrain) {
+                // Binari
+                addTrainRails(zIndex);
+            } else {
+                addTreesForRow(zIndex);
+            }
+        }
+
+        function addCar(zIndex, carIndex, totalCars) {
+            const carGroup = new THREE.Group();
+            
+            // Scelta colore veicolo
+            const carColors = [0xff3333, 0x3366ff, 0xffcc00, 0xff6600, 0x9933ff, 0x00cc99, 0xff69b4];
+            const color = carColors[Math.floor(Math.random() * carColors.length)];
+            
+            // Corpo macchina
+            const bodyGeo = new THREE.BoxGeometry(1.8, 0.5, 0.9);
+            const bodyMat = new THREE.MeshLambertMaterial({ color: color });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.35;
+            body.castShadow = true;
+            carGroup.add(body);
+
+            // Tetto
+            const roofGeo = new THREE.BoxGeometry(1.0, 0.4, 0.8);
+            const roofMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(color).multiplyScalar(0.8) });
+            const roof = new THREE.Mesh(roofGeo, roofMat);
+            roof.position.set(-0.1, 0.75, 0);
+            roof.castShadow = true;
+            carGroup.add(roof);
+
+            // Finestre
+            const windowGeo = new THREE.BoxGeometry(0.4, 0.3, 0.82);
+            const windowMat = new THREE.MeshLambertMaterial({ color: 0xadd8e6, transparent: true, opacity: 0.7 });
+            const windowF = new THREE.Mesh(windowGeo, windowMat);
+            windowF.position.set(0.25, 0.72, 0);
+            carGroup.add(windowF);
+
+            // Ruote
+            const wheelGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.1, 8);
+            const wheelMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+            const positions = [[-0.55, 0.15, 0.5], [-0.55, 0.15, -0.5], [0.55, 0.15, 0.5], [0.55, 0.15, -0.5]];
+            positions.forEach(pos => {
+                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+                wheel.position.set(...pos);
+                wheel.rotation.x = Math.PI / 2;
+                carGroup.add(wheel);
+            });
+
+            // Velocita
+            const baseSpeed = 0.05;
+            const speedBonus = Math.abs(zIndex) * 0.0008;
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            const speed = (baseSpeed + Math.random() * 0.04 + speedBonus) * direction;
+            
+            // Spaziatura macchine sulla stessa riga
+            const spacing = (MAP_WIDTH + 4) / totalCars;
+            const startX = -MAP_WIDTH/2 - 2 + spacing * carIndex + Math.random() * 2;
+            
+            carGroup.position.set(startX, 0, zIndex);
+            carGroup.userData = { speed: speed, z: zIndex, type: 'car' };
+            
+            scene.add(carGroup);
+            cars.push(carGroup);
+        }
+
+        function addTrainRails(zIndex) {
+            // Binari
+            const railGeo = new THREE.BoxGeometry(MAP_WIDTH + 2, 0.25, 0.1);
+            const railMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+            const rail1 = new THREE.Mesh(railGeo, railMat);
+            rail1.position.set(0, 0.02, zIndex - 0.3);
+            scene.add(rail1);
+            const rail2 = new THREE.Mesh(railGeo, railMat);
+            rail2.position.set(0, 0.02, zIndex + 0.3);
+            scene.add(rail2);
+            
+            trainRails.push(rail1, rail2);
+            // Mettiamo riferimento nella riga per cleanup
+            if (rows.length > 0) {
+                rows[rows.length - 1].userData.rails = [rail1, rail2];
+            }
+        }
+
+        function addTreesForRow(zIndex) {
+            const numTrees = Math.floor(Math.random() * 4);
+            if (zIndex >= -1 && zIndex <= 2) return; // zona sicura iniziale
+
+            const occupiedX = [];
+            for (let t = 0; t < numTrees; t++) {
+                let xPos;
+                let attempts = 0;
+                do {
+                    xPos = Math.floor(Math.random() * MAP_WIDTH) - Math.floor(MAP_WIDTH / 2) + 0.5;
+                    attempts++;
+                } while (occupiedX.some(ox => Math.abs(ox - xPos) < 1.2) && attempts < 10);
+                
+                if (attempts >= 10) continue;
+                occupiedX.push(xPos);
+                addTree(zIndex, xPos);
+            }
+        }
+
+        function addTree(zIndex, xPos) {
+            const treeGroup = new THREE.Group();
+            
+            // Tronco
+            const trunkGeo = new THREE.BoxGeometry(0.3, 1.0, 0.3);
+            const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = 0.5;
+            trunk.castShadow = true;
+            treeGroup.add(trunk);
+
+            // Chioma (sfera low-poly fatta con dodecaedro)
+            const leavesGeo = new THREE.DodecahedronGeometry(0.7, 0);
+            const leavesMat = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+            const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+            leaves.position.y = 1.5;
+            leaves.castShadow = true;
+            treeGroup.add(leaves);
+
+            treeGroup.position.set(xPos, 0, zIndex);
+            treeGroup.userData = { z: zIndex, gridX: xPos, type: 'tree' };
+            
+            scene.add(treeGroup);
+            trees.push(treeGroup);
+        }
+
+        // --- CONTROLLI E MOVIMENTO ---
+        let targetPosition = null;
+        let isMoving = false;
+        let moveDirection = { x: 0, z: -1 }; // direzione di default
+
+        function tryMove(moveX, moveZ) {
+            if (isDead || isMoving) return;
+
+            const newX = chicken.position.x + moveX;
+            const newZ = chicken.position.z + moveZ;
+
+            // Controllo bordi laterali della mappa
+            const halfW = MAP_WIDTH / 2 - 0.5;
+            if (newX < -halfW || newX > halfW) return;
+
+            // Controllo bordo posteriore - non si puo tornare troppo indietro
+            const backLimit = maxRowReached + 4;
+            if (newZ > backLimit) {
+                // Game over se vai troppo indietro
+                die("Sei tornato troppo indietro!");
+                return;
+            }
+
+            // --- COLLISIONE ALBERI ---
+            // Controlla se c'e un albero nella cella di destinazione
+            for (let tree of trees) {
+                if (Math.abs(tree.position.z - newZ) < 0.5) {
+                    if (Math.abs(tree.position.x - newX) < 0.6) {
+                        // Blocca il movimento, albero occupa la cella
+                        return;
+                    }
+                }
+            }
+
+            moveDirection = { x: moveX, z: moveZ };
+            targetPosition = { x: newX, z: newZ };
+            isMoving = true;
+
+            // Aggiorna punteggio se vai avanti
+            if (moveZ < 0) {
+                const roundedZ = Math.round(newZ);
+                if (roundedZ < maxRowReached) {
+                    score += (maxRowReached - roundedZ);
+                    maxRowReached = roundedZ;
+                    document.getElementById('score').innerText = score;
+                }
+            }
+        }
+
+        function onKeyDown(event) {
+            let moveX = 0, moveZ = 0;
+            switch(event.key) {
+                case 'ArrowUp': case 'w': case 'W': moveZ = -1; break;
+                case 'ArrowDown': case 's': case 'S': moveZ = 1; break;
+                case 'ArrowLeft': case 'a': case 'A': moveX = -1; break;
+                case 'ArrowRight': case 'd': case 'D': moveX = 1; break;
+            }
+            if (moveX !== 0 || moveZ !== 0) {
+                event.preventDefault();
+                tryMove(moveX, moveZ);
+            }
+        }
+
+        function setupTouchControls() {
+            const buttons = {
+                'btn-up': [0, -1],
+                'btn-down': [0, 1],
+                'btn-left': [-1, 0],
+                'btn-right': [1, 0]
+            };
+            for (let [id, dir] of Object.entries(buttons)) {
+                const el = document.getElementById(id);
+                if (!el) continue;
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); tryMove(dir[0], dir[1]); });
+                el.addEventListener('mousedown', (e) => { e.preventDefault(); tryMove(dir[0], dir[1]); });
+            }
+        }
+
+        function updateMovement() {
+            if (!isMoving || !targetPosition) return;
+
+            const lerpSpeed = 0.18;
+            const dx = targetPosition.x - chicken.position.x;
+            const dz = targetPosition.z - chicken.position.z;
+
+            chicken.position.x += dx * lerpSpeed;
+            chicken.position.z += dz * lerpSpeed;
+
+            // Animazione salto (arco parabolico)
+            const totalDist = Math.sqrt(dx * dx + dz * dz);
+            const currentDist = Math.sqrt(
+                (targetPosition.x - chicken.position.x) ** 2 + 
+                (targetPosition.z - chicken.position.z) ** 2
+            );
+            const progress = totalDist > 0 ? 1 - (currentDist / totalDist) : 1;
+            chicken.position.y = Math.sin(progress * Math.PI) * 0.6;
+
+            // Rotazione fluida della gallina verso la direzione di movimento
+            const targetAngle = Math.atan2(-moveDirection.x, -moveDirection.z);
+            let angleDiff = targetAngle - chicken.rotation.y;
+            // Normalizza angolo
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+            chicken.rotation.y += angleDiff * 0.3;
+
+            // Check arrivo
+            if (currentDist < 0.05) {
+                chicken.position.x = targetPosition.x;
+                chicken.position.z = targetPosition.z;
+                chicken.position.y = 0;
+                isMoving = false;
+                targetPosition = null;
+                
+                checkCollisions();
+                updateWorld();
+            }
+        }
+
+        // --- GESTIONE MAPPA INFINITA ---
+        function updateWorld() {
+            const generationEdge = chicken.position.z - RENDER_DISTANCE;
+            
+            while (furthestRowZ > generationEdge) {
+                furthestRowZ--;
+                createRow(furthestRowZ);
+            }
+
+            const deleteEdge = chicken.position.z + DELETE_DISTANCE;
+
+            // Pulizia File
+            for (let i = rows.length - 1; i >= 0; i--) {
+                if (rows[i].userData.z > deleteEdge) {
+                    // Rimuovi anche la segnaletica
+                    if (rows[i].userData.line) scene.remove(rows[i].userData.line);
+                    if (rows[i].userData.rails) {
+                        rows[i].userData.rails.forEach(r => scene.remove(r));
+                        trainRails = trainRails.filter(r => !rows[i].userData.rails.includes(r));
+                    }
+                    scene.remove(rows[i]);
+                    rows[i].geometry.dispose();
+                    rows[i].material.dispose();
+                    rows.splice(i, 1);
+                }
+            }
+
+            // Pulizia Macchine
+            for (let i = cars.length - 1; i >= 0; i--) {
+                if (cars[i].userData.z > deleteEdge) {
+                    scene.remove(cars[i]);
+                    cars[i].traverse(child => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) child.material.dispose();
+                    });
+                    cars.splice(i, 1);
+                }
+            }
+
+            // Pulizia Alberi
+            for (let i = trees.length - 1; i >= 0; i--) {
+                if (trees[i].userData.z > deleteEdge) {
+                    scene.remove(trees[i]);
+                    trees[i].traverse(child => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) child.material.dispose();
+                    });
+                    trees.splice(i, 1);
+                }
+            }
+        }
+
+        function updateCars() {
+            const halfMap = MAP_WIDTH / 2 + 3;
+            cars.forEach(car => {
+                car.position.x += car.userData.speed;
+
+                // Riciclo
+                if (car.userData.speed > 0 && car.position.x > halfMap) {
+                    car.position.x = -halfMap;
+                } else if (car.userData.speed < 0 && car.position.x < -halfMap) {
+                    car.position.x = halfMap;
+                }
+            });
+        }
+
+        function checkCollisions() {
+            if (isDead) return;
+            
+            const chickenBox = new THREE.Box3().setFromObject(chicken);
+            chickenBox.expandByScalar(-0.15); // Un po di tolleranza
+
+            // Controllo continuo macchine
+            for (let car of cars) {
+                if (Math.abs(car.position.z - chicken.position.z) < 1) {
+                    const carBox = new THREE.Box3().setFromObject(car);
+                    if (chickenBox.intersectsBox(carBox)) {
+                        die("Schiacciato da una macchina!");
+                        return;
+                    }
+                }
+            }
+
+            // Controllo uscita laterale mappa (non dovrebbe capitare ma sicurezza)
+            const halfW = MAP_WIDTH / 2;
+            if (Math.abs(chicken.position.x) > halfW + 0.5) {
+                die("Sei caduto fuori dalla mappa!");
+            }
+        }
+
+        // Collisione continua durante il movimento (le macchine si muovono!)
+        function checkContinuousCollisions() {
+            if (isDead || isMoving) return;
+            
+            const chickenBox = new THREE.Box3().setFromObject(chicken);
+            chickenBox.expandByScalar(-0.1);
+
+            for (let car of cars) {
+                if (Math.abs(car.position.z - chicken.position.z) < 1) {
+                    const carBox = new THREE.Box3().setFromObject(car);
+                    if (chickenBox.intersectsBox(carBox)) {
+                        die("Schiacciato da una macchina!");
+                        return;
+                    }
+                }
+            }
+        }
+
+        function die(reason) {
+            if (isDead) return;
+            isDead = true;
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('death-reason').innerText = reason || "";
+            document.getElementById('game-over').style.display = 'block';
+            
+            // Animazione morte
+            chicken.rotation.x = Math.PI / 2;
+            chicken.position.y = 0.2;
+        }
+
+        function resetGame() {
+            score = 0;
+            maxRowReached = 0;
+            isDead = false;
+            document.getElementById('score').innerText = "0";
+            document.getElementById('game-over').style.display = 'none';
+            
+            // Pulisci scena
+            while(scene.children.length > 0){ 
+                const obj = scene.children[0];
+                scene.remove(obj);
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) {
+                    if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+                    else obj.material.dispose();
+                }
+            }
+            rows = [];
+            cars = [];
+            trees = [];
+            trainRails = [];
+            furthestRowZ = 0;
+            targetPosition = null;
+            isMoving = false;
+
+            // Reinserisci Luci
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x55aa55, 0.4);
+            scene.add(hemiLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight.position.set(10, 25, 15);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 80;
+            dirLight.shadow.camera.left = -20;
+            dirLight.shadow.camera.right = 20;
+            dirLight.shadow.camera.top = 20;
+            dirLight.shadow.camera.bottom = -20;
+            scene.add(dirLight);
+
+            setupGame();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- CAMERA 3D IMMERSIVA ---
+        function updateCamera() {
+            cameraAngle += CAMERA_ROTATION_SPEED;
+            
+            // Posizione circolare lentissima intorno alla gallina
+            const orbitRadius = 0.5; // piccola orbita
+            const camX = chicken.position.x + Math.sin(cameraAngle) * orbitRadius;
+            const camZ = chicken.position.z + CAMERA_DISTANCE;
+            const camY = CAMERA_HEIGHT;
+            
+            // Interpolazione fluida
+            camera.position.x += (camX - camera.position.x) * 0.05;
+            camera.position.y += (camY - camera.position.y) * 0.05;
+            camera.position.z += (camZ - camera.position.z) * 0.05;
+            
+            // Guarda verso la gallina con un po di anticipo
+            const lookTarget = new THREE.Vector3(
+                chicken.position.x,
+                1,
+                chicken.position.z - 3
+            );
+            camera.lookAt(lookTarget);
+        }
+
+        // --- LOOP ---
+        let lastTime = 0;
+        function animate(time) {
+            requestAnimationFrame(animate);
+            
+            const delta = time - lastTime;
+            lastTime = time;
+
+            if (!isDead) {
+                updateMovement();
+                updateCars();
+                checkContinuousCollisions();
+            }
+
+            updateCamera();
+            renderer.render(scene, camera);
+        }
+
+        init();
+
+    </script>
+</body>
+</html>
