@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💸 Calcolatore Interesse Composto</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React via CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel per JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        /* Stili custom per lo slider */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 9999px;
+            cursor: pointer;
+        }
+        
+        .slider-fill {
+            position: absolute;
+            height: 100%;
+            background: #111827;
+            border-radius: 9999px;
+            pointer-events: none;
+        }
+        
+        .slider-thumb {
+            position: absolute;
+            top: 50%;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 2px solid #111827;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            transition: box-shadow 0.15s;
+            pointer-events: auto;
+        }
+        
+        .slider-thumb:hover {
+            box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.1);
+        }
+        
+        .slider-thumb:active {
+            cursor: grabbing;
+        }
+        
+        body {
+            background-color: #f3f4f6;
+        }
+
+        /* Colori personalizzati */
+        .text-rosso { color: #dc2626; }      /* Rosso brillante */
+        .text-verde { color: #16a34a; }       /* Verde brillante */
+        .text-blu { color: #2563eb; }         /* Blu brillante */
+        .text-viola { color: #7c3aed; }       /* Viola per totale finale */
+
+        /* Per mantenere il bold nell'esponente */
+        sup {
+            font-size: 0.75em;
+            vertical-align: super;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useCallback } = React;
+
+        // ✅ FIX 1: Funzione per formattare numeri con spazi ogni 3 cifre
+        const formattaNumero = (num, decimali = 0) => {
+            // Arrotondamento
+            const arrotondato = parseFloat(num.toFixed(decimali));
+            
+            // Separatore parte intera e decimale
+            const [parteIntera, parteDecimale] = arrotondato.toString().split('.');
+            
+            // Aggiungi spazi ogni 3 cifre (da destra a sinistra)
+            const parteInteraFormattata = parteIntera.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            
+            // Ricostruisci il numero
+            if (decimali > 0 && parteDecimale !== undefined) {
+                return `${parteInteraFormattata},${parteDecimale}`;
+            }
+            return parteInteraFormattata;
+        };
+
+        // 🎚️ Componente Slider Custom (sostituisce shadcn/ui)
+        function Slider({ min = 0, max = 100, step = 1, value, onValueChange }) {
+            const containerRef = useRef(null);
+            const isDragging = useRef(false);
+
+            const percentage = ((value[0] - min) / (max - min)) * 100;
+
+            const updateValue = useCallback((clientX) => {
+                if (!containerRef.current) return;
+                
+                const rect = containerRef.current.getBoundingClientRect();
+                const x = clientX - rect.left;
+                const percentage = Math.max(0, Math.min(1, x / rect.width));
+                let newValue = min + percentage * (max - min);
+                
+                // Arrotondamento allo step
+                newValue = Math.round(newValue / step) * step;
+                newValue = Math.max(min, Math.min(max, newValue));
+                
+                onValueChange([newValue]);
+            }, [min, max, step, onValueChange]);
+
+            const handleMouseDown = (e) => {
+                isDragging.current = true;
+                updateValue(e.clientX);
+                
+                const handleMouseMove = (e) => {
+                    if (isDragging.current) {
+                        updateValue(e.clientX);
+                    }
+                };
+                
+                const handleMouseUp = () => {
+                    isDragging.current = false;
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                };
+                
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            };
+
+            const handleTouchStart = (e) => {
+                updateValue(e.touches[0].clientX);
+                
+                const handleTouchMove = (e) => {
+                    updateValue(e.touches[0].clientX);
+                };
+                
+                const handleTouchEnd = () => {
+                    document.removeEventListener('touchmove', handleTouchMove);
+                    document.removeEventListener('touchend', handleTouchEnd);
+                };
+                
+                document.addEventListener('touchmove', handleTouchMove);
+                document.addEventListener('touchend', handleTouchEnd);
+            };
+
+            return (
+                <div className="space-y-2">
+                    <div 
+                        ref={containerRef}
+                        className="slider-container"
+                        onMouseDown={handleMouseDown}
+                        onTouchStart={handleTouchStart}
+                    >
+                        <div 
+                            className="slider-fill" 
+                            style={{ width: `${percentage}%` }}
+                        />
+                        <div 
+                            className="slider-thumb" 
+                            style={{ left: `${percentage}%` }}
+                        />
+                    </div>
+                </div>
+            );
+        }
+
+        // 🃏 Componente Card (sostituisce shadcn/ui)
+        function Card({ children, className = "" }) {
+            return (
+                <div className={`rounded-lg border bg-white shadow-sm ${className}`}>
+                    {children}
+                </div>
+            );
+        }
+
+        function CardContent({ children, className = "" }) {
+            return (
+                <div className={`p-6 ${className}`}>
+                    {children}
+                </div>
+            );
+        }
+
+        // 💰 App Principale
+        function InteresseCompostoApp() {
+            const [risparmio, setRisparmio] = useState(500);
+            const [interesse, setInteresse] = useState(5);
+            const [anni, setAnni] = useState(10);
+
+            const calcolaTotale = () => {
+                const rate = risparmio;
+                const r = interesse / 100 / 12;
+                const n = anni * 12;
+                return rate * ((Math.pow(1 + r, n) - 1) / r);
+            };
+
+            const totale = calcolaTotale();
+            const capitaleVersato = risparmio * 12 * anni;
+            const interessiGuadagnati = totale - capitaleVersato;
+
+            // Arrotondamento a 1 decimale
+            const interesseArrotondato = parseFloat(interesse.toFixed(1));
+            const tassoMensile = parseFloat((interesse / 100).toFixed(4));
+
+            return (
+                <div className="p-8 max-w-3xl mx-auto space-y-10 font-sans">
+                    {/* Titolo in nero */}
+                    <h1 className="text-4xl font-extrabold text-center text-black tracking-tight">
+                        💸 Calcolatore Interesse Composto
+                    </h1>
+
+                    <Card className="shadow-md border-gray-200">
+                        <CardContent className="space-y-6 p-6">
+                            
+                            {/* Risparmio mensile in ROSSO */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm text-gray-600">
+                                    <span>Risparmio mensile</span>
+                                    {/* ✅ FIX 1: Numero formattato con spazi */}
+                                    <span className="font-bold text-rosso text-lg">€{formattaNumero(risparmio)}</span>
+                                </div>
+                                <Slider
+                                    min={0}
+                                    max={2000}
+                                    step={5}
+                                    value={[risparmio]}
+                                    onValueChange={(val) => setRisparmio(val[0])}
+                                />
+                            </div>
+
+                            {/* Interesse annuale in VERDE */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm text-gray-600">
+                                    <span>Interesse annuale</span>
+                                    <span className="font-bold text-verde text-lg">{interesseArrotondato}%</span>
+                                </div>
+                                <Slider
+                                    min={0}
+                                    max={25}
+                                    step={0.1}
+                                    value={[interesse]}
+                                    onValueChange={(val) => setInteresse(val[0])}
+                                />
+                            </div>
+
+                            {/* Numero di anni in BLU */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm text-gray-600">
+                                    <span>Numero di anni</span>
+                                    <span className="font-bold text-blu text-lg">{anni}</span>
+                                </div>
+                                <Slider
+                                    min={1}
+                                    max={50}
+                                    step={1}
+                                    onValueChange={(val) => setAnni(val[0])}
+                                    value={[anni]}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Risultato finale in VIOLA */}
+                    <Card className="shadow-md border-gray-200">
+                        <CardContent className="p-6 space-y-4 text-center">
+                            <div className="text-xl text-gray-600">Totale maturato</div>
+                            {/* ✅ FIX 1: Numero grande formattato con spazi e virgola decimale */}
+                            <div className="text-4xl font-bold text-viola">
+                                €{formattaNumero(totale, 2)}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Formula con colori e ANNI in BOLD nell'esponente */}
+                    <Card className="shadow-sm border-gray-100">
+                        <CardContent className="p-6 space-y-4 text-gray-700 text-sm">
+                            <div className="font-semibold">Formula utilizzata:</div>
+                            
+                            {/* ✅ FIX 2: Anni in BOLD anche nell'esponente! */}
+                            <code className="block bg-gray-50 p-4 rounded-md text-base leading-relaxed">
+                                Totale ={' '}
+                                <span className="font-bold text-rosso">{formattaNumero(risparmio)}</span>
+                                {' '}× ((1 +{' '}
+                                <span className="font-bold text-verde">{tassoMensile}</span>
+                                {' '}/12)<sup><span className="font-bold text-blu">{anni}</span>×12</sup> - 1) ÷ ({' '}
+                                <span className="font-bold text-verde">{tassoMensile}</span>
+                                {' '}/12)
+                            </code>
+
+                            <div className="pt-3 space-y-2 text-base">
+                                <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                                    <span>Capitale versato:</span>
+                                    {/* ✅ FIX 1: Numeri formattati */}
+                                    <span className="font-semibold text-gray-900">€{formattaNumero(capitaleVersato, 2)}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1">
+                                    <span>Interessi guadagnati:</span>
+                                    <span className="font-bold text-green-600 text-lg">€{formattaNumero(interessiGuadagnati, 2)}</span>
+                                </div>
+                            </div>
+
+                            {/* Legenda colori */}
+                            <div className="pt-4 mt-4 border-t border-gray-200">
+                                <div className="text-xs text-gray-500 font-medium mb-2">Legenda colori:</div>
+                                <div className="flex flex-wrap gap-4 text-xs">
+                                    <span><span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>Risparmio mensile</span>
+                                    <span><span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>Tasso interesse</span>
+                                    <span><span className="inline-block w-3 h-3 rounded-full bg-blue-500 mr-1"></span>Anni</span>
+                                    <span><span className="inline-block w-3 h-3 rounded-full bg-violet-500 mr-1"></span>Totale finale</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Footer */}
+                    <div className="text-center text-xs text-gray-400 pt-4">
+                        ciauuuu✨
+                    </div>
+                </div>
+            );
+        }
+
+        // Render dell'app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<InteresseCompostoApp />);
+    </script>
+</body>
+</html>
