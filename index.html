@@ -1,16 +1,818 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Bolzi Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bolzi Lab - Progetti Fighissimi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a0b;
+      --bg-secondary: #141416;
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --accent-pink: #ff006e;
+      --accent-blue: #00d4ff;
+      --accent-green: #39ff14;
+      --accent-yellow: #ffd60a;
+      --accent-purple: #bf5af2;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-bg: rgba(255, 255, 255, 0.06);
+      --mouse-x: 50%;
+      --mouse-y: 50%;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      cursor: default;
+    }
+
+    /* ===== MOUSE FOLLOWING GRADIENT BACKGROUND ===== */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: var(--bg-primary);
+    }
+
+    /* Gradient Radiale che segue il mouse */
+    .mouse-gradient {
+      position: absolute;
+      width: 150vw;
+      height: 150vh;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: 
+        radial-gradient(
+          circle 600px at var(--mouse-x) var(--mouse-y),
+          rgba(255, 0, 110, 0.15) 0%,
+          transparent 60%
+        ),
+        radial-gradient(
+          circle 500px at calc(var(--mouse-x) + 200px) calc(var(--mouse-y) - 150px),
+          rgba(0, 212, 255, 0.12) 0%,
+          transparent 55%
+        ),
+        radial-gradient(
+          circle 450px at calc(var(--mouse-x) - 180px) calc(var(--mouse-y) + 180px),
+          rgba(191, 90, 242, 0.1) 0%,
+          transparent 50%
+        );
+      transition: background 0.1s ease-out;
+      will-change: background;
+    }
+
+    /* Blob animati che si muovono lentamente */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.25;
+      animation: float 25s infinite ease-in-out;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .blob-1 {
+      width: 500px;
+      height: 500px;
+      background: var(--accent-pink);
+      top: -150px;
+      left: -150px;
+      animation-delay: 0s;
+    }
+
+    .blob-2 {
+      width: 400px;
+      height: 400px;
+      background: var(--accent-blue);
+      bottom: -120px;
+      right: -120px;
+      animation-delay: -8s;
+    }
+
+    .blob-3 {
+      width: 350px;
+      height: 350px;
+      background: var(--accent-purple);
+      top: 40%;
+      left: 45%;
+      animation-delay: -16s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+      25% { transform: translate(40px, -40px) scale(1.08) rotate(5deg); }
+      50% { transform: translate(-30px, 30px) scale(0.95) rotate(-3deg); }
+      75% { transform: translate(30px, 20px) scale(1.03) rotate(2deg); }
+    }
+
+    /* Noise texture overlay */
+    .noise {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    /* ===== MAIN CONTAINER ===== */
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* ===== HEADER / HERO ===== */
+    header {
+      text-align: center;
+      margin-bottom: 80px;
+      padding-top: 60px;
+    }
+
+    .emoji-rain {
+      font-size: 48px;
+      margin-bottom: 24px;
+      animation: bounce 2s infinite;
+      display: inline-block;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.03em;
+      cursor: default;
+    }
+
+    .subtitle {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    .tagline {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      backdrop-filter: blur(10px);
+    }
+
+    .tagline-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    /* ===== PROJECTS SECTION ===== */
+    .projects-section {
+      margin-bottom: 80px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .project-count {
+      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+      color: white;
+      padding: 4px 14px;
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    /* ===== PROJECT CARD CON PREVIEW GIF ===== */
+    .project-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .project-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--card-accent), transparent);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .project-card:hover::before {
+      opacity: 1;
+    }
+
+    .project-card:hover {
+      transform: translateY(-8px);
+      background: var(--card-hover-bg);
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Preview Container per GIF/Screenshot */
+    .preview-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 20px;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .preview-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.05);
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .project-card:hover .preview-container {
+      opacity: 1;
+    }
+
+    .project-card:hover .preview-image {
+      transform: scale(1);
+    }
+
+    /* Overlay scuro sopra la preview per leggibilità */
+    .preview-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to bottom, 
+        rgba(0,0,0,0.7) 0%, 
+        rgba(0,0,0,0.4) 50%,
+        rgba(10, 10, 11, 0.95) 100%
+      );
+      z-index: 11;
+    }
+
+    /* Content della card (sopra la preview) */
+    .card-content {
+      position: relative;
+      z-index: 12;
+    }
+
+    .card-icon {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .project-card:hover .card-icon {
+      transform: scale(1.15) rotate(5deg);
+    }
+
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .card-description {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .card-tag {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .card-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--card-accent);
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: gap 0.3s ease;
+    }
+
+    .project-card:hover .card-link {
+      gap: 10px;
+    }
+
+    .arrow {
+      transition: transform 0.3s ease;
+    }
+
+    .project-card:hover .arrow {
+      transform: translateX(4px);
+    }
+
+    /* Individual Card Accents */
+    .card-crossy { --card-accent: var(--accent-pink); }
+    .card-interesse { --card-accent: var(--accent-blue); }
+    .card-inflazione { --card-accent: var(--accent-green); }
+
+    /* Placeholder per preview non ancora disponibile */
+    .preview-placeholder {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, 
+        rgba(255, 0, 110, 0.1) 0%, 
+        rgba(0, 212, 255, 0.1) 100%
+      );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      opacity: 0.3;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      text-align: center;
+      padding: 60px 0 40px;
+      border-top: 1px solid var(--card-border);
+      margin-top: 40px;
+    }
+
+    .footer-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 16px;
+    }
+
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+    }
+
+    .social-link:hover {
+      background: var(--card-hover-bg);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      transform: translateY(-3px);
+    }
+
+    .copyright {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .meme-text {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      opacity: 0.7;
+      font-style: italic;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      header {
+        padding-top: 40px;
+        margin-bottom: 60px;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+      }
+
+      .subtitle {
+        font-size: 1.1rem;
+      }
+
+      .projects-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .project-card {
+        padding: 24px;
+      }
+
+      .container {
+        padding: 24px 16px;
+      }
+
+      /* Disabilita effetti pesanti su mobile */
+      .mouse-gradient {
+        display: none;
+      }
+    }
+
+    /* ===== SCROLL ANIMATION ===== */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    .fade-in:nth-child(1) { animation-delay: 0.1s; }
+    .fade-in:nth-child(2) { animation-delay: 0.2s; }
+    .fade-in:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Glitch effect on title hover */
+    h1:hover {
+      animation: glitch 0.3s ease;
+    }
+
+    @keyframes glitch {
+      0%, 100% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+    }
+
+    /* Cursor personalizzato opzionale */
+    body::after {
+      content: '';
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.15s ease-out;
+      will-change: transform;
+    }
+  </style>
 </head>
 <body>
-  <h1>Benvenuto nel Bolzi Lab!</h1>
-  <p>Homepage globale dei miei progetti 🚀</p>
-  <ul>
-    <li><a href="crossy-road/">Crossy Road</a></li>
-     <li><a href="interesse-composto/">Interesse Composto</a></li>
-    <!-- in futuro aggiungi altri progetti qui -->
-  </ul>
+
+  <!-- Animated Background con Mouse Tracking -->
+  <div class="bg-animation">
+    <div class="mouse-gradient" id="mouseGradient"></div>
+    <div class="blob blob-1" id="blob1"></div>
+    <div class="blob blob-2" id="blob2"></div>
+    <div class="blob blob-3" id="blob3"></div>
+  </div>
+
+  <!-- Noise Texture Overlay -->
+  <div class="noise"></div>
+
+  <!-- Main Container -->
+  <div class="container">
+    
+    <!-- Header -->
+    <header>
+      <div class="emoji-rain">🧪</div>
+      <h1>Bolzi Lab</h1>
+      <p class="subtitle">
+        Benvenuto nel mio laboratorio digitale dove i progetti nascono dal caos creativo e dalla voglia di sperimentare ✨
+      </p>
+      <div class="tagline">
+        <span class="tagline-dot"></span>
+        <span>3 progetti attivi • sempre in evoluzione</span>
+      </div>
+    </header>
+
+    <!-- Projects Section -->
+    <section class="projects-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          🎯 Progetti
+        </h2>
+        <span class="project-count">3 live</span>
+      </div>
+
+      <div class="projects-grid">
+        
+        <!-- Project 1: Crossy Road -->
+        <a href="crossy-road/" class="project-card card-crossy fade-in" data-preview="previews/crossy-road.gif">
+          
+          <!-- Preview Container (mostra GIF/screenshot al hover) -->
+          <div class="preview-container">
+            <!-- QUI METTI LA TUA GIF PREVIEW: sostituisci src con il path corretto -->
+            <img src="" alt="Crossy Road Preview" class="preview-image" 
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display: none;">🐔</div>
+            <div class="preview-overlay"></div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="card-content">
+            <span class="card-icon">🐔</span>
+            <h3 class="card-title">Crossy Road</h3>
+            <p class="card-description">
+              Il classico gioco dell'attraversamento stradale ricreato da zero! Sposta il pollo attraverso il traffico senza farti schiacciare. Quanto lontano riesci ad arrivare? 🛣️
+            </p>
+            <div class="card-meta">
+              <span class="card-tag">🎮 Gioco</span>
+              <span class="card-link">
+                Gioca ora 
+                <span class="arrow">→</span>
+              </span>
+            </div>
+          </div>
+        </a>
+
+        <!-- Project 2: Interesse Composto -->
+        <a href="interesse-composto/" class="project-card card-interesse fade-in" data-preview="previews/interesse-composto.gif">
+          
+          <!-- Preview Container -->
+          <div class="preview-container">
+            <img src="" alt="Interesse Composto Preview" class="preview-image"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display: none;">💰</div>
+            <div class="preview-overlay"></div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="card-content">
+            <span class="card-icon">💰</span>
+            <h3 class="card-title">Interesse Composto</h3>
+            <p class="card-description">
+              Calcolatore di interesse composto super potente! Scopri come i tuoi soldi possono crescere nel tempo. Il tempo è il tuo migliore alleato finanziario 📈
+            </p>
+            <div class="card-meta">
+              <span class="card-tag">🧮 Finanza</span>
+              <span class="card-link">
+                Calcola 
+                <span class="arrow">→</span>
+              </span>
+            </div>
+          </div>
+        </a>
+
+        <!-- Project 3: Calcolo Inflazione -->
+        <a href="calcolo-inflazione/" class="project-card card-inflazione fade-in" data-preview="previews/calcolo-inflazione.gif">
+          
+          <!-- Preview Container -->
+          <div class="preview-container">
+            <img src="" alt="Calcolo Inflazione Preview" class="preview-image"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display: none;">📊</div>
+            <div class="preview-overlay"></div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="card-content">
+            <span class="card-icon">📊</span>
+            <h3 class="card-title">Calcolo Inflazione</h3>
+            <p class="card-description">
+              Strumento per calcolare l'impatto dell'inflazione sul potere d'acquisto. Capisci quanto valgono davvero i tuoi soldi nel tempo 💸
+            </p>
+            <div class="card-meta">
+              <span class="card-tag">📉 Economia</span>
+              <span class="card-link">
+                Analizza 
+                <span class="arrow">→</span>
+              </span>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="social-links">
+          <a href="https://github.com/alebolzi" target="_blank" class="social-link" title="GitHub">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </a>
+        </div>
+        <p class="meme-text">Made with ☕ and too much enthusiasm</p>
+        <p class="copyright">© 2026 alebolzi • Bolzi Lab</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ===== JAVASCRIPT PER MOUSE TRACKING E EFFETTI ===== -->
+  <script>
+    // ===== MOUSE FOLLOWING GRADIENT EFFECT =====
+    const mouseGradient = document.getElementById('mouseGradient');
+    const blobs = [
+      document.getElementById('blob1'),
+      document.getElementById('blob2'),
+      document.getElementById('blob3')
+    ];
+    
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let currentX = mouseX;
+    let currentY = mouseY;
+
+    // Smooth interpolation per movimento fluido
+    function lerp(start, end, factor) {
+      return start + (end - start) * factor;
+    }
+
+    // Aggiorna posizione del gradient principale
+    function updateGradient() {
+      currentX = lerp(currentX, mouseX, 0.05);
+      currentY = lerp(currentY, mouseY, 0.05);
+
+      if (mouseGradient && window.innerWidth > 768) {
+        mouseGradient.style.setProperty('--mouse-x', `${currentX}px`);
+        mouseGradient.style.setProperty('--mouse-y', `${currentY}px`);
+      }
+
+      requestAnimationFrame(updateGradient);
+    }
+
+    // Mouse move listener
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      // Muovi i blob leggermente in base al mouse (parallax)
+      if (window.innerWidth > 768) {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        
+        blobs.forEach((blob, index) => {
+          if (blob) {
+            const speed = (index + 1) * 0.02;
+            const offsetX = (mouseX - centerX) * speed;
+            const offsetY = (mouseY - centerY) * speed;
+            blob.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+          }
+        });
+      }
+
+      // Aggiorna cursor glow
+      const cursorGlow = document.body.querySelector('body::after') || 
+                         document.createElement('div');
+      document.body.style.setProperty('--cursor-x', `${e.clientX}px`);
+      document.body.style.setProperty('--cursor-y', `${e.clientY}px`);
+      
+      // Movimento del glow effect via CSS variable (usato in body::after)
+      const afterStyle = `
+        transform: translate(${e.clientX}px, ${e.clientY}px);
+      `;
+      // Nota: body::after è gestito tramite JS inline style alternativo
+    });
+
+    // Avvia l'animazione del gradient
+    updateGradient();
+
+    // ===== PRELOAD PREVIEW IMAGES (quando saranno disponibili) =====
+    document.querySelectorAll('.project-card[data-preview]').forEach(card => {
+      const previewUrl = card.getAttribute('data-preview');
+      if (previewUrl) {
+        const img = card.querySelector('.preview-image');
+        if (img && previewUrl.trim() !== '') {
+          img.src = previewUrl;
+          img.onload = () => {
+            console.log(`✅ Preview loaded: ${previewUrl}`);
+          };
+        }
+      }
+    });
+
+    // ===== INTERSECTION OBSERVER PER ANIMAZIONI SCROLL =====
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.fade-in').forEach(el => {
+      observer.observe(el);
+    });
+
+    // ===== CONSOLE Easter Egg =====
+    console.log('%c🧪 Bolzi Lab', 'font-size: 24px; font-weight: bold; color: #ff006e;');
+    console.log('%cBenvenuto nel laboratorio! Prova a muovere il mouse 👆', 'color: #00d4ff;');
+  </script>
+
 </body>
 </html>
