@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC Halving Cycle Indicator | Position Tracker</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <!-- Custom Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        btc: {
+                            orange: '#F7931A',
+                            dark: '#0D1117',
+                            card: '#161B22',
+                            border: '#30363D',
+                            text: '#C9D1D9',
+                            muted: '#8B949E'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: linear-gradient(135deg, #0D1117 0%, #161B22 50%, #0D1117 100%);
+            min-height: 100vh;
+            color: #C9D1D9;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #F7931A 0%, #FFB84D 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glow-orange { box-shadow: 0 0 40px rgba(247, 147, 26, 0.3); }
+        
+        .card {
+            background: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid #30363D;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover { border-color: #F7931A; transform: translateY(-2px); }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(247, 147, 26, 0.1) 0%, rgba(22, 27, 34, 0.8) 100%);
+            border: 1px solid rgba(247, 147, 26, 0.3);
+        }
+        
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+        
+        .cycle-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, 
+                #8B5CF6 0%, #3B82F6 15%, #10B981 30%, 
+                #F7931A 50%, #EF4444 70%, #DC2626 85%, #991B1B 100%
+            );
+        }
+
+        /* ════════════════════════════════════════════════════════ */
+        /* BOX MESSAGGIO - Minimal & Clean Redesign */
+        /* ════════════════════════════════════════════════════════ */
+        .action-box {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .action-box-inner {
+            position: relative;
+            background: rgba(22, 27, 34, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 24px 28px;
+        }
+
+        .action-box-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-color, #F7931A), transparent);
+            opacity: 0.9;
+            pointer-events: none;
+        }
+        
+        .chart-container { position: relative; height: 500px; width: 100%; }
+        @media (max-width: 768px) { .chart-container { height: 350px; } }
+
+        .action-message { animation: fadeInUp 0.6s ease-out; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-number { text-shadow: 0 0 40px rgba(247, 147, 26, 0.5); }
+        
+        .urgency-pulse { animation: urgencyPulse 1.5s ease-in-out infinite; }
+        @keyframes urgencyPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* ════════════════════════════════════════════════════════ */
+        /* MARKER - PIÙ ALTO (valore da modificare: top) */
+        /* ════════════════════════════════════════════════════════ */
+        #positionMarker {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            border: 4px solid #F7931A;
+            box-shadow: 
+                0 4px 16px rgba(0,0,0,0.6), 
+                0 0 25px rgba(247,147,26,0.6),
+                0 0 50px rgba(247,147,26,0.3);
+            transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            left: 50%;
+            top: -27px;  /* ← VALORE DA MODIFICARE per altezza */
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0D1117; }
+        ::-webkit-scrollbar-thumb { background: #30363D; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #F7931A'; }
+    </style>
+</head>
+<body class="antialiased">
+    
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-btc-dark/90 backdrop-blur-md border-b border-btc-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-btc-orange to-yellow-500 flex items-center justify-center font-bold text-black text-lg">₿</div>
+                    <span class="font-bold text-xl">Halving Cycle</span>
+                </div>
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#indicator" class="text-btc-muted hover:text-btc-orange transition-colors">Indicator</a>
+                    <a href="#chart" class="text-btc-muted hover:text-btc-orange transition-colors">Chart</a>
+                    <a href="#halvings" class="text-btc-muted hover:text-btc-orange transition-colors">Halvings</a>
+                    <a href="#phases" class="text-btc-muted hover:text-btc-orange transition-colors">Phases</a>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="pulse-dot w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span class="text-sm text-btc-muted">Live Data</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SEZIONE PRINCIPALE -->
+    <section id="indicator" class="pt-28 pb-16 px-4">
+        <div class="max-w-4xl mx-auto">
+            
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-btc-orange/10 border border-btc-orange/30 mb-4">
+                    <span class="w-2 h-2 bg-btc-orange rounded-full pulse-dot"></span>
+                    <span class="text-sm font-medium text-btc-orange">Real-Time Bitcoin Cycle Analysis</span>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-bold mb-2">
+                    BTC Halving <span class="gradient-text">Cycle Position</span> Indicator
+                </h1>
+            </div>
+
+            <div class="card p-8 md:p-12 glow-orange">
+                
+                <!-- PROTAGONIST: Cycle Position Number -->
+                <div class="text-center mb-8">
+                    <h2 class="text-base font-medium text-btc-muted mb-3 uppercase tracking-wider">Current Cycle Position</h2>
+                    
+                    <div class="hero-number my-6">
+                        <div class="text-[120px] md:text-[180px] font-bold gradient-text font-mono leading-none" id="currentPosition">--</div>
+                    </div>
+
+                    <!-- ACTION MESSAGE - CON NUOVO EFFETTO MINIMAL -->
+                    <div class="action-message mt-8 mb-8">
+                        <div id="actionMessageContainer" class="inline-block"></div>
+                    </div>
+                    
+                    <!-- Visual Bar -->
+                    <div class="mt-8 max-w-2xl mx-auto">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-purple-400 font-medium">0.0 = BOTTOM 🟣</span>
+                            <span class="text-red-400 font-medium">1.0 = TOP 🔴</span>
+                        </div>
+                        <div class="cycle-bar w-full rounded-full"></div>
+                        <div class="relative mt-3 h-6">
+                            <div id="positionMarker"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="border-t border-btc-border my-10"></div>
+
+                <!-- 3 BOXES -->
+                <div class="grid md:grid-cols-3 gap-6 mt-8">
+                    
+                    <!-- Box 1 -->
+                    <div class="stat-card rounded-xl p-6 hover:scale-105 transition-transform">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm text-btc-muted font-medium uppercase tracking-wide">Days Since Last Halving</span>
+                            <svg class="w-5 h-5 text-btc-orange flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div class="text-5xl font-bold font-mono text-white mb-2" id="daysSinceHalving">--</div>
+                        <div class="text-base text-btc-orange font-medium" id="lastHalvingDate">Loading...</div>
+                    </div>
+
+                    <!-- Box 2 + Years/Cycle sotto -->
+                    <div class="stat-card rounded-xl p-6 hover:scale-105 transition-transform">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm text-btc-muted font-medium uppercase tracking-wide">Dynamic Cycle Length</span>
+                            <svg class="w-5 h-5 text-btc-orange flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        </div>
+                        <div class="text-5xl font-bold font-mono text-white mb-1" id="cycleLength">--</div>
+                        <div class="text-base text-btc-orange font-medium mb-2" id="cycleLengthMethod">Avg Last 2 Cycles</div>
+                        
+                        <div class="pt-3 border-t border-btc-border/50 mt-3">
+                            <div class="text-xs text-btc-muted mb-1">Years per Cycle</div>
+                            <div class="text-lg font-semibold font-mono text-white" id="yearsPerCycle">-- years</div>
+                        </div>
+                    </div>
+
+                    <!-- Box 3: MACRO-FASE AGGREGATA -->
+                    <div class="stat-card rounded-xl p-6 hover:scale-105 transition-transform">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm text-btc-muted font-medium uppercase tracking-wide">Current Phase</span>
+                            <span id="phaseIcon" class="text-3xl">🔄</span>
+                        </div>
+                        
+                        <div class="text-xl font-bold text-white leading-tight mb-2" id="phaseName">Calculating...</div>
+                        
+                        <div class="mb-2">
+                            <div class="text-sm font-semibold mb-1" id="macroPhaseName">--</div>
+                            <div class="text-2xl font-bold font-mono text-btc-orange" id="macroPhaseProgress">--%</div>
+                        </div>
+                        
+                        <div class="mt-3 mb-2">
+                            <div class="w-full bg-btc-dark/50 rounded-full overflow-hidden">
+                                <div id="macroProgressBar" class="h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-xs text-btc-muted mt-2" id="subPhasesInMacro"></div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- PHASES LEGEND Section -->
+    <section id="phases" class="py-16 px-4">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4">Cycle <span class="gradient-text">Phases Guide</span></h2>
+                <p class="text-btc-muted max-w-2xl mx-auto">9 detailed phases with actionable insights for each stage of the Bitcoin halving cycle.</p>
+            </div>
+            
+            <div class="grid gap-4" id="phasesGrid"></div>
+        </div>
+    </section>
+
+    <!-- Main Chart Section -->
+    <section id="chart" class="py-16 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4">Historical <span class="gradient-text">Cycle Position</span></h2>
+                <p class="text-btc-muted max-w-2xl mx-auto">Complete visualization of Bitcoin's cycle position from 2012 to present.</p>
+            </div>
+            
+            <div class="card p-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div class="flex items-center gap-4">
+                        <button onclick="setTimeRange('all')" class="px-4 py-2 rounded-lg bg-btc-orange text-black font-medium hover:bg-orange-600 transition-colors">All Time</button>
+                        <button onclick="setTimeRange('5y')" class="px-4 py-2 rounded-lg bg-btc-card border border-btc-border hover:border-btc-orange transition-colors">5 Years</button>
+                        <button onclick="setTimeRange('2y')" class="px-4 py-2 rounded-lg bg-btc-card border border-btc-border hover:border-btc-orange transition-colors">2 Years</button>
+                    </div>
+                    
+                    <div class="flex items-center gap-6 text-sm">
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-btc-orange"></div><span>Cycle Position</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-1 bg-btc-orange opacity-50" style="border-style: dashed;"></div><span>Halving Events</span></div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="cycleChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Halvings Table -->
+    <section id="halvings" class="py-16 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4">Bitcoin <span class="gradient-text">Halvings History</span></h2>
+                <p class="text-btc-muted">Complete record of all Bitcoin halving events.</p>
+            </div>
+            <div class="grid gap-6" id="halvingsGrid"></div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-4 border-t border-btc-border">
+        <div class="max-w-6xl mx-auto text-center">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-btc-orange to-yellow-500 flex items-center justify-center font-bold text-black">₿</div>
+                <span class="font-bold text-lg">BTC Halving Cycle Indicator</span>
+            </div>
+            <p class="text-btc-muted text-sm">Educational tool • Not financial advice</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // =====================================================
+        // DATA: Bitcoin Halvings
+        // =====================================================
+        const HALVINGS = [
+            { number: 1, date: new Date('2012-11-28'), rewardBefore: 50, rewardAfter: 25, priceAtHalving: 12.35 },
+            { number: 2, date: new Date('2016-07-09'), rewardBefore: 25, rewardAfter: 12.5, priceAtHalving: 650.65 },
+            { number: 3, date: new Date('2020-05-11'), rewardBefore: 12.5, rewardAfter: 6.25, priceAtHalving: 8873.24 },
+            { number: 4, date: new Date('2024-04-20'), rewardBefore: 6.25, rewardAfter: 3.125, priceAtHalving: 67880.97 }
+        ];
+
+        // =====================================================
+        // DEFINIZIONE DELLE 9 FASI
+        // =====================================================
+        const CYCLE_PHASES = [
+            {
+                id: 1,
+                name: '🚀 Post-Halving Immediate',
+                shortName: 'Post-Halving',
+                range: [0, 7],
+                emoji: '🚀',
+                color: 'green',
+                target: 'TOP',
+                macroPhase: 'BULL',
+                actionMessage: (daysToTarget) => `Early bull - hold tight (${formatDays(daysToTarget)} to peak)`,
+                actionDetail: 'Post-halving euphoria starting. Historical best returns happen here.',
+                operationalAdvice: '🟢 HOLD strong. Do NOT sell. This is the golden window for maximum gains. DCA if possible.'
+            },
+            {
+                id: 2,
+                name: '📈 Bull Acceleration',
+                shortName: 'Bull Rally',
+                range: [7, 21],
+                emoji: '📈',
+                color: 'lime',
+                target: 'TOP',
+                macroPhase: 'BULL',
+                actionMessage: (daysToTarget) => `Rally in progress - don't sell (${formatDays(daysToTarget)} to peak)`,
+                actionDetail: 'Momentum building up. FOMO entering the market.',
+                operationalAdvice: '🟢 HOLD. Consider taking partial profits only at major resistance levels. Stay invested.'
+            },
+            {
+                id: 3,
+                name: '⚡ Approaching Top',
+                shortName: 'Near Top',
+                range: [21, 33],
+                emoji: '⚡',
+                color: 'yellow',
+                target: 'TOP',
+                macroPhase: 'BULL',
+                actionMessage: (daysToTarget) => `Caution: near cycle peak (${formatDays(daysToTarget)} left)`,
+                actionDetail: 'Getting close to historical cycle top. Euforia building.',
+                operationalAdvice: '🟡 CAUTION. Move to stablecoins/cash, gradually with exit DCA (50% sold). Set stop-losses. Don\'t go all-in here.'
+            },
+            {
+                id: 4,
+                name: '📉 Early Bear',
+                shortName: 'Early Bear',
+                range: [33, 42],
+                emoji: '📉',
+                color: 'orange',
+                target: 'BOTTOM',
+                macroPhase: 'BEAR',
+                actionMessage: (daysToTarget) => `Top maybe passed - correction starting (${formatDays(daysToTarget)} to bottom)`,
+                actionDetail: 'Peak likely behind us. First wave of correction underway.',
+                operationalAdvice: '🟠 DANGER: REDUCE EXPOSURE. Move to stablecoins/cash (90-100% sold). Wait for clearer signals. Don\'t FOMO'
+            },
+            {
+                id: 5,
+                name: '❄️ Deep Bear',
+                shortName: 'Deep Bear',
+                range: [42, 56],
+                emoji: '❄️',
+                color: 'red',
+                target: 'BOTTOM',
+                macroPhase: 'BEAR',
+                actionMessage: (daysToTarget) => `Deep bear - prepare capital (${formatDays(daysToTarget)} to accumulation zone)`,
+                actionDetail: 'Capitulation phase. Weak hands selling. Fear dominates.',
+                operationalAdvice: '🔴 PREPARE capital. Start small DCA positions (10-20% of target). Keep dry powder ready.'
+            },
+            {
+                id: 6,
+                name: '🟣 Near Bottom',
+                shortName: 'Near Bottom',
+                range: [56, 67],
+                emoji: '🟣',
+                color: 'purple',
+                target: 'BOTTOM',
+                macroPhase: 'BEAR',
+                actionMessage: (daysToTarget) => `BOTTOM approaching in ${formatDays(daysToTarget)}! 🎯`,
+                actionDetail: 'Historical accumulation zone approaching. Best risk/reward entry point.',
+                operationalAdvice: '🟣 ACCUMULATE AGGRESSIVELY. This is the zone where millionaires are made. Increase DCA significantly.'
+            },
+            {
+                id: 7,
+                name: '🌱 Recovery Start',
+                shortName: 'Recovery',
+                range: [67, 77],
+                emoji: '🌱',
+                color: 'cyan',
+                target: 'HALVING',
+                macroPhase: 'PRE_HALVING',
+                actionMessage: (daysToTarget) => `Bottom done - slow recovery (${formatDays(daysToTarget)} to next halving)`,
+                actionDetail: 'Recovery beginning. Market finding its footing again.',
+                operationalAdvice: '🔵 Continue accumulating on dips. Build your position steadily. Patience pays off.'
+            },
+            {
+                id: 8,
+                name: '📈 Pre-Halving Build',
+                shortName: 'Pre-Halving Build',
+                range: [77, 91],
+                emoji: '📈',
+                color: 'blue',
+                target: 'HALVING',
+                macroPhase: 'PRE_HALVING',
+                actionMessage: (daysToTarget) => `Accumulation phase - buy dips (${formatDays(daysToTarget)} before halving)`,
+                actionDetail: 'Pre-halving momentum building. Smart money positioning early.',
+                operationalAdvice: '🔵 BUY DIPS aggressively. Near full position. Next halving catalyst coming soon.'
+            },
+            {
+                id: 9,
+                name: '🔥 Pre-Halving Final Run',
+                shortName: 'Final Run',
+                range: [91, 100],
+                emoji: '🔥',
+                color: 'pink',
+                target: 'HALVING',
+                macroPhase: 'PRE_HALVING',
+                actionMessage: (daysToTarget) => `Final push before next halving (${formatDays(daysToTarget)} left!) 🔥`,
+                actionDetail: 'Final leg of the cycle. Anticipation of next halving driving price.',
+                operationalAdvice: '🔥 FULL POSITION or slight trim. Enjoy the ride but be ready for post-halving volatility.'
+            }
+        ];
+
+        // =====================================================
+        // UTILITY FUNCTIONS
+        // =====================================================
+
+        function formatDays(days) {
+            if (days <= 30) return `${days}d`;
+            if (days <= 90) return `${Math.round(days / 7)}w`;
+            if (days <= 365) return `${Math.round(days / 30.44)}mo`;
+            return `${(days / 365.25).toFixed(1)}y`;
+        }
+
+        function getDynamicCycleLength(referenceDate) {
+            const completedCycles = [];
+            for (let i = 0; i < HALVINGS.length - 1; i++) {
+                const start = HALVINGS[i].date;
+                const end = HALVINGS[i + 1].date;
+                if (end <= referenceDate) {
+                    const duration = Math.round((end - start) / (1000 * 60 * 60 * 24));
+                    completedCycles.push({ cycleNum: i + 1, durationDays: duration });
+                }
+            }
+            if (completedCycles.length === 0) return { length: 1460, method: 'default_4_years' };
+            if (completedCycles.length === 1) return { length: completedCycles[0].durationDays, method: 'single_cycle' };
+            const lastTwo = completedCycles.slice(-2);
+            const avgLength = Math.round(lastTwo.reduce((sum, c) => sum + c.durationDays, 0) / lastTwo.length);
+            return { length: avgLength, method: 'avg_last_2_cycles', cycles: lastTwo };
+        }
+
+        function getLatestHalving(referenceDate) {
+            for (let i = HALVINGS.length - 1; i >= 0; i--) {
+                if (HALVINGS[i].date <= referenceDate) return HALVINGS[i];
+            }
+            return HALVINGS[0];
+        }
+
+        function normalizeCyclePosition(daysSinceHalving, cycleLength) {
+            const daysNorm = daysSinceHalving % cycleLength;
+            const phase1End = cycleLength / 3;
+            const phase2End = (2 * cycleLength) / 3;
+            
+            let position;
+            if (daysNorm <= phase1End) {
+                position = 0.5 + (daysNorm / phase1End) * 0.5;
+            } else if (daysNorm <= phase2End) {
+                const progress = (daysNorm - phase1End) / (phase2End - phase1End);
+                position = 1.0 - progress;
+            } else {
+                const progress = (daysNorm - phase2End) / (cycleLength - phase2End);
+                position = progress * 0.5;
+            }
+            return Math.round(position * 10000) / 10000;
+        }
+
+        // Funzione per ottenere colore dal valore 0-1 (gradient)
+        function getColorFromPosition(position) {
+            const colorStops = [
+                { pos: 0.00, color: [139, 92, 246] },   // violet-500
+                { pos: 0.15, color: [59, 130, 246] },   // blue-500
+                { pos: 0.30, color: [16, 185, 129] },   // emerald-500
+                { pos: 0.50, color: [247, 147, 26] },   // orange-500 (btc)
+                { pos: 0.70, color: [239, 68, 68] },     // red-500
+                { pos: 0.85, color: [220, 38, 38] },     // red-600
+                { pos: 1.00, color: [153, 27, 27] }      // red-700
+            ];
+            
+            let lowerStop = colorStops[0];
+            let upperStop = colorStops[colorStops.length - 1];
+            
+            for (let i = 0; i < colorStops.length - 1; i++) {
+                if (position >= colorStops[i].pos && position <= colorStops[i + 1].pos) {
+                    lowerStop = colorStops[i];
+                    upperStop = colorStops[i + 1];
+                    break;
+                }
+            }
+            
+            const range = upperStop.pos - lowerStop.pos;
+            const factor = range === 0 ? 0 : (position - lowerStop.pos) / range;
+            
+            const r = Math.round(lowerStop.color[0] + (upperStop.color[0] - lowerStop.color[0]) * factor);
+            const g = Math.round(lowerStop.color[1] + (upperStop.color[1] - lowerStop.color[1]) * factor);
+            const b = Math.round(lowerStop.color[2] + (upperStop.color[2] - lowerStop.color[2]) * factor);
+            
+            return {
+                hex: `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`,
+                rgb: `rgb(${r}, ${g}, ${b})`
+            };
+        }
+
+        // =====================================================
+        // FUNZIONE CON MACRO-FASI AGGREGATE
+        // =====================================================
+
+        function getDetailedPhaseInfo(cyclePos, daysSince, cycleLength) {
+            const pctInCycle = (daysSince / cycleLength) * 100;
+            
+            let currentPhase = null;
+            for (const phase of CYCLE_PHASES) {
+                if (pctInCycle >= phase.range[0] && pctInCycle < phase.range[1]) {
+                    currentPhase = phase;
+                    break;
+                }
+            }
+            
+            if (!currentPhase) currentPhase = CYCLE_PHASES[CYCLE_PHASES.length - 1];
+
+            let macroPhaseName = '';
+            let macroPhasePercent = 0;
+            let macroPhaseColor = '';
+            let macroBarClass = '';
+            
+            const BULL_END = 33;
+            const BEAR_START = 33;
+            const BEAR_END = 67;
+
+            if (currentPhase.macroPhase === 'BULL') {
+                macroPhaseName = '🐂 BULL PHASE (to TOP)';
+                macroPhaseColor = 'text-green-400';
+                macroBarClass = 'bg-gradient-to-r from-green-500 to-yellow-500';
+                
+                if (pctInCycle <= BULL_END) {
+                    macroPhasePercent = Math.min(100, Math.max(0, (pctInCycle / BULL_END) * 100));
+                } else {
+                    macroPhasePercent = 100;
+                }
+                
+            } else if (currentPhase.macroPhase === 'BEAR') {
+                macroPhaseName = '🐻 BEAR PHASE (to BOTTOM)';
+                macroPhaseColor = 'text-purple-400';
+                macroBarClass = 'bg-gradient-to-r from-orange-500 to-purple-500';
+                
+                const bearRange = BEAR_END - BEAR_START;
+                const bearProgress = pctInCycle - BEAR_START;
+                macroPhasePercent = Math.min(100, Math.max(0, (bearProgress / bearRange) * 100));
+                
+            } else {
+                macroPhaseName = '🔄 PRE-HALVING PHASE';
+                macroPhaseColor = 'text-blue-400';
+                macroBarClass = 'bg-gradient-to-r from-cyan-500 to-pink-500';
+                
+                const preHalvingStart = 67;
+                const preHalvingRange = 100 - preHalvingStart;
+                const preHalvingProgress = pctInCycle - preHalvingStart;
+                macroPhasePercent = Math.min(100, Math.max(0, (preHalvingProgress / preHalvingRange) * 100));
+            }
+
+            let daysToTarget = 0;
+            let targetName = '';
+            
+            if (currentPhase.target === 'TOP') {
+                const dayOfTop = cycleLength / 3;
+                daysToTarget = Math.max(0, Math.round(dayOfTop - daysSince));
+                targetName = 'CYCLE TOP';
+            } else if (currentPhase.target === 'BOTTOM') {
+                const dayOfBottom = (2 * cycleLength) / 3;
+                daysToTarget = Math.max(0, Math.round(dayOfBottom - daysSince));
+                targetName = 'CYCLE BOTTOM';
+            } else {
+                daysToTarget = Math.max(0, Math.round(cycleLength - daysSince));
+                targetName = 'NEXT HALVING';
+            }
+
+            const dayOfTop = cycleLength / 3;
+            const dayOfBottom = (2 * cycleLength) / 3;
+            const otherTargets = {
+                daysToTop: Math.max(0, Math.round(dayOfTop - daysSince)),
+                daysToBottom: Math.max(0, Math.round(dayOfBottom - daysSince)),
+                daysToHalving: Math.max(0, Math.round(cycleLength - daysSince))
+            };
+
+            const phaseStartPct = currentPhase.range[0];
+            const phaseEndPct = currentPhase.range[1];
+            const phaseProgress = ((pctInCycle - phaseStartPct) / (phaseEndPct - phaseStartPct)) * 100;
+
+            const isUrgent = daysToTarget <= 30 && (currentPhase.id === 3 || currentPhase.id === 6 || currentPhase.id === 9);
+
+            let subPhasesText = '';
+            if (currentPhase.macroPhase === 'BEAR') {
+                subPhasesText = '📉 Early Bear → ❄️ Deep Bear → 🟣 Near Bottom';
+            } else if (currentPhase.macroPhase === 'BULL') {
+                subPhasesText = '🚀 Post-Halving → 📈 Bull Rally → ⚡ Near Top';
+            } else {
+                subPhasesText = '🌱 Recovery → 📈 Build → 🔥 Final Run';
+            }
+
+            return {
+                ...currentPhase,
+                daysToTarget: daysToTarget,
+                targetName: targetName,
+                phaseProgress: phaseProgress.toFixed(1),
+                pctInCycle: pctInCycle.toFixed(1),
+                isUrgent: isUrgent,
+                actionMessage: currentPhase.actionMessage(daysToTarget),
+                operationalAdvice: currentPhase.operationalAdvice,
+                otherTargets: otherTargets,
+                macroPhaseName: macroPhaseName,
+                macroPhasePercent: macroPhasePercent.toFixed(1),
+                macroPhaseColor: macroPhaseColor,
+                macroBarClass: macroBarClass,
+                subPhasesText: subPhasesText
+            };
+        }
+
+        function generateChartData() {
+            const data = [];
+            const startDate = new Date('2012-11-28');
+            const endDate = new Date();
+            let currentDate = new Date(startDate);
+            
+            while (currentDate <= endDate) {
+                const latestHalving = getLatestHalving(currentDate);
+                const daysSince = Math.round((currentDate - latestHalving.date) / (1000 * 60 * 60 * 24));
+                const { length: cycleLen } = getDynamicCycleLength(currentDate);
+                const position = normalizeCyclePosition(daysSince, cycleLen);
+                
+                data.push({
+                    date: new Date(currentDate),
+                    position: position,
+                    daysSinceHalving: daysSince,
+                    cycleLength: cycleLen
+                });
+                
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            return data;
+        }
+
+        // COLORI PER LE 9 FASI
+        const PHASE_COLORS = {
+            green:   { bg: 'bg-green-500/15', border: 'border-green-500/40', text: 'text-green-400', hex: '#22C55E' },
+            lime:    { bg: 'bg-lime-500/15', border: 'border-lime-500/40', text: 'text-lime-400', hex: '#84CC16' },
+            yellow:  { bg: 'bg-yellow-500/15', border: 'border-yellow-500/40', text: 'text-yellow-400', hex: '#EAB308' },
+            orange:  { bg: 'bg-orange-500/15', border: 'border-orange-500/40', text: 'text-orange-400', hex: '#F97316' },
+            red:     { bg: 'bg-red-500/15', border: 'border-red-500/40', text: 'text-red-400', hex: '#EF4444' },
+            purple:  { bg: 'bg-purple-500/15', border: 'border-purple-500/40', text: 'text-purple-400', hex: '#A855F7' },
+            cyan:    { bg: 'bg-cyan-500/15', border: 'border-cyan-500/40', text: 'text-cyan-400', hex: '#06B6D4' },
+            blue:    { bg: 'bg-blue-500/15', border: 'border-blue-500/40', text: 'text-blue-400', hex: '#3B82F6' },
+            pink:    { bg: 'bg-pink-500/15', border: 'border-pink-500/40', text: 'text-pink-400', hex: '#EC4899' }
+        };
+
+        // =====================================================
+        // UI UPDATE FUNCTIONS
+        // =====================================================
+
+        let mainChart = null;
+
+        function updateUI() {
+            const now = new Date();
+            const latestHalving = getLatestHalving(now);
+            const daysSince = Math.round((now - latestHalving.date) / (1000 * 60 * 60 * 24));
+            const { length: cycleLen, method } = getDynamicCycleLength(now);
+            const position = normalizeCyclePosition(daysSince, cycleLen);
+            const phaseInfo = getDetailedPhaseInfo(position, daysSince, cycleLen);
+
+            document.getElementById('currentPosition').textContent = position.toFixed(4);
+
+            // ═══════════════════════════════════════════════════════════════════
+            // BOX MESSAGGIO - VERSIONE MINIMAL CON TITOLO SHORT E GIORNI DETTAGLIATI
+            // ═══════════════════════════════════════════════════════════════════
+            const gradientColor = getColorFromPosition(position);
+            const urgentClass = phaseInfo.isUrgent ? 'urgency-pulse' : '';
+            
+            // Giorni rimanenti
+            const { otherTargets } = phaseInfo;
+            
+            // Formatta con giorni + (mesi/anni)
+            const fmtTarget = (days, label) => {
+                if (days <= 0) return '';
+                return `${days} days (${formatDays(days)}) to ${label}`;
+            }; 
+            
+            const parts = [];
+            if (otherTargets.daysToTop > 0) parts.push(fmtTarget(otherTargets.daysToTop, 'TOP'));
+            if (otherTargets.daysToBottom > 0) parts.push(fmtTarget(otherTargets.daysToBottom, 'BOTTOM'));
+            if (otherTargets.daysToHalving > 0) parts.push(fmtTarget(otherTargets.daysToHalving, 'HALVING'));
+            
+            const targetsText = parts.join(' • ');
+
+            document.getElementById('actionMessageContainer').innerHTML = `
+                <div class="action-box ${urgentClass}" style="--accent-color: ${gradientColor.hex};">
+                    <!-- Top accent line -->
+                    <div class="action-box-glow"></div>
+                    
+                    <div class="action-box-inner">
+                        
+                        <!-- Messaggio principale - SOLO NOME BREVE -->
+                        <div class="text-lg md:text-xl font-semibold mb-2" style="color: ${gradientColor.hex}; line-height: 1.4;">
+                            ${phaseInfo.shortName}
+                        </div>
+                        
+                        <!-- Dettaglio -->
+                        <div class="text-sm mb-4" style="color: #8B949E; line-height: 1.5;">
+                            ${phaseInfo.actionDetail}
+                        </div>
+                        
+                        <!-- Giorni rimanenti - FORMATO: giorni (mesi) -->
+                        <div class="text-xs font-medium mb-3 pt-3 pb-3 border-t" style="color: ${gradientColor.hex}; border-color: rgba(48, 54, 61, 0.6); letter-spacing: 0.02em;">
+                            ⏱️ ${targetsText}
+                        </div>
+                        
+                        <!-- Consiglio operativo -->
+                        <div class="text-xs leading-relaxed" style="color: #C9D1D9; background: ${gradientColor.rgb}08; padding: 12px 16px; border-radius: 10px; border-left: 3px solid ${gradientColor.hex};">
+                            ${phaseInfo.operationalAdvice}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // MARKER
+            document.getElementById('positionMarker').style.left = `${position * 100}%`;
+            
+            // BOX 1
+            document.getElementById('daysSinceHalving').textContent = daysSince.toLocaleString();
+            document.getElementById('lastHalvingDate').textContent = `Halving #${latestHalving.number}: ${latestHalving.date.toLocaleDateString('it-IT')}`;
+            
+            // BOX 2
+            document.getElementById('cycleLength').textContent = cycleLen.toLocaleString() + ' days';
+            document.getElementById('cycleLengthMethod').textContent = method.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            document.getElementById('yearsPerCycle').textContent = (cycleLen / 365.25).toFixed(2) + ' years';
+            
+            // BOX 3
+            document.getElementById('phaseName').textContent = phaseInfo.name;
+            document.getElementById('phaseIcon').textContent = phaseInfo.emoji;
+            
+            document.getElementById('macroPhaseName').textContent = phaseInfo.macroPhaseName;
+            document.getElementById('macroPhaseName').className = `text-sm font-semibold mb-1 ${phaseInfo.macroPhaseColor}`;
+            
+            document.getElementById('macroPhaseProgress').textContent = phaseInfo.macroPhasePercent + '%';
+            document.getElementById('macroPhaseProgress').className = `text-2xl font-bold font-mono ${phaseInfo.macroPhaseColor}`;
+            
+            document.getElementById('macroProgressBar').style.width = phaseInfo.macroPhasePercent + '%';
+            document.getElementById('macroProgressBar').className = `h-2 rounded-full transition-all duration-500 ${phaseInfo.macroBarClass}`;
+            
+            document.getElementById('subPhasesInMacro').textContent = phaseInfo.subPhasesText;
+
+            renderPhasesGrid(phaseInfo);
+            renderHalvingsGrid();
+            initChart();
+        }
+
+        function renderPhasesGrid(currentPhase) {
+            const grid = document.getElementById('phasesGrid');
+            let html = '';
+            
+            for (const phase of CYCLE_PHASES) {
+                const isActive = phase.id === currentPhase.id;
+                const colors = PHASE_COLORS[phase.color];
+                const activeBorder = isActive ? 'ring-2 ring-offset-2 ring-offset-btc-dark' : '';
+                
+                html += `
+                    <div class="card p-5 ${activeBorder} transition-all duration-300 ${isActive ? 'border-' + phase.color.split('-')[0] + '-500 scale-105' : ''}">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">${phase.emoji}</span>
+                                <div>
+                                    <h3 class="font-bold text-lg">${phase.name}</h3>
+                                    <p class="text-sm text-btc-muted">Phase ${phase.id}/9 • ${phase.range[0]}-${phase.range[1]}% of cycle</p>
+                                </div>
+                            </div>
+                            
+                            ${isActive ? `<span class="px-3 py-1 rounded-full text-xs font-bold ${colors.bg} ${colors.text}">YOU ARE HERE</span>` : ''}
+                        </div>
+                        
+                        <div class="mt-4 pt-4 border-t border-btc-border/50">
+                            <div class="text-sm ${colors.text} font-semibold mb-1">Target: ${phase.target}</div>
+                            <div class="text-sm text-btc-muted mb-2">${phase.actionMessage(0).replace(/\(\d+.*?\)/, '').trim()}</div>
+                            <div class="text-xs text-btc-muted italic">${phase.operationalAdvice}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            grid.innerHTML = html;
+        }
+
+        function renderHalvingsGrid() {
+            const grid = document.getElementById('halvingsGrid');
+            let html = '';
+            
+            for (let i = 0; i < HALVINGS.length; i++) {
+                const h = HALVINGS[i];
+                const nextHalving = HALVINGS[i + 1];
+                let cycleDurationDays = '';
+                
+                if (nextHalving) {
+                    cycleDurationDays = Math.round((nextHalving.date - h.date) / (1000 * 60 * 60 * 24));
+                } else {
+                    cycleDurationDays = Math.round((new Date() - h.date) / (1000 * 60 * 60 * 24));
+                }
+                
+                html += `
+                    <div class="card p-6 ${i === HALVINGS.length - 1 ? 'border-btc-orange glow-orange' : ''}">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-btc-orange to-yellow-500 flex items-center justify-center">
+                                    <span class="text-2xl font-bold text-black">#${h.number}</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold">Halving #${h.number}</h3>
+                                    <p class="text-btc-muted">${h.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-6 text-sm">
+                                <div class="text-center"><div class="text-btc-muted">Reward</div><div class="font-mono font-bold text-btc-orange">${h.rewardBefore} → ${h.rewardAfter} BTC</div></div>
+                                <div class="text-center"><div class="text-btc-muted">Price</div><div class="font-mono font-bold">$${h.priceAtHalving.toLocaleString()}</div></div>
+                                <div class="text-center"><div class="text-btc-muted">Duration</div><div class="font-mono font-bold">${cycleDurationDays} days</div></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            grid.innerHTML = html;
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('cycleChart');
+            if (!ctx) return;
+            
+            const data = generateChartData();
+            const labels = data.map(d => d.date);
+            const positions = data.map(d => d.position);
+
+            if (mainChart) {
+                mainChart.destroy();
+                mainChart = null;
+            }
+
+            const config = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Cycle Position (0-1)',
+                        data: positions,
+                        borderColor: '#F7931A',
+                        backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: '#F7931A'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(13, 17, 23, 0.95)',
+                            titleColor: '#F7931A',
+                            bodyColor: '#C9D1D9',
+                            borderColor: '#30363D',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                title: (context) => new Date(context[0].label).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+                                label: (context) => {
+                                    const idx = context.dataIndex;
+                                    const d = data[idx];
+                                    return [`Position: ${d.position.toFixed(4)}`, `Days from Halving: ${d.daysSinceHalving}`, `Cycle Length: ${d.cycleLength} days`];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'year', displayFormats: { year: 'yyyy' } },
+                            grid: { color: 'rgba(48, 54, 61, 0.5)', drawBorder: false },
+                            ticks: { color: '#8B949E', font: { size: 11 }, maxRotation: 0 }
+                        },
+                        y: {
+                            min: -0.05,
+                            max: 1.05,
+                            grid: { color: 'rgba(48, 54, 61, 0.5)', drawBorder: false },
+                            ticks: {
+                                color: '#8B949E',
+                                stepSize: 0.25,
+                                callback: (value) => {
+                                    if (value === 0) return 'BOTTOM (0)';
+                                    if (value === 0.5) return 'NEUTRAL (0.5)';
+                                    if (value === 1) return 'TOP (1)';
+                                    return value.toFixed(1);
+                                },
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            };
+
+            try {
+                mainChart = new Chart(ctx, config);
+                console.log('✅ Chart initialized successfully');
+            } catch (error) {
+                console.error('❌ Chart error:', error);
+            }
+        }
+
+        function setTimeRange(range) {
+            console.log('Time range:', range);
+        }
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing BTC Cycle Indicator...');
+            setTimeout(() => updateUI(), 100);
+        });
+
+        setInterval(() => {
+            try {
+                const now = new Date();
+                const latestHalving = getLatestHalving(now);
+                const daysSince = Math.round((now - latestHalving.date) / (1000 * 60 * 60 * 24));
+                const { length: cycleLen } = getDynamicCycleLength(now);
+                const position = normalizeCyclePosition(daysSince, cycleLen);
+                const phaseInfo = getDetailedPhaseInfo(position, daysSince, cycleLen);
+                
+                document.getElementById('currentPosition').textContent = position.toFixed(4);
+                document.getElementById('daysSinceHalving').textContent = daysSince.toLocaleString();
+                document.getElementById('positionMarker').style.left = `${position * 100}%`;
+                
+                const gradientColor = getColorFromPosition(position);
+                const { otherTargets } = phaseInfo;
+                
+                document.getElementById('actionMessageContainer').innerHTML = `
+                    <div class="action-box" style="--accent-color: ${gradientColor.hex};">
+                        <div class="action-box-glow"></div>
+                        <div class="action-box-inner">
+                            <div class="text-lg md:text-xl font-semibold mb-2" style="color: ${gradientColor.hex}; line-height: 1.4;">${phaseInfo.shortName}</div>
+                            <div class="text-sm mb-4" style="color: #8B949E; line-height: 1.5;">${phaseInfo.actionDetail}</div>
+                            
+                            <!-- Giorni rimanenti -->
+                            ${(() => {
+                                const ot = phaseInfo.otherTargets;
+                                const fmtT = (d, l) => d > 0 ? `${d} days (${formatDays(d)}) to ${l}` : '';
+                                const p = [];
+                                if (ot.daysToTop > 0) p.push(fmtT(ot.daysToTop, 'TOP'));
+                                if (ot.daysToBottom > 0) p.push(fmtT(ot.daysToBottom, 'BOTTOM'));
+                                if (ot.daysToHalving > 0) p.push(fmtT(ot.daysToHalving, 'HALVING'));
+                                return `<div class="text-xs font-medium mb-3 pt-3 pb-3 border-t" style="color: ${gradientColor.hex}; border-color: rgba(48, 54, 61, 0.6); letter-spacing: 0.02em;">⏱️ ${p.join(' • ')}</div>`;
+                            })()}
+                            
+                            <div class="text-xs leading-relaxed" style="color: #C9D1D9; background: ${gradientColor.rgb}08; padding: 12px 16px; border-radius: 10px; border-left: 3px solid ${gradientColor.hex};">${phaseInfo.operationalAdvice}</div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('macroPhaseProgress').textContent = phaseInfo.macroPhasePercent + '%';
+                document.getElementById('macroProgressBar').style.width = phaseInfo.macroPhasePercent + '%';
+                document.getElementById('phaseProgress').textContent = phaseInfo.phaseProgress + '% complete';
+
+            } catch (e) {
+                console.error('Auto-refresh error:', e);
+            }
+        }, 60000);
+
+    </script>
+</body>
+</html>
