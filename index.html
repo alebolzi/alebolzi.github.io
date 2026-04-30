@@ -25,6 +25,7 @@
       --accent-green: #39ff14;
       --accent-yellow: #ffd60a;
       --accent-purple: #bf5af2;
+      --accent-emerald: #10b981;
       --card-bg: rgba(255, 255, 255, 0.03);
       --card-border: rgba(255, 255, 255, 0.08);
       --card-hover-bg: rgba(255, 255, 255, 0.06);
@@ -415,6 +416,7 @@
     .card-inflazione { --card-accent: var(--accent-green); }
     .card-trading { --card-accent: var(--accent-yellow); }
     .card-halving { --card-accent: #f7931a; }
+    .card-4factor { --card-accent: var(--accent-emerald); }
     
     /* Placeholder per preview non ancora disponibile */
     .preview-placeholder {
@@ -529,6 +531,9 @@
     .fade-in:nth-child(1) { animation-delay: 0.1s; }
     .fade-in:nth-child(2) { animation-delay: 0.2s; }
     .fade-in:nth-child(3) { animation-delay: 0.3s; }
+    .fade-in:nth-child(4) { animation-delay: 0.4s; }
+    .fade-in:nth-child(5) { animation-delay: 0.5s; }
+    .fade-in:nth-child(6) { animation-delay: 0.6s; }
 
     @keyframes fadeInUp {
       to {
@@ -591,7 +596,7 @@
       </p>
       <div class="tagline">
         <span class="tagline-dot"></span>
-        <span>5 progetti attivi • sempre in evoluzione</span>
+        <span>6 progetti attivi • sempre in evoluzione</span>
       </div>
     </header>
 
@@ -601,7 +606,7 @@
         <h2 class="section-title">
           🎯 Progetti
         </h2>
-        <span class="project-count">5 live</span>
+        <span class="project-count">6 live</span>
       </div>
 
       <div class="projects-grid">
@@ -690,60 +695,91 @@
             </div>
           </div>
         </a>
-<!-- Project 4: Trading vs Holding -->
-<a href="trading-holding/" class="project-card card-trading fade-in" data-preview="previews/trading-holding.gif">
-  
-  <!-- Preview Container -->
-  <div class="preview-container">
-    <img src="" alt="Trading vs Holding Preview" class="preview-image"
-         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-    <div class="preview-placeholder" style="display: none;">⚖️</div>
-    <div class="preview-overlay"></div>
-  </div>
 
-  <!-- Card Content -->
-  <div class="card-content">
-    <span class="card-icon">⚖️</span>
-    <h3 class="card-title">Trading vs Holding</h3>
-    <p class="card-description">
-      Il dilemma eterno! Confronta se conviene tradare attivamente o holdare e vendere alla fine. Analisi caso per caso con 1 vs 2 trade per trovare la strategia vincente 🎯
-    </p>
-    <div class="card-meta">
-      <span class="card-tag">💹 Strategia</span>
-      <span class="card-link">
-        Confronta 
-        <span class="arrow">→</span>
-      </span>
-    </div>
-  </div>
-</a>
+        <!-- Project 4: Trading vs Holding -->
+        <a href="trading-holding/" class="project-card card-trading fade-in" data-preview="previews/trading-holding.gif">
+  
+          <!-- Preview Container -->
+          <div class="preview-container">
+            <img src="" alt="Trading vs Holding Preview" class="preview-image"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display: none;">⚖️</div>
+            <div class="preview-overlay"></div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="card-content">
+            <span class="card-icon">⚖️</span>
+            <h3 class="card-title">Trading vs Holding</h3>
+            <p class="card-description">
+              Il dilemma eterno! Confronta se conviene tradare attivamente o holdare e vendere alla fine. Analisi caso per caso con 1 vs 2 trade per trovare la strategia vincente 🎯
+            </p>
+            <div class="card-meta">
+              <span class="card-tag">💹 Strategia</span>
+              <span class="card-link">
+                Confronta 
+                <span class="arrow">→</span>
+              </span>
+            </div>
+          </div>
+        </a>
+
         <!-- Project 5: BTC Halving Cycle Indicator -->
-<a href="btc-halving-cycle-indicator/" class="project-card card-halving fade-in" data-preview="previews/btc-halving.gif">
+        <a href="btc-halving-cycle-indicator/" class="project-card card-halving fade-in" data-preview="previews/btc-halving.gif">
   
-  <!-- Preview Container -->
-  <div class="preview-container">
-    <img src="" alt="BTC Halving Indicator Preview" class="preview-image"
-         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-    <div class="preview-placeholder" style="display: none;">🟠</div>
-    <div class="preview-overlay"></div>
-  </div>
+          <!-- Preview Container -->
+          <div class="preview-container">
+            <img src="" alt="BTC Halving Indicator Preview" class="preview-image"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display: none;">🟠</div>
+            <div class="preview-overlay"></div>
+          </div>
 
-  <!-- Card Content -->
-  <div class="card-content">
-    <span class="card-icon">🟠</span>
-    <h3 class="card-title">BTC Halving Cycle</h3>
-    <p class="card-description">
-      Indicatore ciclico da 0 a 1 che mostra dove siamo nel ciclo di Bitcoin rispetto all’halving. Identifica zone di bottom, accumulo e top per decisioni più intelligenti 🚀
-    </p>
-    <div class="card-meta">
-      <span class="card-tag">₿ Crypto</span>
-      <span class="card-link">
-        Analizza 
-        <span class="arrow">→</span>
-      </span>
-    </div>
-  </div>
-</a>
+          <!-- Card Content -->
+          <div class="card-content">
+            <span class="card-icon">🟠</span>
+            <h3 class="card-title">BTC Halving Cycle</h3>
+            <p class="card-description">
+              Indicatore ciclico da 0 a 1 che mostra dove siamo nel ciclo di Bitcoin rispetto all'halving. Identifica zone di bottom, accumulo e top per decisioni più intelligenti 🚀
+            </p>
+            <div class="card-meta">
+              <span class="card-tag">₿ Crypto</span>
+              <span class="card-link">
+                Analizza 
+                <span class="arrow">→</span>
+              </span>
+            </div>
+          </div>
+        </a>
+
+        <!-- Project 6: BTC 4 Factor Model [NUOVO] -->
+        <a href="btc-4-factor-model/" class="project-card card-4factor fade-in" data-preview="previews/btc-4factor.gif">
+  
+          <!-- Preview Container -->
+          <div class="preview-container">
+            <img src="" alt="BTC 4 Factor Model Preview" class="preview-image"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display: none;">🧠</div>
+            <div class="preview-overlay"></div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="card-content">
+            <span class="card-icon">🧠</span>
+            <h3 class="card-title">BTC 4 Factor Model</h3>
+            <p class="card-description">
+              Modello quantitativo avanzato che analizza 4 indicatori chiave: <strong>Halving Cycle</strong>, <strong>Fear & Greed Index</strong>, <strong>MA200</strong> e <strong>RSI</strong>. Combina dati on-chain, sentiment e technical analysis per generare un segnale operativo completo su dove siamo e cosa fare 🎯
+            </p>
+            <div class="card-meta">
+              <span class="card-tag">🔬 Analysis</span>
+              <span class="card-link">
+                Analizza 
+                <span class="arrow">→</span>
+              </span>
+            </div>
+          </div>
+        </a>
+
       </div>
     </section>
 
