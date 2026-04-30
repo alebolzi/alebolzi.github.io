@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>BTC Indicator Engine</title>
+</head>
+<body>
+
+<pre id="output">Loading...</pre>
+
+<script>
+const HALVING_DATE = new Date("2024-04-20");
+const CYCLE_LENGTH = 1410;
+
+// =======================
+// HALVING
+// =======================
+
+function getHalvingPosition() {
+    const now = new Date();
+
+    const daysFromHalving = Math.floor(
+        (now - HALVING_DATE) / (1000 * 60 * 60 * 24)
+    );
+
+    const normalizedDays = daysFromHalving % CYCLE_LENGTH;
+    const percent = normalizedDays / CYCLE_LENGTH;
+
+    let position;
+
+    if (percent <= 0.33) {
+        position = 0.5 + (percent / 0.33) * 0.5;
+    } else if (percent <= 0.67) {
+        position = 1 - ((percent - 0.33) / 0.34);
+    } else {
+        position = ((percent - 0.67) / 0.33) * 0.5;
+    }
+
+    return {
+        raw: daysFromHalving,
+        norm: Number(position.toFixed(4))
+    };
+}
+// =======================
+// FEAR & GREED
+// =======================
+async function getFearGreed() {
+    const res = await fetch("https://api.alternative.me/fng/");
+    const data = await res.json();
+    return Number(data.data[0].value);
+}
+
+// =======================
+// MA200
+// =======================
+async function getMA200() {
+    const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=200");
+    const data = await res.json();
+
+    const closes = data.map(d => parseFloat(d[4]));
+    const ma200 = closes.reduce((a,b)=>a+b,0) / closes.length;
+    const current = closes[closes.length-1];
+
+    let diff = ((current - ma200) / ma200) * 100;
+
+    let normalized;
+    if (diff <= -30) normalized = 0;
+    else if (diff >= 30) normalized = 1;
+    else normalized = (diff + 30) / 60;
+
+    return { diff, norm: normalized };
+}
+
+// =======================
+// RSI
+// =======================
+async function getMonthlyRSI() {
+    const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1M&limit=100");
+    const data = await res.json();
+
+    const closes = data.map(d => parseFloat(d[4]));
+
+    let gains = 0;
+    let losses = 0;
+
+    for (let i = closes.length - 14; i < closes.length; i++) {
+        let diff = closes[i] - closes[i-1];
+        if (diff > 0) gains += diff;
+        else losses -= diff;
+    }
+
+    let rs = (gains/14) / (losses/14);
+    let rsi = 100 - (100 / (1 + rs));
+
+    let norm;
+    if (rsi <= 35) norm = 0;
+    else if (rsi >= 80) norm = 1;
+    else norm = (rsi - 35) / 45;
+
+    return { raw: rsi, norm };
+}
+
+function reasoningData(halvingObj, fearGreedNorm, maNorm, rsiNorm) {
+
+    const days = halvingObj.raw;
+
+    let regime = "";
+    let sentiment = "";
+    let price = "";
+    let momentum = "";
+    let action = "";
+    let notes = [];
+
+    // =========================
+    // REGIME
+    // =========================
+    const isBearPhase = days >= 500 && days <= 1000;
+
+    if (isBearPhase) {
+        regime = "BEAR";
+        notes.push("pay attention: historically weak cycle phase");
+
+        // =========================
+        // SENTIMENT
+        // =========================
+        if (fearGreedNorm < 0.4) {
+            sentiment = "Fear";
+			if (fearGreedNorm < 0.25) {
+				notes.push("Fear attention → possible local dip to buy");
+			} 
+		}
+		else if (fearGreedNorm > 0.6) {
+            sentiment = "Greed";
+			if (fearGreedNorm  > 0.75) {
+				notes.push("Greed attention → possible local top to sell");
+			}
+        } else{
+			sentiment = "Normal";
+		}
+
+        // =========================
+        // PREZZO
+        // =========================
+        if (maNorm < 0.3) {
+            price = "under 0.3 → sale";
+        } else if (maNorm > 0.35){
+            price = "upper 0.35 → risk";
+        }else{
+			price = "Normal → reasonable and fair price";
+		}
+
+
+        // =========================
+        // MOMENTUM
+        // =========================
+        if (rsiNorm < 0.5) {
+            momentum = "reasonable weak";
+        } else {
+            momentum = "strong → risk";
+        }
+
+        // =========================
+        // DECISIONE BEAR
+        // =========================
+        if (fearGreedNorm < 0.4 && maNorm < 0.3 && rsiNorm < 0.2) {
+            action = "BEAR MARKET STRONG BUY";
+        } 
+        else if (fearGreedNorm > 0.4 && maNorm > 0.6) {
+            action = "BEAR MARKET SELL OPPORTUNITY";
+        } 
+        else {
+            action = "BEAR MARKET WAIT / DCA";
+        }
+
+    } else {
+
+        regime = "BULL";
+        notes.push("historically favorable cycle phase");
+
+        // =========================
+        // SENTIMENT
+        // =========================
+        if (fearGreedNorm < 0.4) {
+            sentiment = "Fear";
+            notes.push("Fear attention → possible local dip to buy");
+        } else if (fearGreedNorm > 0.6) {
+            sentiment = "Greed";
+            notes.push("Greed attention → possible local top");
+        } else{
+			sentiment = "Normal";
+		}
+
+        // =========================
+        // PREZZO
+        // =========================
+        if (maNorm > 0.7) {
+            price = "all time high → correction risk";
+        } else {
+            price = "normal and safe";
+        }
+
+        // =========================
+        // MOMENTUM
+        // =========================
+        if (rsiNorm > 0.7) {
+            momentum = "reasonable strong";
+        } else if (rsiNorm < 0.5){
+            momentum = "weak: buy opportunity";
+        } else {
+			momentum = "normal";
+		}
+
+        // =========================
+        // DECISIONE BULL
+        // =========================
+        if (fearGreedNorm < 0.5 && maNorm < 0.6) {
+            action = "BUY OPPORTUNITY (pullback)";
+        } 
+        else if (fearGreedNorm > 0.7 && rsiNorm > 0.7) {
+            action = "TAKE PROFIT / SELL";
+        } 
+        else {
+            action = "HOLD / TREND FOLLOW";
+        }
+    }
+
+    return {
+        regime,
+        sentiment,
+        price,
+        momentum,
+        action,
+        notes
+    };
+}
+
+
+function reasoningDataV2(halvingObj, fearGreedNorm, maNorm, rsiNorm, maDiff) {
+
+    const days = halvingObj.raw;
+
+    let scenario = "NEUTRAL";
+    let action = "HOLD";
+    let notes = [];
+
+    const isBear = days >= 500 && days <= 1000;
+    const isBull = !isBear;
+
+    const sentimentHigh = fearGreedNorm > 0.6;
+    const sentimentLow = fearGreedNorm < 0.4;
+
+    const priceAbove = maNorm > 0.55;
+    const priceBelow = maNorm < 0.45;
+
+    const rsiHigh = rsiNorm > 0.6;
+    const rsiLow = rsiNorm < 0.4;
+
+    // =========================
+    // 🪤 BULL TRAP
+    // =========================
+    if (isBear && days >= 500 && days <= 900 && priceAbove && sentimentHigh) {
+        scenario = "BULL TRAP";
+        action = "SELL (ora o mai più)";
+        notes.push("rialzo in fase bear");
+        notes.push("sentiment alto → retail euforico");
+    }
+
+    // =========================
+    // 🟢 BUY THE DIP
+    // =========================
+    else if (isBull && priceBelow && sentimentLow) {
+        scenario = "BUY THE DIP";
+        action = "ACCUMULO";
+        notes.push("paura in bull market");
+        notes.push("prezzo sotto valore medio");
+    }
+
+    // =========================
+    // 🧊 CYCLE BOTTOM
+    // =========================
+    else if (days >= 800 && days <= 1000 && maDiff <= -20) {
+        scenario = "CYCLE BOTTOM";
+        action = "STRONG BUY";
+
+        notes.push("fase finale bear");
+
+        if (sentimentLow) {
+            notes.push("✔ conferma sentiment (paura)");
+        }
+
+        if (rsiLow) {
+            notes.push("✔ conferma RSI (ipervenduto)");
+        }
+    }
+
+    // =========================
+    // 🔥 CYCLE TOP
+    // =========================
+    else if (days >= 450 && days <= 550 && maDiff > 0) {
+        scenario = "CYCLE TOP";
+        action = "TAKE PROFIT / SELL";
+
+        notes.push("fase avanzata bull");
+
+        if (sentimentHigh) {
+            notes.push("✔ conferma sentiment (avidità)");
+        }
+
+        if (rsiHigh) {
+            notes.push("✔ conferma RSI (ipercomprato)");
+        }
+    }
+
+    return {
+        scenario,
+        action,
+        notes
+    };
+}
+
+// =======================
+// MAIN (UNICO, PULITO)
+// =======================
+async function run() {
+    try {
+
+        const halvingObj = getHalvingPosition();
+
+        const fearGreedRaw = await getFearGreed();
+        const fearGreedNorm = fearGreedRaw / 100;
+
+        const ma = await getMA200();
+        const rsiObj = await getMonthlyRSI();
+
+		const sum = halvingObj.norm + fearGreedNorm + ma.norm + rsiObj.norm;
+		const final = sum / 4;
+
+		const reasoning = reasoningData(
+			halvingObj,
+			fearGreedNorm,
+			ma.norm,
+			rsiObj.norm
+		);
+		
+		const reasoningV2 = reasoningDataV2(
+			halvingObj,
+			fearGreedNorm,
+			ma.norm,
+			rsiObj.norm,
+			ma.diff   // 🔥 QUESTO NUOVO
+		);
+
+        let label;
+
+        if (final <= 0.2) 	   label = "HARD BUY";
+        else if (final <= 0.3) label = "BUY";
+        else if (final <= 0.4) label = "BUY / DCA";
+        else if (final <= 0.6) label = "HOLD";
+        else if (final <= 0.7) label = "SELL OPPORTUNITY";
+        else if (final <= 0.8) label = "SELL";
+        else 				   label = "HARD SELL";
+
+    document.getElementById("output").innerText = `
+========================
+📊 BTC MULTI-FACTOR MODEL
+========================
+
+🔵 HALVING
+raw: ${halvingObj.raw}g
+norm: ${halvingObj.norm}
+
+🟡 FEAR & GREED
+raw: ${fearGreedRaw}
+norm: ${fearGreedNorm.toFixed(4)}
+
+🟣 MA200
+diff: ${ma.diff.toFixed(2)}%
+norm: ${ma.norm.toFixed(4)}
+
+🔴 RSI
+raw: ${rsiObj.raw.toFixed(2)}
+norm: ${rsiObj.norm.toFixed(4)}
+
+------------------------
+🧠 MEDIA
+
+(${halvingObj.norm.toFixed(4)} + ${fearGreedNorm.toFixed(4)} + ${ma.norm.toFixed(4)} + ${rsiObj.norm.toFixed(4)}) / 4
+
+= ${sum.toFixed(4)} / 4
+= ${final.toFixed(4)}
+
+🎯 SIGNAL 1 : ${label}
+
+why?
+ 0 - 0.2   "HARD BUY"
+ 0.2 - 0.3 "BUY"
+ 0.3 - 0.4 "BUY / DCA"
+ 0.4 - 0.6 "HOLD"
+ 0.6 - 0.7 "SELL OPPORTUNITY"
+ 0.7 - 0.8 "SELL"
+ 0.8 - 1   "HARD SELL"
+
+
+------------------------
+🧠 REASONING ENGINE
+
+Regime: ${reasoning.regime}
+Sentiment: ${reasoning.sentiment}
+Price: ${reasoning.price}
+Momentum: ${reasoning.momentum}
+
+Scenario: ${reasoningV2.scenario}
+
+🎯 SIGNAL 2 : ${reasoning.action}
+
+why?
+My reasonings
+
+Note:
+- ${reasoning.notes.join("\n- ")}
+
+
+
+`;
+    } catch (err) {
+        document.getElementById("output").innerText =
+        "❌ ERROR: " + err.message;
+    }
+}
+
+run();
+</script>
+
+</body>
+</html>
