@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUANTO GUADAGNO?</title>
+    <style>
+        /* === VARIABILI GLOBALI === */
+        :root {
+            --bg: #ffffff;
+            --text: #000000;
+            --accent: #ff3b30;
+            --font: 'Impact', 'Arial Black', sans-serif;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-transform: uppercase;
+            overflow-x: hidden;
+            cursor: default;
+            padding: 40px 20px;
+        }
+
+        main { 
+            text-align: center; 
+            max-width: 800px; 
+            width: 100%; 
+            z-index: 1; 
+        }
+
+        /* === TITOLI CON EFFETTO MAGNETICO === */
+        h1 { 
+            font-size: 4rem; 
+            line-height: 1; 
+            margin-bottom: 15px; 
+            pointer-events: none; 
+            user-select: none;
+            will-change: transform;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+            letter-spacing: -2px;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            margin-bottom: 50px; 
+            font-family: var(--font);
+            letter-spacing: 2px;
+            pointer-events: none; 
+            user-select: none;
+            will-change: transform;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            color: #666;
+        }
+
+        /* === INPUT BOX CON MAGNETIC EFFECT === */
+        .input-section {
+            margin-bottom: 35px;
+        }
+
+        .input-box {
+            border: 5px solid black;
+            padding: 25px 35px;
+            background: white;
+            box-shadow: 12px 12px 0px rgba(0,0,0,1);
+            display: inline-block;
+            will-change: transform;
+            user-select: none;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .input-label {
+            font-size: 1.3rem;
+            display: block;
+            border-bottom: 4px solid black;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+            pointer-events: none;
+            letter-spacing: 1px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        /* INPUT - FUNZIONANTE E ACCESSIBILE */
+        .input-wrapper input {
+            width: 100%;
+            font-size: 3rem;
+            font-family: var(--font);
+            border: 4px solid black;
+            padding: 15px 20px;
+            background: white;
+            color: black;
+            outline: none;
+            text-align: center;
+            letter-spacing: 2px;
+            cursor: text;
+            position: relative;
+            z-index: 100;
+        }
+
+        .input-wrapper input::placeholder {
+            color: #ccc;
+        }
+
+        .input-wrapper input:focus {
+            background: #ffffcc;
+        }
+
+        /* === PULSANTE RESET CON MAGNETIC === */
+        #resetBtn {
+            background: black;
+            color: white;
+            border: none;
+            padding: 18px 45px;
+            font-family: var(--font);
+            font-size: 1.6rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            will-change: transform;
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.2s;
+            margin: 10px 0 35px 0;
+            letter-spacing: 2px;
+        }
+
+        #resetBtn:hover { 
+            background-color: var(--accent); 
+            transform: translate(-3px, -3px);
+            box-shadow: 11px 11px 0px rgba(0,0,0,1);
+        }
+        
+        #resetBtn:active { 
+            transform: translate(2px, 2px) !important; 
+            box-shadow: 6px 6px 0px rgba(0,0,0,1) !important;
+        }
+
+        /* === COUNTER BOX PRINCIPALE - SEMPRE VISIBILE DOPO INPUT === */
+        .counter-box {
+            border: 6px solid black;
+            padding: 30px 50px;
+            margin: 30px auto;
+            display: inline-block;
+            background: white;
+            box-shadow: 15px 15px 0px rgba(0,0,0,1);
+            will-change: transform;
+            user-select: none;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s;
+            min-width: 400px;
+        }
+
+        .counter-box.hidden {
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            visibility: hidden;
+        }
+
+        .label {
+            font-size: 1.4rem;
+            display: block;
+            border-bottom: 4px solid black;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+            pointer-events: none;
+            letter-spacing: 1px;
+        }
+
+        /* COUNTER DEI SOLDI - GRANDE E VISIBILE */
+        #counter {
+            font-size: 5.5rem;
+            line-height: 1;
+            display: inline-block;
+            pointer-events: none;
+            color: var(--accent);
+            font-family: 'Courier New', monospace;
+            letter-spacing: -2px;
+        }
+
+        /* === TIMER PICCOLO === */
+        .timer-small {
+            margin-top: 20px;
+            display: inline-block;
+            border: 3px solid black;
+            padding: 8px 20px;
+            background: #f0f0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.3rem;
+            letter-spacing: 2px;
+            color: black;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+        }
+
+        .timer-small .timer-label {
+            font-size: 0.75rem;
+            color: #666;
+            font-family: var(--font);
+            margin-right: 8px;
+            text-transform: uppercase;
+        }
+
+        /* === STATUS INDICATOR === */
+        .status-indicator {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 4px 12px;
+            font-size: 0.85rem;
+            border: 2px solid black;
+            background: white;
+            font-family: sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .status-indicator.running {
+            background: #00ff88;
+            color: black;
+        }
+
+        .status-indicator.waiting {
+            background: #ffcc00;
+            color: black;
+        }
+
+        .status-indicator.stopped {
+            background: #ccc;
+            color: black;
+        }
+
+        /* === STATS GRID === */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-top: 50px;
+        }
+
+        .stats-grid.hidden {
+            display: none !important;
+        }
+
+        .stat-card {
+            border: 5px solid black;
+            padding: 25px 20px;
+            background: white;
+            box-shadow: 10px 10px 0px rgba(0,0,0,1);
+            will-change: transform;
+            user-select: none;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            text-align: center;
+        }
+
+        .stat-card:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 13px 13px 0px rgba(0,0,0,1);
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            border-bottom: 3px solid black;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            color: black;
+            font-family: 'Courier New', monospace;
+            line-height: 1.2;
+        }
+
+        .stat-value.highlight {
+            color: var(--accent);
+            font-size: 2.8rem;
+        }
+
+        /* === COMPARISON SECTION === */
+        .comparison-section {
+            margin-top: 60px;
+            border-top: 5px solid black;
+            padding-top: 40px;
+        }
+
+        .comparison-section.hidden {
+            display: none !important;
+        }
+
+        .comparison-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .comparison-item {
+            border: 4px solid black;
+            padding: 20px 25px;
+            margin-bottom: 20px;
+            background: white;
+            box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .comparison-item:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 10px 10px 0px rgba(0,0,0,1);
+        }
+
+        .comparison-item.you {
+            background: #ffffcc;
+            border-color: var(--accent);
+        }
+
+        .comparison-left {
+            text-align: left;
+            flex: 1;
+        }
+
+        .comparison-name {
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+        }
+
+        .comparison-desc {
+            font-size: 1rem;
+            color: #666;
+            font-family: sans-serif;
+            text-transform: none;
+        }
+
+        .comparison-right {
+            text-align: right;
+        }
+
+        .comparison-value {
+            font-size: 2rem;
+            color: var(--accent);
+            font-family: 'Courier New', monospace;
+        }
+
+        .comparison-unit {
+            font-size: 0.9rem;
+            color: #666;
+            font-family: sans-serif;
+            text-transform: none;
+        }
+
+        /* === FOOTER === */
+        footer {
+            margin-top: 60px;
+            font-family: sans-serif;
+            font-size: 0.85rem;
+            opacity: 0.5;
+            text-align: center;
+            padding: 0 20px;
+            pointer-events: none;
+            text-transform: none;
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .subtitle { font-size: 1.3rem; }
+            .counter-box { min-width: auto; width: 100%; }
+            #counter { font-size: 3.5rem; }
+            .input-wrapper input { font-size: 2rem; }
+            #resetBtn { font-size: 1.3rem; padding: 15px 30px; }
+            .stat-value { font-size: 1.6rem; }
+            .stat-value.highlight { font-size: 2rem; }
+            .comparison-item { flex-direction: column; text-align: center; gap: 15px; }
+            .comparison-left, .comparison-right { text-align: center; }
+            .timer-small { font-size: 1.1rem; }
+        }
+
+        /* === ANIMAZIONE PULSE PER COUNTER ATTIVO === */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .running-animation {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        /* ============================================ */
+        /* === AGGIUNTO: STILE TOGGLE ORE LAVORATIVE === */
+        /* ============================================ */
+
+        .toggle-section {
+            margin: 25px 0;
+            display: inline-block;
+        }
+
+        .toggle-box {
+            border: 4px solid black;
+            padding: 18px 28px;
+            background: white;
+            box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            display: inline-block;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            position: relative;
+            z-index: 50;
+        }
+
+        .toggle-box:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 10px 10px 0px rgba(0,0,0,1);
+        }
+
+        .toggle-box.active {
+            background: #00ff88;
+            box-shadow: 8px 8px 0px rgba(0,0,0,1);
+        }
+
+        .toggle-text {
+            font-size: 1.2rem;
+            font-family: var(--font);
+            letter-spacing: 1px;
+        }
+
+        .toggle-status {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 3px 10px;
+            font-size: 0.85rem;
+            border: 2px solid black;
+            background: white;
+            font-weight: bold;
+            vertical-align: middle;
+        }
+
+        .toggle-box.active .toggle-status {
+            background: black;
+            color: white;
+        }
+
+        /* Input ore settimanali - nascosto di default */
+        .hours-input-wrapper {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .hours-input-wrapper.visible {
+            display: block;
+        }
+
+        .hours-input-box {
+            border: 4px solid black;
+            padding: 18px 25px;
+            background: #ffffcc;
+            box-shadow: 6px 6px 0px rgba(0,0,0,1);
+            display: inline-block;
+        }
+
+        .hours-input-label {
+            font-size: 1rem;
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        #weeklyHoursInput {
+            width: 120px;
+            font-size: 2rem;
+            font-family: var(--font);
+            border: 3px solid black;
+            padding: 10px 15px;
+            text-align: center;
+            outline: none;
+            background: white;
+        }
+
+        #weeklyHoursInput:focus {
+            background: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .toggle-text { font-size: 1rem; }
+            #weeklyHoursInput { font-size: 1.6rem; width: 100px; }
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <!-- TITOLI -->
+        <div style="margin-bottom: 30px;">
+            <h1 class="magnetic-text" data-rotate="0">QUANTO GUADAGNO?</h1>
+            <div class="subtitle magnetic-text" data-rotate="0">in tempo reale</div>
+        </div>
+
+        <!-- INPUT SECTION -->
+        <div class="input-section">
+            <div class="input-box magnetic" data-rotate="-1">
+                <span class="input-label">💵 STIPENDIO ANNUALE (€)</span>
+                <div class="input-wrapper">
+                    <input type="number" id="salaryInput" placeholder="30000" min="0" step="1000" value="" autofocus>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOGGLE ORE LAVORATIVE -->
+        <div class="toggle-section">
+            <!-- ✅ AGGIUNTO: classe magnetic + data-rotate -->
+            <div class="toggle-box magnetic" id="workHoursToggle" data-rotate="0">
+                <span class="toggle-text">⏰ CONSIDERA SOLO ORE LAVORATIVE</span>
+                <span class="toggle-status" id="toggleStatus">NO</span>
+            </div>
+            
+            <div class="hours-input-wrapper" id="hoursInputWrapper">
+                <!-- ✅ AGGIUNTO: classe magnetic + data-rotate -->
+                <div class="hours-input-box magnetic" data-rotate="1">
+                    <span class="hours-input-label">📝 Ore lavorative settimanali:</span>
+                    <input type="number" id="weeklyHoursInput" placeholder="40" min="1" max="168" value="40">
+                </div>
+            </div>
+        </div>
+
+        <!-- PULSANTE RESET -->
+        <button id="resetBtn" class="magnetic" data-rotate="0">↺ RESET</button>
+
+        <!-- COUNTER PRINCIPALE - ✅ AGGIUNTO: classe magnetic + data-rotate -->
+        <div class="counter-box hidden magnetic" id="mainCounterBox" data-rotate="-2">
+            <span class="label">🔥 STAI GUADAGNANDO:</span>
+            <div id="counter">€0.000000</div>
+            
+            <!-- TIMER PICCOLO + STATUS -->
+            <div class="timer-small">
+                <span class="timer-label">⏱️</span>
+                <span id="timer">00:00:00</span>
+                <span class="status-indicator stopped" id="statusIndicator">FERMO</span>
+            </div>
+        </div>
+
+        <!-- STATS GRID -->
+        <div class="stats-grid hidden" id="statsGrid">
+            <div class="stat-card magnetic" data-rotate="1">
+                <div class="stat-label">⚡ AL SECONDO</div>
+                <div class="stat-value highlight" id="perSecond">€0.0000</div>
+            </div>
+            
+            <div class="stat-card magnetic" data-rotate="-1">
+                <div class="stat-label">⏱️ AL MINUTO</div>
+                <div class="stat-value" id="perMinute">€0.00</div>
+            </div>
+            
+            <div class="stat-card magnetic" data-rotate="2">
+                <div class="stat-label">🕐 ALL'ORA</div>
+                <div class="stat-value" id="perHour">€0.00</div>
+            </div>
+            
+            <div class="stat-card magnetic" data-rotate="-2">
+                <div class="stat-label">📅 AL GIORNO</div>
+                <div class="stat-value" id="perDay">€0.00</div>
+            </div>
+            
+            <div class="stat-card magnetic" data-rotate="1">
+                <div class="stat-label">📆 AL MESE</div>
+                <div class="stat-value" id="perMonth">€0.00</div>
+            </div>
+            
+            <div class="stat-card magnetic" data-rotate="-1">
+                <div class="stat-label">💎 SESSIONE</div>
+                <div class="stat-value highlight" id="sessionTotal">€0.00</div>
+            </div>
+        </div>
+
+        <!-- CONFRONTI -->
+        <div class="comparison-section hidden" id="comparisons">
+            <h2 class="comparison-title magnetic-text" data-rotate="0">🌟 NEL FRATTEMPO ...</h2>
+            
+            <div class="comparison-item magnetic" data-rotate="0">
+                <div class="comparison-left">
+                    <div class="comparison-name">⭐ CR7</div>
+                    <div class="comparison-desc">Cristiano Ronaldo</div>
+                </div>
+                <div class="comparison-right">
+                    <div class="comparison-value" id="cr7Counter">€0.00</div>
+                    <div class="comparison-unit">accumulati</div>
+                </div>
+            </div>
+
+            <div class="comparison-item magnetic" data-rotate="0">
+                <div class="comparison-left">
+                    <div class="comparison-name">🍎 TIM COOK</div>
+                    <div class="comparison-desc">CEO Apple</div>
+                </div>
+                <div class="comparison-right">
+                    <div class="comparison-value" id="timCookCounter">€0.00</div>
+                    <div class="comparison-unit">accumulati</div>
+                </div>
+            </div>
+
+            <div class="comparison-item magnetic" data-rotate="0">
+                <div class="comparison-left">
+                    <div class="comparison-name">🚀 ELON MUSK</div>
+                    <div class="comparison-desc">CEO Tesla e SpaceX</div>
+                </div>
+                <div class="comparison-right">
+                    <div class="comparison-value" id="elonCounter">€0.00</div>
+                    <div class="comparison-unit">accumulati</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        * Parte automaticamente quando smetti di scrivere. Nessun dato viene salvato.
+    </footer>
+
+    <script>
+        // ============================================
+        // CONFIGURAZIONE EFFETTO MAGNETICO
+        // ============================================
+        
+        const MAX_MAGNETIC_STRENGTH = 0.08;
+        const MAGNETIC_RANGE = 600;        
+        const SMOOTHING = 0.05;            
+        const HOVER_SCALE = 1.05;         
+        const HOVER_ROTATION_LIMIT = 5;
+
+        // DEBOUNCE TIMER
+        const DEBOUNCE_DELAY = 800;
+
+        // ============================================
+        // 🧠 Guadagni al secondo delle celebrità
+        // ============================================
+
+        const CR7_PER_SECOND = 7;
+        const TIMCOOK_PER_SECOND = 2.35;
+        const ELON_PER_SECOND = 3170;
+
+        // ELEMENTI DOM
+        const salaryInput = document.getElementById('salaryInput');
+        const resetBtn = document.getElementById('resetBtn');
+        const mainCounterBox = document.getElementById('mainCounterBox');
+        const statsGrid = document.getElementById('statsGrid');
+        const comparisons = document.getElementById('comparisons');
+        const counterEl = document.getElementById('counter');
+        const timerEl = document.getElementById('timer');
+        const statusIndicator = document.getElementById('statusIndicator');
+        
+        // AGGIUNTO: Elementi toggle ore lavorative
+        const workHoursToggle = document.getElementById('workHoursToggle');
+        const toggleStatus = document.getElementById('toggleStatus');
+        const hoursInputWrapper = document.getElementById('hoursInputWrapper');
+        const weeklyHoursInput = document.getElementById('weeklyHoursInput');
+        
+        // Raccolta elementi magnetici
+        const magneticElements = document.querySelectorAll('.magnetic');
+        const magneticTextElements = document.querySelectorAll('.magnetic-text');
+
+        // STATO APPLICAZIONE
+        let isRunning = false;
+        let intervalId = null;
+        let startTime = null;
+        let annualSalary = 0;
+        let earningsPerSecond = 0;
+        let debounceTimer = null;
+
+        // AGGIUNTO: Stato toggle ore lavorative
+        let workHoursMode = false; // false = 24/7, true = solo ore lavoro
+
+        // ============================================
+        // SISTEMA MAGNETICO
+        // ============================================
+        
+        let mouse = { x: 0, y: 0 };
+        
+        document.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        const magneticObjects = [];
+
+        function initMagnetic(elements) {
+            elements.forEach(elem => {
+                const children = elem.querySelectorAll('*');
+                children.forEach(child => {
+                    if (!child.closest('.input-wrapper') && !child.closest('.hours-input-box')) {
+                        child.style.pointerEvents = 'none';
+                    }
+                });
+
+                magneticObjects.push({
+                    element: elem,
+                    x: 0,
+                    y: 0,
+                    rotation: elem.getAttribute('data-rotate') || 0,
+                    isHovered: false
+                });
+            });
+        }
+
+        initMagnetic(magneticElements);
+        initMagnetic(magneticTextElements);
+
+        function animateMagnets() {
+            magneticObjects.forEach(obj => {
+                const rect = obj.element.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                const distX = mouse.x - centerX;
+                const distY = mouse.y - centerY;
+                const distance = Math.sqrt(distX * distX + distY * distY);
+
+                const isMouseOver = distance < 100; 
+                
+                let targetX = 0;
+                let targetY = 0;
+                let targetRotation = parseFloat(obj.rotation);
+                let targetScale = 1;
+
+                if (isMouseOver) {
+                    // Mouse sopra l'elemento → effetto forte
+                    const intensity = (MAGNETIC_RANGE - distance) / MAGNETIC_RANGE;
+                    targetX = distX * intensity * MAX_MAGNETIC_STRENGTH;
+                    targetY = distY * intensity * MAX_MAGNETIC_STRENGTH;
+
+                    const normalizedX = Math.max(-1, Math.min(1, distX / (rect.width / 2)));
+                    targetRotation += normalizedX * HOVER_ROTATION_LIMIT;
+                    targetScale = HOVER_SCALE;
+                } else if (distance < MAGNETIC_RANGE) {
+                    // Mouse vicino ma non sopra → effetto debole
+                    const intensity = (MAGNETIC_RANGE - distance) / MAGNETIC_RANGE;
+                    targetX = distX * intensity * MAX_MAGNETIC_STRENGTH;
+                    targetY = distY * intensity * MAX_MAGNETIC_STRENGTH;
+                }
+
+                // Smooth interpolation
+                obj.x += (targetX - obj.x) * SMOOTHING;
+                obj.y += (targetY - obj.y) * SMOOTHING;
+                obj.currentScale = (obj.currentScale || 1) + ((targetScale - (obj.currentScale || 1)) * 0.1);
+                obj.currentRotation = (obj.currentRotation || parseFloat(obj.rotation)) + ((targetRotation - (obj.currentRotation || parseFloat(obj.rotation))) * 0.1);
+
+                // Applica trasformazione
+                obj.element.style.transform = `
+                    translate(${obj.x}px, ${obj.y}px) 
+                    rotate(${obj.currentRotation}deg) 
+                    scale(${obj.currentScale})
+                `;
+            });
+
+            requestAnimationFrame(animateMagnets);
+        }
+
+        // AVVIA ANIMAZIONE MAGNETICA
+        animateMagnets();
+
+        // ============================================
+        // FUNZIONI UTILITÀ
+        // ============================================
+
+        function formatCurrency(amount, decimals = 2) {
+            return '€' + amount.toFixed(decimals);
+        }
+
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function calculateStats() {
+            let secondsPerYear;
+
+            // AGGIUNTO: Calcolo diverso base sulla modalità
+            if (workHoursMode) {
+                // Solo ore lavorative
+                const weeklyHours = parseFloat(weeklyHoursInput.value) || 40;
+                const yearlyWorkHours = weeklyHours * 52; // 52 settimane
+                secondsPerYear = yearlyWorkHours * 3600; // Converti in secondi
+            } else {
+                // 24/7/365 (comportamento originale)
+                secondsPerYear = 365 * 24 * 60 * 60;
+            }
+
+            const secondsPerDay = 24 * 60 * 60;
+            const daysPerMonth = 30.44;
+
+            earningsPerSecond = annualSalary / secondsPerYear;
+
+            // Aggiorna tutte le statistiche
+            document.getElementById('perSecond').textContent = formatCurrency(earningsPerSecond, 4);
+            document.getElementById('perMinute').textContent = formatCurrency(earningsPerSecond * 60);
+            document.getElementById('perHour').textContent = formatCurrency(earningsPerSecond * 3600);
+            document.getElementById('perDay').textContent = formatCurrency(earningsPerSecond * secondsPerDay);
+            document.getElementById('perMonth').textContent = formatCurrency(earningsPerSecond * secondsPerDay * daysPerMonth);
+        }
+
+        // ============================================
+        // 🔥 Aggiornamento TUTTI i counter live
+        // ============================================
+
+        function updateCounter() {
+            if (!isRunning || !startTime) return;
+
+            const now = Date.now();
+            const elapsedSeconds = (now - startTime) / 1000;
+            const currentEarnings = elapsedSeconds * earningsPerSecond;
+
+            // TU
+            counterEl.textContent = formatCurrency(currentEarnings, 6);
+            document.getElementById('sessionTotal').textContent = formatCurrency(currentEarnings);
+
+            // LORO accumulano in tempo reale!
+            document.getElementById('cr7Counter').textContent = formatCurrency(elapsedSeconds * CR7_PER_SECOND, 2);
+            document.getElementById('timCookCounter').textContent = formatCurrency(elapsedSeconds * TIMCOOK_PER_SECOND, 2);
+            document.getElementById('elonCounter').textContent = formatCurrency(elapsedSeconds * ELON_PER_SECOND, 2);
+
+            // Timer
+            timerEl.textContent = formatTime(elapsedSeconds);
+        }
+
+        function updateStatus(status) {
+            statusIndicator.className = 'status-indicator ' + status;
+            if (status === 'running') {
+                statusIndicator.textContent = '▶ LIVE';
+            } else if (status === 'waiting') {
+                statusIndicator.textContent = '⏳ ATTESA...';
+            } else {
+                statusIndicator.textContent = 'FERMO';
+            }
+        }
+
+        function showAllSections() {
+            // Mostra counter box
+            mainCounterBox.classList.remove('hidden');
+            mainCounterBox.style.position = 'static';
+            mainCounterBox.style.visibility = 'visible';
+            mainCounterBox.style.opacity = '1';
+
+            // Mostra stats grid
+            statsGrid.classList.remove('hidden');
+
+            // Mostra confronti
+            comparisons.classList.remove('hidden');
+        }
+
+        function hideAllSections() {
+            // Nascondi counter box
+            mainCounterBox.classList.add('hidden');
+
+            // Nascondi stats grid
+            statsGrid.classList.add('hidden');
+
+            // Nascondi confronti
+            comparisons.classList.add('hidden');
+        }
+
+        // ============================================
+        // LOGICA PRINCIPALE: AUTO-START CON DEBOUNCE
+        // ============================================
+
+        function stopCounter() {
+            // Ferma timer
+            isRunning = false;
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+            startTime = null;
+            
+            // Rimuovi animazione
+            mainCounterBox.classList.remove('running-animation');
+            
+            // Aggiorna status
+            updateStatus('stopped');
+        }
+
+        function startCounter() {
+            const salaryValue = salaryInput.value;
+
+            if (!salaryValue || salaryValue <= 0 || isNaN(salaryValue)) {
+                stopCounter();
+                hideAllSections();
+                return;
+            }
+
+            annualSalary = parseFloat(salaryValue);
+
+            showAllSections();
+
+            // Aggiungi animazione pulse
+            mainCounterBox.classList.add('running-animation');
+
+            // Calcola statistiche
+            calculateStats();
+
+            // AVVIA TIMER DA ZERO
+            startTime = Date.now();
+            isRunning = true;
+            updateStatus('running');
+
+            // Resetta valori visuali
+            counterEl.textContent = '€0.000000';
+            timerEl.textContent = '00:00:00';
+            document.getElementById('sessionTotal').textContent = '€0.00';
+
+            // Resetta LORO a zero!
+            document.getElementById('cr7Counter').textContent = '€0.00';
+            document.getElementById('timCookCounter').textContent = '€0.00';
+            document.getElementById('elonCounter').textContent = '€0.00';
+
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+            intervalId = setInterval(updateCounter, 100);
+
+            console.log('Counter avviato!'); // DEBUG
+
+            // Scroll smooth verso il counter
+            setTimeout(() => {
+                mainCounterBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 150);
+        }
+
+        // Handler per input con debounce
+        function handleInputChange() {
+            console.log('Input cambiato:', salaryInput.value); // DEBUG
+
+            // 1. FERMA SUBITO tutto ciò che stava girando
+            stopCounter();
+
+            // 2. Mostra stato "attesa"
+            updateStatus('waiting');
+
+            // 3. Cancella timer precedente se esiste
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
+            }
+
+            // 4. Imposta nuovo timer: parte tra 800ms dall'ultimo keystroke
+            debounceTimer = setTimeout(() => {
+                console.log('Debounce completato, avvio counter...'); // DEBUG
+                startCounter();
+            }, DEBOUNCE_DELAY);
+        }
+
+        // Handler per reset
+        function handleReset() {
+            console.log('Reset premuto'); // DEBUG
+
+            // Ferma tutto
+            stopCounter();
+            
+            // Cancella debounce
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
+                debounceTimer = null;
+            }
+
+            // Reset input
+            salaryInput.value = '';
+            
+            // Nascondi tutto
+            hideAllSections();
+
+            // Reset variabili
+            annualSalary = 0;
+            earningsPerSecond = 0;
+
+            // Focus sull'input
+            setTimeout(() => {
+                salaryInput.focus();
+                salaryInput.select();
+            }, 100);
+        }
+
+        // ============================================
+        // AGGIUNTO: LOGICA TOGGLE ORE LAVORATIVE
+        // ============================================
+
+        workHoursToggle.addEventListener('click', function() {
+            workHoursMode = !workHoursMode;
+            
+            if (workHoursMode) {
+                // Attiva modalità ore lavorative
+                this.classList.add('active');
+                toggleStatus.textContent = 'SI';
+                hoursInputWrapper.classList.add('visible');
+            } else {
+                // Disattiva, torna a 24/7
+                this.classList.remove('active');
+                toggleStatus.textContent = 'NO';
+                hoursInputWrapper.classList.remove('visible');
+            }
+
+            // Se il counter sta girando, ricalcola subito
+            if (isRunning && annualSalary > 0) {
+                calculateStats();
+            }
+        });
+
+        // Se cambiano le ore settimanali mentre corre, ricalcola
+        weeklyHoursInput.addEventListener('input', function() {
+            if (isRunning && annualSalary > 0 && workHoursMode) {
+                calculateStats();
+            }
+        });
+
+        // EVENT LISTENERS
+        salaryInput.addEventListener('input', handleInputChange);
+
+        // Reset button
+        resetBtn.addEventListener('click', handleReset);
+
+        // Focus effects sull'input box
+        salaryInput.addEventListener('focus', () => {
+            const box = salaryInput.closest('.input-box');
+            if (box) {
+                box.style.transform = 'translate(-3px, -3px)';
+                box.style.boxShadow = '15px 15px 0px rgba(0,0,0,1)';
+            }
+        });
+
+        salaryInput.addEventListener('blur', () => {
+            const box = salaryInput.closest('.input-box');
+            if (box) {
+                box.style.transform = '';
+                box.style.boxShadow = '';
+            }
+        });
+
+        window.onload = function() {
+            salaryInput.focus();
+        };
+
+    </script>
+</body>
+</html>
