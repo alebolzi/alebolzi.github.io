@@ -12,7 +12,9 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <style>
-body { background:#f3f4f6; }
+body {
+  background:#f3f4f6;
+}
 
 .slider-container {
   position:relative;
@@ -54,6 +56,7 @@ body { background:#f3f4f6; }
 </head>
 
 <body>
+
 <div id="root"></div>
 
 <script type="text/babel">
@@ -66,16 +69,20 @@ const format1 = (n)=>
     maximumFractionDigits:1
   });
 
+/* SLIDER */
 function Slider({value,setValue,min,max,step}){
 
   const ref=useRef();
 
   const update=(x)=>{
+
     const r=ref.current.getBoundingClientRect();
+
     let p=(x-r.left)/r.width;
     p=Math.max(0,Math.min(1,p));
 
     let v=min+p*(max-min);
+
     v=Math.round(v/step)*step;
 
     setValue(v);
@@ -88,14 +95,21 @@ function Slider({value,setValue,min,max,step}){
       onMouseDown={e=>update(e.clientX)}
       onMouseMove={e=>e.buttons===1&&update(e.clientX)}
     >
+
       <div
         className="slider-fill"
-        style={{width:((value-min)/(max-min))*100+"%"}}
+        style={{
+          width:((value-min)/(max-min))*100+"%"
+        }}
       />
+
       <div
         className="slider-thumb"
-        style={{left:((value-min)/(max-min))*100+"%"}}
+        style={{
+          left:((value-min)/(max-min))*100+"%"
+        }}
       />
+
     </div>
   );
 }
@@ -109,53 +123,123 @@ function App(){
   const [rendimento,setRendimento]=useState(7);
   const [anni,setAnni]=useState(50);
 
-  const [costBasis,setCostBasis]=useState(patrimonio/2);
+  const [costBasis,setCostBasis]=useState(400000);
   const [taxRate,setTaxRate]=useState(26);
+
+  // 🎲 RANDOM WALK
+  const [randomWalk,setRandomWalk]=useState(false);
+  const [volatility,setVolatility]=useState(10);
+
+  // ⚙️ SETTINGS TOGGLE
+  const [showSettings,setShowSettings]=useState(false);
 
   const chartRef=useRef(null);
   const chartInstance=useRef(null);
 
   const annuale = spesa * 12;
 
+  const withdrawalRate =
+    patrimonio > 0
+      ? (annuale / patrimonio) * 100
+      : 0;
+
+  // 🎲 RANDOM RETURN
+  function getRandomReturn(mean, volatility){
+
+    return mean +
+      ((Math.random()*2)-1) * volatility;
+  }
+
+  // 🔥 SIMULAZIONE
   const simulate=()=>{
 
     let capital = patrimonio;
+
     let expense = annuale;
-    let basis = costBasis;
+
+    let currentCostBasis = costBasis;
 
     const data = [];
 
     for(let y=0;y<anni;y++){
 
       if(capital <= 0){
+
+        capital = 0;
         data.push(0);
+
         continue;
       }
 
-      // 💸 vendita per spese
-      let sell = Math.min(expense, capital);
+      // 💸 PRELIEVO
+      let withdrawal = expense;
 
-      // 📊 quota costo medio
-      let costPortion = (basis / capital) * sell;
+      // 💰 VENDITA ASSET
+      let sellAmount = withdrawal;
 
-      let gain = Math.max(0, sell - costPortion);
+      // 📊 COST BASIS %
+      let avgCost = capital > 0
+        ? Math.min(1,currentCostBasis / capital)
+        : 0;
 
+      // 💰 QUOTA COSTO
+      let costPortion = sellAmount * avgCost;
+
+      // 📈 GAIN
+      let gain = Math.max(
+        0,
+        sellAmount - costPortion
+      );
+
+      // 🧾 TASSE
       let tax = gain * (taxRate/100);
 
-      let totalOut = sell + tax;
+      // 💸 USCITA TOTALE
+      let totalOut = sellAmount + tax;
 
+      // 💥 RIDUZIONE CAPITALE
       capital -= totalOut;
 
-      if(capital < 0) capital = 0;
+      if(capital <= 0){
 
-      // 📈 rendimento
-      capital = capital * (1 + rendimento/100);
+        capital = 0;
 
-      // 📊 inflazione spese
-      expense = expense * (1 + inflazione/100);
+        data.push(0);
 
-      // 📉 aggiornamento cost basis
-      basis = basis * (capital / (capital + totalOut || 1));
+        continue;
+      }
+
+      // 🎲 RANDOM WALK
+      let yearlyReturn = rendimento;
+
+      if(randomWalk){
+
+        yearlyReturn = getRandomReturn(
+          rendimento,
+          volatility
+        );
+      }
+
+      // ⚠️ NON PUÒ SCENDERE OLTRE -99%
+      yearlyReturn = Math.max(
+        -99,
+        yearlyReturn
+      );
+
+      // 📈 CRESCITA
+      capital =
+        capital *
+        (1 + yearlyReturn/100);
+
+      // 📊 INFLAZIONE SPESE
+      expense =
+        expense *
+        (1 + inflazione/100);
+
+      // 📉 RIDUZIONE COST BASIS
+      currentCostBasis =
+        currentCostBasis *
+        (capital / (capital + totalOut));
 
       data.push(capital);
     }
@@ -168,30 +252,52 @@ function App(){
   useEffect(()=>{
 
     const data = simulate();
-    const final = data.at(-1);
+
+    const finalCapital = data.at(-1);
 
     if(chartInstance.current)
       chartInstance.current.destroy();
 
-    chartInstance.current = new Chart(chartRef.current,{
+    chartInstance.current =
+      new Chart(chartRef.current,{
+
       type:"line",
+
       data:{
-        labels:[...Array(anni)].map((_,i)=>i+1),
+
+        labels:[...Array(anni)]
+          .map((_,i)=>i+1),
+
         datasets:[{
+
+          label:"Patrimonio",
+
           data,
+
           borderColor:"#111827",
+
           tension:0.3
         }]
       },
+
       options:{
-        plugins:{legend:{display:false}},
+
+        plugins:{
+          legend:{display:false}
+        },
+
         scales:{
-          y:{ticks:{callback:v=>"€"+v/1000+"k"}}
+
+          y:{
+            ticks:{
+              callback:v=>"€"+v/1000+"k"
+            }
+          }
         }
       }
     });
 
-    setFinal(final);
+    setFinal(finalCapital);
 
   },[
     patrimonio,
@@ -200,104 +306,300 @@ function App(){
     rendimento,
     anni,
     costBasis,
-    taxRate
+    taxRate,
+    randomWalk,
+    volatility
   ]);
 
   const isFire = finalCapital >= 1;
 
-  const withdrawalRate = (annuale / patrimonio) * 100;
-
   return (
+
     <div className="max-w-3xl mx-auto p-6 space-y-6">
 
+      {/* TITOLO */}
       <h1 className="text-4xl font-bold text-center">
         🔥 Sei in FIRE?
       </h1>
 
-      {/* INPUT BASE */}
-      <div className="bg-white p-6 rounded-xl shadow text-center text-xl font-bold">
-        Patrimonio{" "}
-        <input className="custom-input w-40"
+      {/* INPUT */}
+      <div className="bg-white p-5 rounded-xl shadow text-center text-xl font-bold">
+
+        Ho un patrimonio di{" "}
+
+        <input
+          className="custom-input w-40"
           value={patrimonio}
-          onChange={e=>setPatrimonio(+e.target.value)}
-        /> €
-        {" "} | Spesa{" "}
-        <input className="custom-input w-28"
+          onChange={e=>
+            setPatrimonio(+e.target.value)
+          }
+        />
+
+        {" "}€
+
+        {" "}e spendo{" "}
+
+        <input
+          className="custom-input w-28"
           value={spesa}
-          onChange={e=>setSpesa(+e.target.value)}
-        /> €/mese
+          onChange={e=>
+            setSpesa(+e.target.value)
+          }
+        />
+
+        {" "}€ al mese
+
       </div>
 
-      {/* SLIDERS */}
+      {/* SETTINGS BUTTON */}
+      <button
+        onClick={()=>
+          setShowSettings(!showSettings)
+        }
+
+        className="bg-white shadow rounded-xl px-4 py-3 font-semibold w-full text-left hover:bg-gray-50 transition"
+      >
+
+        {showSettings
+          ? "⚙️ Nascondi settaggi"
+          : "⚙️ Con questi settaggi:"
+        }
+
+      </button>
+
+      {/* SETTINGS */}
+      {showSettings && (
+
       <div className="bg-white p-6 rounded-xl space-y-6 shadow">
 
+        {/* INFLAZIONE */}
         <div>
+
           📊 Inflazione
-          <div><b>{format1(inflazione)}%</b></div>
-          <Slider value={inflazione} setValue={setInflazione} min={0} max={10} step={0.1}/>
+
+          <div>
+            <b>{format1(inflazione)}%</b>
+          </div>
+
+          <Slider
+            value={inflazione}
+            setValue={setInflazione}
+            min={0}
+            max={10}
+            step={0.1}
+          />
+
         </div>
 
+        {/* RENDIMENTO */}
         <div>
-          📈 Rendimento
-          <div><b>{format1(rendimento)}%</b></div>
-          <Slider value={rendimento} setValue={setRendimento} min={0} max={12} step={0.1}/>
+
+          📈 Rendimento composto
+
+          <div>
+            <b>{format1(rendimento)}%</b>
+          </div>
+
+          <Slider
+            value={rendimento}
+            setValue={setRendimento}
+            min={0}
+            max={20}
+            step={0.1}
+          />
+
         </div>
 
+        {/* ANNI */}
         <div>
+
           ⏳ Anni simulazione
-          <div><b>{anni}</b></div>
-          <Slider value={anni} setValue={setAnni} min={10} max={100} step={1}/>
+
+          <div>
+            <b>{anni}</b>
+          </div>
+
+          <Slider
+            value={anni}
+            setValue={setAnni}
+            min={1}
+            max={100}
+            step={1}
+          />
+
         </div>
 
+        {/* COST BASIS */}
         <div>
+
           💰 Prezzo medio di carico
-          <div><b>{format1(costBasis)} €</b></div>
-          <Slider value={costBasis} setValue={setCostBasis} min={0} max={patrimonio} step={1000}/>
+
+          <div>
+            <b>{format1(costBasis)} €</b>
+          </div>
+
+          <Slider
+            value={costBasis}
+            setValue={setCostBasis}
+            min={0}
+            max={patrimonio}
+            step={1000}
+          />
+
         </div>
 
+        {/* TASSE */}
         <div>
+
           🧾 Tassa plusvalenze
-          <div><b>{format1(taxRate)}%</b></div>
-          <Slider value={taxRate} setValue={setTaxRate} min={0} max={40} step={0.1}/>
+
+          <div>
+            <b>{format1(taxRate)}%</b>
+          </div>
+
+          <Slider
+            value={taxRate}
+            setValue={setTaxRate}
+            min={0}
+            max={50}
+            step={0.1}
+          />
+
+        </div>
+
+        {/* RANDOM WALK */}
+        <div className="space-y-3">
+
+          <div className="flex justify-between items-center">
+
+            <span>
+              🎲 Random Walk
+            </span>
+
+            <input
+              type="checkbox"
+              checked={randomWalk}
+              onChange={()=>
+                setRandomWalk(!randomWalk)
+              }
+            />
+
+          </div>
+
+          {randomWalk && (
+
+            <div>
+
+              <div>
+
+                📉 Volatilità annuale
+
+                <div>
+                  <b>{format1(volatility)}%</b>
+                </div>
+
+              </div>
+
+              <Slider
+                value={volatility}
+                setValue={setVolatility}
+                min={0}
+                max={20}
+                step={0.5}
+              />
+
+            </div>
+
+          )}
+
         </div>
 
       </div>
+
+      )}
 
       {/* RISULTATO */}
       <div className="bg-white p-6 rounded-xl text-center space-y-3 shadow">
 
-        <div className={"text-3xl font-bold "+(isFire?"fire":"notfire")}>
-          {isFire ? "🔥 SEI IN FIRE" : "💀 NON SEI IN FIRE"}
+        <div className={
+          "text-3xl font-bold "+
+          (isFire ? "fire" : "notfire")
+        }>
+
+          {isFire
+            ? "🔥 SEI IN FIRE"
+            : "💀 NON SEI IN FIRE"
+          }
+
         </div>
 
-        <div>Capitale iniziale: <b>{format1(patrimonio)} €</b></div>
-        <div>Capitale finale: <b>{format1(finalCapital)} €</b></div>
+        <div>
+          Capitale iniziale:
+          <b> {format1(patrimonio)} €</b>
+        </div>
+
+        <div>
+          Capitale finale:
+          <b> {format1(finalCapital)} €</b>
+        </div>
 
         {/* PRELIEVO */}
-        <div className="text-sm text-gray-700">
-          Stai prelevando il <b>{format1(withdrawalRate)}%</b> del tuo capitale
+        <div className="text-sm text-gray-700 mt-2">
+
+          Stai prelevando il{" "}
+
+          <b>
+            {format1(withdrawalRate)}%
+          </b>
+
+          {" "}del tuo capitale
+
           {withdrawalRate > 4 && (
-            <span className="ml-2 font-bold text-red-500">⚠️</span>
+
+            <span className="ml-2 text-red-500 font-bold">
+              ⚠️
+            </span>
+
           )}
+
         </div>
 
+        {/* INFO */}
         <div className="text-sm text-gray-500">
-          Inflazione {format1(inflazione)}% · Rendimento {format1(rendimento)}% · Tassa {format1(taxRate)}%
+
+          Inflazione {format1(inflazione)}%
+          {" · "}
+          Rendimento {format1(rendimento)}%
+          {" · "}
+          Tassa {format1(taxRate)}%
+
+          {randomWalk && (
+            <>
+              {" · "}
+              Random Walk ±{format1(volatility)}%
+            </>
+          )}
+
         </div>
 
       </div>
 
       {/* GRAFICO */}
       <div className="bg-white p-6 rounded-xl shadow">
+
         <canvas ref={chartRef}></canvas>
+
       </div>
 
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+ReactDOM
+  .createRoot(document.getElementById("root"))
+  .render(<App/>);
 
 </script>
+
 </body>
 </html>
