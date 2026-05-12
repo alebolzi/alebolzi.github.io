@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🔥 Sei in FIRE?</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+body { background:#f3f4f6; }
+
+.slider-container {
+  position:relative;
+  height:8px;
+  background:#e5e7eb;
+  border-radius:9999px;
+}
+
+.slider-fill {
+  position:absolute;
+  height:100%;
+  background:#111827;
+  border-radius:9999px;
+}
+
+.slider-thumb {
+  position:absolute;
+  top:50%;
+  width:18px;
+  height:18px;
+  background:white;
+  border:2px solid #111827;
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+}
+
+.custom-input {
+  border:none;
+  border-bottom:2px dashed #9ca3af;
+  background:transparent;
+  text-align:center;
+  font-weight:600;
+  outline:none;
+}
+
+.fire { color:#16a34a; }
+.notfire { color:#dc2626; }
+</style>
+</head>
+
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+
+const {useState,useRef,useEffect} = React;
+
+const format1 = (n)=>
+  Number(n).toLocaleString("it-IT",{
+    minimumFractionDigits:0,
+    maximumFractionDigits:1
+  });
+
+function Slider({value,setValue,min,max,step}){
+
+  const ref=useRef();
+
+  const update=(x)=>{
+    const r=ref.current.getBoundingClientRect();
+    let p=(x-r.left)/r.width;
+    p=Math.max(0,Math.min(1,p));
+
+    let v=min+p*(max-min);
+    v=Math.round(v/step)*step;
+
+    setValue(v);
+  };
+
+  return (
+    <div
+      ref={ref}
+      className="slider-container"
+      onMouseDown={e=>update(e.clientX)}
+      onMouseMove={e=>e.buttons===1&&update(e.clientX)}
+    >
+      <div
+        className="slider-fill"
+        style={{width:((value-min)/(max-min))*100+"%"}}
+      />
+      <div
+        className="slider-thumb"
+        style={{left:((value-min)/(max-min))*100+"%"}}
+      />
+    </div>
+  );
+}
+
+function App(){
+
+  const [patrimonio,setPatrimonio]=useState(800000);
+  const [spesa,setSpesa]=useState(2000);
+
+  const [inflazione,setInflazione]=useState(2);
+  const [rendimento,setRendimento]=useState(7);
+  const [anni,setAnni]=useState(50);
+
+  const [costBasis,setCostBasis]=useState(patrimonio/2);
+  const [taxRate,setTaxRate]=useState(26);
+
+  const chartRef=useRef(null);
+  const chartInstance=useRef(null);
+
+  const annuale = spesa * 12;
+
+  const simulate=()=>{
+
+    let capital = patrimonio;
+    let expense = annuale;
+    let basis = costBasis;
+
+    const data = [];
+
+    for(let y=0;y<anni;y++){
+
+      if(capital <= 0){
+        data.push(0);
+        continue;
+      }
+
+      // 💸 vendita per spese
+      let sell = Math.min(expense, capital);
+
+      // 📊 quota costo medio
+      let costPortion = (basis / capital) * sell;
+
+      let gain = Math.max(0, sell - costPortion);
+
+      let tax = gain * (taxRate/100);
+
+      let totalOut = sell + tax;
+
+      capital -= totalOut;
+
+      if(capital < 0) capital = 0;
+
+      // 📈 rendimento
+      capital = capital * (1 + rendimento/100);
+
+      // 📊 inflazione spese
+      expense = expense * (1 + inflazione/100);
+
+      // 📉 aggiornamento cost basis
+      basis = basis * (capital / (capital + totalOut || 1));
+
+      data.push(capital);
+    }
+
+    return data;
+  };
+
+  const [finalCapital,setFinal]=useState(0);
+
+  useEffect(()=>{
+
+    const data = simulate();
+    const final = data.at(-1);
+
+    if(chartInstance.current)
+      chartInstance.current.destroy();
+
+    chartInstance.current = new Chart(chartRef.current,{
+      type:"line",
+      data:{
+        labels:[...Array(anni)].map((_,i)=>i+1),
+        datasets:[{
+          data,
+          borderColor:"#111827",
+          tension:0.3
+        }]
+      },
+      options:{
+        plugins:{legend:{display:false}},
+        scales:{
+          y:{ticks:{callback:v=>"€"+v/1000+"k"}}
+        }
+      }
+    });
+
+    setFinal(final);
+
+  },[
+    patrimonio,
+    spesa,
+    inflazione,
+    rendimento,
+    anni,
+    costBasis,
+    taxRate
+  ]);
+
+  const isFire = finalCapital >= 1;
+
+  const withdrawalRate = (annuale / patrimonio) * 100;
+
+  return (
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+
+      <h1 className="text-4xl font-bold text-center">
+        🔥 Sei in FIRE?
+      </h1>
+
+      {/* INPUT BASE */}
+      <div className="bg-white p-6 rounded-xl shadow text-center text-xl font-bold">
+        Patrimonio{" "}
+        <input className="custom-input w-40"
+          value={patrimonio}
+          onChange={e=>setPatrimonio(+e.target.value)}
+        /> €
+        {" "} | Spesa{" "}
+        <input className="custom-input w-28"
+          value={spesa}
+          onChange={e=>setSpesa(+e.target.value)}
+        /> €/mese
+      </div>
+
+      {/* SLIDERS */}
+      <div className="bg-white p-6 rounded-xl space-y-6 shadow">
+
+        <div>
+          📊 Inflazione
+          <div><b>{format1(inflazione)}%</b></div>
+          <Slider value={inflazione} setValue={setInflazione} min={0} max={10} step={0.1}/>
+        </div>
+
+        <div>
+          📈 Rendimento
+          <div><b>{format1(rendimento)}%</b></div>
+          <Slider value={rendimento} setValue={setRendimento} min={0} max={12} step={0.1}/>
+        </div>
+
+        <div>
+          ⏳ Anni simulazione
+          <div><b>{anni}</b></div>
+          <Slider value={anni} setValue={setAnni} min={10} max={100} step={1}/>
+        </div>
+
+        <div>
+          💰 Prezzo medio di carico
+          <div><b>{format1(costBasis)} €</b></div>
+          <Slider value={costBasis} setValue={setCostBasis} min={0} max={patrimonio} step={1000}/>
+        </div>
+
+        <div>
+          🧾 Tassa plusvalenze
+          <div><b>{format1(taxRate)}%</b></div>
+          <Slider value={taxRate} setValue={setTaxRate} min={0} max={40} step={0.1}/>
+        </div>
+
+      </div>
+
+      {/* RISULTATO */}
+      <div className="bg-white p-6 rounded-xl text-center space-y-3 shadow">
+
+        <div className={"text-3xl font-bold "+(isFire?"fire":"notfire")}>
+          {isFire ? "🔥 SEI IN FIRE" : "💀 NON SEI IN FIRE"}
+        </div>
+
+        <div>Capitale iniziale: <b>{format1(patrimonio)} €</b></div>
+        <div>Capitale finale: <b>{format1(finalCapital)} €</b></div>
+
+        {/* PRELIEVO */}
+        <div className="text-sm text-gray-700">
+          Stai prelevando il <b>{format1(withdrawalRate)}%</b> del tuo capitale
+          {withdrawalRate > 4 && (
+            <span className="ml-2 font-bold text-red-500">⚠️</span>
+          )}
+        </div>
+
+        <div className="text-sm text-gray-500">
+          Inflazione {format1(inflazione)}% · Rendimento {format1(rendimento)}% · Tassa {format1(taxRate)}%
+        </div>
+
+      </div>
+
+      {/* GRAFICO */}
+      <div className="bg-white p-6 rounded-xl shadow">
+        <canvas ref={chartRef}></canvas>
+      </div>
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+
+</script>
+</body>
+</html>
