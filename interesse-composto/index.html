@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>💸 Calcolatore Interesse Composto</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            background: #f3f4f6;
+        }
+
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 9999px;
+            cursor: pointer;
+        }
+
+        .slider-fill {
+            position: absolute;
+            height: 100%;
+            background: #111827;
+            border-radius: 9999px;
+        }
+
+        .slider-thumb {
+            position: absolute;
+            top: 50%;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border: 2px solid #111827;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .text-rosso {
+            color: #dc2626;
+        }
+
+        .text-verde {
+            color: #16a34a;
+        }
+
+        .text-blu {
+            color: #2563eb;
+        }
+
+        .text-viola {
+            color: #7c3aed;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+        const {
+            useState,
+            useRef,
+            useEffect,
+            useCallback
+        } = React;
+
+        /* FORMAT */
+        const formattaNumero = (
+            num,
+            decimali = 0
+        ) => {
+
+            return Number(num).toLocaleString(
+                "it-IT",
+                {
+                    minimumFractionDigits: decimali,
+                    maximumFractionDigits: decimali
+                }
+            );
+        };
+
+        /* SLIDER */
+        function Slider({
+            min = 0,
+            max = 100,
+            step = 1,
+            value,
+            onValueChange
+        }) {
+
+            const ref = useRef(null);
+
+            const percentage =
+                ((value[0] - min) / (max - min)) * 100;
+
+            const updateValue = useCallback((clientX) => {
+
+                if (!ref.current) return;
+
+                const rect =
+                    ref.current.getBoundingClientRect();
+
+                let p =
+                    (clientX - rect.left)
+                    / rect.width;
+
+                p = Math.max(0, Math.min(1, p));
+
+                let v =
+                    min + p * (max - min);
+
+                v =
+                    Math.round(v / step) * step;
+
+                v =
+                    Math.max(min, Math.min(max, v));
+
+                onValueChange([v]);
+
+            }, [
+                min,
+                max,
+                step,
+                onValueChange
+            ]);
+
+            const mouseDown = (e) => {
+
+                updateValue(e.clientX);
+
+                const move = (e) => {
+
+                    updateValue(e.clientX);
+                };
+
+                const up = () => {
+
+                    document.removeEventListener(
+                        "mousemove",
+                        move
+                    );
+
+                    document.removeEventListener(
+                        "mouseup",
+                        up
+                    );
+                };
+
+                document.addEventListener(
+                    "mousemove",
+                    move
+                );
+
+                document.addEventListener(
+                    "mouseup",
+                    up
+                );
+            };
+
+            return (
+
+                <div
+                    ref={ref}
+                    className="slider-container"
+                    onMouseDown={mouseDown}
+                >
+
+                    <div
+                        className="slider-fill"
+                        style={{
+                            width: percentage + "%"
+                        }}
+                    />
+
+                    <div
+                        className="slider-thumb"
+                        style={{
+                            left: percentage + "%"
+                        }}
+                    />
+
+                </div>
+            );
+        }
+
+        /* CARD */
+        function Card({
+            children,
+            className = ""
+        }) {
+
+            return (
+
+                <div className={
+                    `rounded-xl bg-white shadow border ${className}`
+                }>
+
+                    {children}
+
+                </div>
+            );
+        }
+
+        function CardContent({
+            children,
+            className = ""
+        }) {
+
+            return (
+
+                <div className={`p-6 ${className}`}>
+                    {children}
+                </div>
+            );
+        }
+
+        function App() {
+
+            /* INPUT */
+
+            const [
+                capitaleIniziale,
+                setCapitaleIniziale
+            ] = useState(10000);
+
+            const [
+                risparmio,
+                setRisparmio
+            ] = useState(400);
+
+            const [
+                interesse,
+                setInteresse
+            ] = useState(7);
+
+            const [
+                anni,
+                setAnni
+            ] = useState(40);
+
+            /* RANDOM WALK */
+
+            const [
+                randomWalk,
+                setRandomWalk
+            ] = useState(false);
+
+            const [
+                volatility,
+                setVolatility
+            ] = useState(14);
+
+            const [editCapitale, setEditCapitale] = useState(false);
+
+            /* CHART */
+
+            const chartRef =
+                useRef(null);
+
+            const chartInstance =
+                useRef(null);
+
+            /* RANDOM RETURN */
+
+            function getRandomReturn(
+                mean,
+                vol
+            ) {
+
+                return (
+                    mean +
+                    (
+                        ((Math.random() * 2) - 1)
+                        * vol
+                    )
+                );
+            }
+
+            /* SIMULAZIONE */
+
+            const simulate = () => {
+
+                let capitale =
+                    capitaleIniziale;
+
+                const data = [];
+
+                data.push(capitale);
+
+                for (let y = 0; y < anni; y++) {
+
+                    let rendimentoAnnuale =
+                        interesse;
+
+                    if (randomWalk) {
+
+                        rendimentoAnnuale =
+                            getRandomReturn(
+                                interesse,
+                                volatility
+                            );
+                    }
+
+                    rendimentoAnnuale =
+                        Math.max(
+                            -99,
+                            rendimentoAnnuale
+                        );
+
+                    const rendimentoMensile =
+
+                        Math.pow(
+                            1 + rendimentoAnnuale / 100,
+                            1 / 12
+                        ) - 1;
+
+                    for (let m = 0; m < 12; m++) {
+
+                        capitale += risparmio;
+
+                        capitale *= (
+                            1 +
+                            rendimentoMensile
+                        );
+                    }
+
+                    data.push(capitale);
+                }
+
+                return data;
+            };
+
+            const dati =
+                simulate();
+
+            const totale =
+                dati.at(-1);
+
+            const capitaleVersato =
+
+                capitaleIniziale +
+                (
+                    risparmio
+                    * 12
+                    * anni
+                );
+
+            const interessiGuadagnati =
+
+                totale -
+                capitaleVersato;
+
+            /* GRAFICO */
+
+            useEffect(() => {
+
+                if (chartInstance.current) {
+
+                    chartInstance.current.destroy();
+                }
+
+                chartInstance.current =
+                    new Chart(
+                        chartRef.current,
+                        {
+
+                            type: "line",
+
+                            data: {
+
+                                labels: [
+                                    ...Array(anni + 1)
+                                ].map((_, i) => i),
+
+                                datasets: [{
+
+                                    label: "Capitale",
+
+                                    data: dati,
+
+                                    borderColor: "#7c3aed",
+
+                                    tension: 0.25
+                                }]
+                            },
+
+                            options: {
+
+                                responsive: true,
+
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    }
+                                },
+
+                                scales: {
+
+                                    y: {
+
+                                        ticks: {
+
+                                            callback: v =>
+                                                "€" +
+                                                formattaNumero(v)
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+            }, [
+                capitaleIniziale,
+                risparmio,
+                interesse,
+                anni,
+                randomWalk,
+                volatility
+            ]);
+
+            /* FORMULA */
+
+            const r =
+                interesse / 100;
+
+            return (
+
+                <div className="max-w-3xl mx-auto p-8 space-y-8 font-sans">
+
+                    {/* TITOLO */}
+
+                    <h1 className="text-4xl font-extrabold text-center">
+
+                        💸 Calcolatore Interesse Composto
+
+                    </h1>
+
+                    {/* SETTINGS */}
+
+                    <Card>
+
+                        <CardContent className="space-y-6">
+
+                            {/* CAPITALE */}
+
+                            <div className="space-y-2">
+
+                                <div className="flex justify-between items-center">
+
+                                    <span>Capitale iniziale</span>
+
+                                    {!editCapitale ? (
+
+                                        <div
+                                            className="flex items-center gap-2 cursor-pointer"
+                                            onClick={() => setEditCapitale(true)}
+                                        >
+
+                                            <b className="text-viola text-lg">
+                                                €{formattaNumero(capitaleIniziale)}
+                                            </b>
+
+                                            <span className="text-gray-400 text-sm">
+                                                ✏️
+                                            </span>
+
+                                        </div>
+
+                                    ) : (
+
+                                        <input
+                                            autoFocus
+                                            className="text-right font-bold text-viola bg-transparent border-b outline-none w-40"
+                                            value={capitaleIniziale}
+                                            onChange={(e) =>
+                                                setCapitaleIniziale(+e.target.value)
+                                            }
+                                            onBlur={() => setEditCapitale(false)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    setEditCapitale(false);
+                                                }
+                                            }}
+                                        />
+
+                                    )}
+
+                                </div>
+
+                                {/* SLIDER RIMANE IDENTICO */}
+                                <Slider
+                                    min={0}
+                                    max={100000}
+                                    step={1000}
+                                    value={[capitaleIniziale]}
+                                    onValueChange={v => setCapitaleIniziale(v[0])}
+                                />
+
+                            </div>
+
+                            {/* RISPARMIO */}
+
+                            <div className="space-y-2">
+
+                                <div className="flex justify-between">
+
+                                    <span>
+                                        Risparmio mensile
+                                    </span>
+
+                                    <span className="font-bold text-rosso">
+
+                                        €{
+                                            formattaNumero(
+                                                risparmio
+                                            )
+                                        }
+
+                                    </span>
+
+                                </div>
+
+                                <Slider
+                                    min={0}
+                                    max={2000}
+                                    step={10}
+                                    value={[risparmio]}
+                                    onValueChange={v =>
+                                        setRisparmio(v[0])
+                                    }
+                                />
+
+                            </div>
+
+                            {/* INTERESSE */}
+
+                            <div className="space-y-2">
+
+                                <div className="flex justify-between">
+
+                                    <span>
+                                        Interesse annuale
+                                    </span>
+
+                                    <span className="font-bold text-verde">
+
+                                        {formattaNumero(
+                                            interesse,
+                                            1
+                                        )}%
+
+                                    </span>
+
+                                </div>
+
+                                <Slider
+                                    min={0}
+                                    max={30}
+                                    step={0.1}
+                                    value={[interesse]}
+                                    onValueChange={v =>
+                                        setInteresse(v[0])
+                                    }
+                                />
+
+                            </div>
+
+                            {/* ANNI */}
+
+                            <div className="space-y-2">
+
+                                <div className="flex justify-between">
+
+                                    <span>
+                                        Numero di anni
+                                    </span>
+
+                                    <span className="font-bold text-blu">
+
+                                        {anni}
+
+                                    </span>
+
+                                </div>
+
+                                <Slider
+                                    min={1}
+                                    max={100}
+                                    step={1}
+                                    value={[anni]}
+                                    onValueChange={v =>
+                                        setAnni(v[0])
+                                    }
+                                />
+
+                            </div>
+
+                            {/* RANDOM WALK */}
+
+                            <div className="space-y-3">
+
+                                <div className="flex justify-between items-center">
+
+                                    <span className="font-medium">
+
+                                        🎲 Random Walk
+
+                                    </span>
+
+                                    <input
+                                        type="checkbox"
+                                        checked={randomWalk}
+                                        onChange={() =>
+                                            setRandomWalk(
+                                                !randomWalk
+                                            )
+                                        }
+                                    />
+
+                                </div>
+
+                                {randomWalk && (
+
+                                    <div className="space-y-2 mt-3">
+
+                                        <div className="flex justify-between">
+
+                                            <span>
+                                                Volatilità annuale
+                                            </span>
+
+                                            <span className="font-bold text-gray-800">
+
+                                                ±{formattaNumero(volatility, 1)}%
+
+                                            </span>
+
+                                        </div>
+
+                                        <Slider
+                                            min={0}
+                                            max={50}
+                                            step={0.5}
+                                            value={[volatility]}
+                                            onValueChange={(v) =>
+                                                setVolatility(v[0])
+                                            }
+                                        />
+
+                                    </div>
+
+                                )}
+
+                            </div>
+
+                        </CardContent>
+
+                    </Card>
+
+                    {/* RISULTATO */}
+
+                    <Card>
+
+                        <CardContent className="space-y-4 text-center">
+
+                            <div className="text-xl text-gray-500">
+
+                                Totale maturato
+
+                            </div>
+
+                            <div className="text-5xl font-bold text-viola">
+
+                                €{
+                                    formattaNumero(
+                                        totale,
+                                        2
+                                    )
+                                }
+
+                            </div>
+
+                            <div className="space-y-2 text-sm text-gray-600">
+
+                                <div>
+
+                                    Capitale versato:
+
+                                    <b>
+
+                                        {" "}€{
+                                            formattaNumero(
+                                                capitaleVersato,
+                                                2
+                                            )
+                                        }
+
+                                    </b>
+
+                                </div>
+
+                                <div>
+
+                                    Interessi guadagnati:
+
+                                    <b className={
+                                        interessiGuadagnati >= 0
+                                            ? "text-green-600"
+                                            : "text-red-500"
+                                    }>
+
+                                        {" "}€{
+                                            formattaNumero(
+                                                interessiGuadagnati,
+                                                2
+                                            )
+                                        }
+
+                                    </b>
+
+                                </div>
+
+                            </div>
+
+                        </CardContent>
+
+                    </Card>
+
+                    {/* GRAFICO */}
+
+                    <Card>
+
+                        <CardContent>
+
+                            <canvas ref={chartRef}></canvas>
+
+                        </CardContent>
+
+                    </Card>
+
+                    {/* FORMULA */}
+
+                    <Card>
+
+                        <CardContent className="space-y-4 text-sm">
+
+                            <div className="font-semibold">
+
+                                Formula utilizzata
+
+                            </div>
+
+                            {/* NO RANDOM WALK */}
+
+                            {!randomWalk && (
+
+                                <code className="block bg-gray-50 p-4 rounded-md leading-relaxed">
+
+                                    Totale =
+
+                                    {" "}
+
+                                    <span className="font-bold text-viola">
+
+                                        {
+                                            formattaNumero(
+                                                capitaleIniziale
+                                            )
+                                        }
+
+                                    </span>
+
+                                    {" "}×
+
+                                    (1+r<sub>m</sub>)
+
+                                    <sup>
+
+                                        <span className="font-bold text-blu">
+                                            12×{anni}
+                                        </span>
+
+                                    </sup>
+
+                                    {" "}+
+
+                                    {" "}
+
+                                    <span className="font-bold text-rosso">
+
+                                        {
+                                            formattaNumero(
+                                                risparmio
+                                            )
+                                        }
+
+                                    </span>
+
+                                    {" "}×
+
+                                    (
+
+                                    ((1+r<sub>m</sub>)
+
+                                    <sup>
+
+                                        <span className="font-bold text-blu">
+                                            12×{anni}
+                                        </span>
+
+                                    </sup>
+
+                                    {" "} -1)
+
+                                    ÷ r<sub>m</sub>
+
+                                    )
+
+                                    <br /><br />
+
+                                    r<sub>m</sub> =
+
+                                    {" "}
+
+                                    (1+r)
+
+                                    <sup>1/12</sup>
+
+                                    {" "} -1
+
+                                    <br /><br />
+
+                                    <span className="font-bold text-verde">
+                                        r
+                                    </span>
+
+                                    {" "} =
+
+                                    <span className="font-bold text-green-600">
+
+                                        {
+                                            formattaNumero(
+                                                interesse,
+                                                1
+                                            )
+                                        }%
+
+                                    </span>
+
+                                </code>
+
+                            )}
+
+                            {/* RANDOM WALK */}
+
+                            {randomWalk && (
+
+                                <code className="block bg-gray-50 p-4 rounded-md leading-relaxed">
+
+                                    Totale =
+
+                                    {" "}
+
+                                    <span className="font-bold text-viola">
+
+                                        {
+                                            formattaNumero(
+                                                capitaleIniziale
+                                            )
+                                        }
+
+                                    </span>
+
+                                    {" "}×
+
+                                    (1+R<sub>m</sub>)
+
+                                    <sup>
+
+                                        <span className="font-bold text-blu">
+                                            12×{anni}
+                                        </span>
+
+                                    </sup>
+
+                                    {" "}+
+
+                                    {" "}
+
+                                    <span className="font-bold text-rosso">
+
+                                        {
+                                            formattaNumero(
+                                                risparmio
+                                            )
+                                        }
+
+                                    </span>
+
+                                    {" "}×
+
+                                    (
+
+                                    ((1+R<sub>m</sub>)
+
+                                    <sup>
+
+                                        <span className="font-bold text-blu">
+                                            12×{anni}
+                                        </span>
+
+                                    </sup>
+
+                                    {" "} -1)
+
+                                    ÷ R<sub>m</sub>
+
+                                    )
+
+                                    <br /><br />
+
+                                    R<sub>m</sub> =
+
+                                    {" "}
+
+                                    (1+R)
+
+                                    <sup>1/12</sup>
+
+                                    {" "} -1
+
+                                    <br /><br />
+
+                                    <span className="font-bold text-verde">
+                                        R
+                                    </span>
+
+                                    {" "} =
+
+                                    random(
+
+                                    <span className="font-bold text-red-500">
+
+                                        {
+                                            formattaNumero(
+                                                interesse - volatility,
+                                                1
+                                            )
+                                        }%
+
+                                    </span>
+
+                                    ;
+
+                                    <span className="font-bold text-green-600">
+
+                                        {
+                                            formattaNumero(
+                                                interesse + volatility,
+                                                1
+                                            )
+                                        }%
+
+                                    </span>
+
+                                    )
+
+                                    <br /><br />
+
+                                    <span className="text-gray-500 text-xs">
+
+                                        R cambia casualmente ogni anno.
+
+                                    </span>
+
+                                </code>
+
+                            )}
+
+                        </CardContent>
+
+                    </Card>
+
+                    {/* FOOTER */}
+
+                    <div className="text-center text-xs text-gray-400">
+
+                        ciauuuu✨
+
+                    </div>
+
+                </div>
+            );
+        }
+
+        ReactDOM
+            .createRoot(
+                document.getElementById("root")
+            )
+            .render(<App />);
+
+    </script>
+
+</body>
+
+</html>
