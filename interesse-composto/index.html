@@ -265,6 +265,13 @@
                 setVolatility
             ] = useState(14);
 
+            /* TASSE */
+
+            const [
+                tasse,
+                setTasse
+            ] = useState(26);
+
             const [editCapitale, setEditCapitale] = useState(false);
 
             /* CHART */
@@ -364,6 +371,22 @@
 
                 totale -
                 capitaleVersato;
+
+
+            const plusvalenza =
+                Math.max(
+                    0,
+                    interessiGuadagnati
+                );
+
+            const tasseDaPagare =
+                plusvalenza *
+                (tasse / 100);
+
+            const totaleNetto =
+                totale -
+                tasseDaPagare;
+
 
             /* GRAFICO */
 
@@ -580,6 +603,39 @@
 
                             </div>
 
+                            {/* TASSE */}
+
+                            <div className="space-y-2">
+
+                                <div className="flex justify-between">
+
+                                    <span>
+                                        Tassazione plusvalenza
+                                    </span>
+
+                                    <span className="font-bold text-orange-500">
+
+                                        {formattaNumero(
+                                            tasse,
+                                            1
+                                        )}%
+
+                                    </span>
+
+                                </div>
+
+                                <Slider
+                                    min={0}
+                                    max={60}
+                                    step={0.5}
+                                    value={[tasse]}
+                                    onValueChange={v =>
+                                        setTasse(v[0])
+                                    }
+                                />
+
+                            </div>
+
                             {/* ANNI */}
 
                             <div className="space-y-2">
@@ -646,7 +702,9 @@
 
                                             <span className="font-bold text-gray-800">
 
-                                                ±{formattaNumero(volatility, 1)}%
+                                                <span style={{ color: "#2dd4bf", fontWeight: "bold" }}>
+                                                    ±{formattaNumero(volatility, 1)}%
+                                                </span>
 
                                             </span>
 
@@ -727,6 +785,40 @@
                                         {" "}€{
                                             formattaNumero(
                                                 interessiGuadagnati,
+                                                2
+                                            )
+                                        }
+
+                                    </b>
+
+                                </div>
+
+                                <div>
+
+                                    Tasse sulla plusvalenza:
+
+                                    <b className="text-orange-500">
+
+                                        {" "}€{
+                                            formattaNumero(
+                                                tasseDaPagare,
+                                                2
+                                            )
+                                        }
+
+                                    </b>
+
+                                </div>
+
+                                <div>
+
+                                    Totale netto finale:
+
+                                    <b className="text-cyan-600">
+
+                                        {" "}€{
+                                            formattaNumero(
+                                                totaleNetto,
                                                 2
                                             )
                                         }
@@ -861,6 +953,38 @@
                                         }%
 
                                     </span>
+                                    <br /><br />
+
+                                    Plusvalenza =
+
+                                    {" "}
+
+                                    Totale -
+
+                                    Capitale versato
+
+                                    <br /><br />
+
+                                    Tasse =
+
+                                    {" "}
+
+                                    Plusvalenza ×
+
+                                    <span className="font-bold text-orange-500">
+
+                                        {" "}
+                                        {formattaNumero(tasse, 1)}%
+
+                                    </span>
+
+                                    <br /><br />
+
+                                    Totale netto =
+
+                                    {" "}
+
+                                    Totale - Tasse
 
                                 </code>
 
@@ -946,38 +1070,30 @@
 
                                     <br /><br />
 
-                                    <span className="font-bold text-verde">
+                                    <span className="font-bold" style={{ color: "#2dd4bf" }}>
                                         R
                                     </span>
 
                                     {" "} =
 
                                     random(
-
-                                    <span className="font-bold text-red-500">
-
+                                    <span style={{ color: "#2dd4bf", fontWeight: "bold" }}>
                                         {
                                             formattaNumero(
                                                 interesse - volatility,
                                                 1
                                             )
                                         }%
-
                                     </span>
-
                                     ;
-
-                                    <span className="font-bold text-green-600">
-
+                                    <span style={{ color: "#2dd4bf", fontWeight: "bold" }}>
                                         {
                                             formattaNumero(
                                                 interesse + volatility,
                                                 1
                                             )
                                         }%
-
                                     </span>
-
                                     )
 
                                     <br /><br />
@@ -987,7 +1103,38 @@
                                         R cambia casualmente ogni anno.
 
                                     </span>
+                                    <br /><br />
 
+                                    Plusvalenza =
+
+                                    {" "}
+
+                                    Totale -
+
+                                    Capitale versato
+
+                                    <br /><br />
+
+                                    Tasse =
+
+                                    {" "}
+
+                                    Plusvalenza ×
+
+                                    <span className="font-bold text-orange-500">
+
+                                        {" "}
+                                        {formattaNumero(tasse, 1)}%
+
+                                    </span>
+
+                                    <br /><br />
+
+                                    Totale netto =
+
+                                    {" "}
+
+                                    Totale - Tasse
                                 </code>
 
                             )}
@@ -999,9 +1146,9 @@
                     {/* FOOTER */}
 
                     <div className="text-center text-xs text-gray-400">
-                        
-                        <a href="/interesse-composto/v.1.0.html"> Vai a versione iniziale semplificata </a> <br/>
-                        
+
+                        <a href="/interesse-composto/v.1.0.html"> Vai a versione iniziale semplificata </a> <br />
+
                         ciauuuu✨
 
                     </div>
