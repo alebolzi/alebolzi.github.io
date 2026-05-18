@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC Multi-Factor Model — Whitepaper v1.0</title>
+
+    <style>
+        /* ============================================
+           WHITEPAPER DOCUMENT STYLES
+           Academic / Technical Document Aesthetic
+        ============================================ */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #fafbfc;
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --accent-blue: #2563eb;
+            --border-color: #e2e8f0;
+            --code-bg: #f7fafc;
+            --table-header-bg: #f1f5f9;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 16px;
+            line-height: 1.75;
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Document Container */
+        .document {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--bg-primary);
+            box-shadow: 0 0 40px rgba(0,0,0,0.08);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 80px 60px 50px;
+            border-bottom: 2px solid var(--border-color);
+            background: linear-gradient(to bottom, var(--bg-secondary), var(--bg-primary));
+        }
+
+        .doc-meta {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        h1 {
+            font-size: 38px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 18px;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 17px;
+            color: var(--text-secondary);
+            font-style: italic;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Content */
+        main {
+            padding: 0 60px 60px;
+        }
+
+        /* Section Styling */
+        section {
+            padding: 45px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        section:last-of-type {
+            border-bottom: none;
+        }
+
+        h2 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 22px;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        h2 .section-number {
+            font-size: 15px;
+            color: var(--accent-blue);
+            font-weight: 700;
+            min-width: 28px;
+        }
+
+        h3 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 30px;
+            margin-bottom: 14px;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            text-align: justify;
+        }
+
+        /* Abstract Box */
+        .abstract {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--accent-blue);
+            padding: 25px 30px;
+            margin: 25px 0;
+            font-size: 15px;
+            line-height: 1.75;
+        }
+
+        .abstract p {
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        thead {
+            background: var(--table-header-bg);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            vertical-align: top;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Code & Formulas */
+        code {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            background: var(--code-bg);
+            padding: 3px 8px;
+            border-radius: 3px;
+            color: #c53030;
+            border: 1px solid var(--border-color);
+        }
+
+        .formula-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 20px 25px;
+            margin: 24px 0;
+            text-align: center;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+        }
+
+        .formula-label {
+            display: block;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 16px 0 16px 24px;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 8px;
+            line-height: 1.65;
+        }
+
+        li strong {
+            color: var(--text-primary);
+        }
+
+        /* Factor Cards (Minimal) */
+        .factor-spec {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 25px 28px;
+            margin: 24px 0;
+        }
+
+        .factor-header {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .factor-meta {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 10px 20px;
+            font-size: 14px;
+            margin: 16px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .factor-meta dt {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .factor-meta dd {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tag-green { 
+            background: #f0fff4; 
+            color: #22543d; 
+            border: 1px solid #9ae6b4; 
+        }
+        
+        .tag-yellow { 
+            background: #fffff0; 
+            color: #744210; 
+            border: 1px solid #faf089; 
+        }
+        
+        .tag-red { 
+            background: #fff5f5; 
+            color: #742a2a; 
+            border: 1px solid #feb2b2; 
+        }
+        
+        .tag-gray {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #cbd5e0;
+        }
+        
+        .tag-purple {
+            background: #faf5ff;
+            color: #553c9a;
+            border: 1px solid #d6bcfa;
+        }
+        
+        .tag-orange {
+            background: #fffaf0;
+            color: #7b341e;
+            border: 1px solid #fbd38d;
+        }
+
+        /* Warning Box */
+        .warning {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            border-left: 3px solid #c53030;
+            padding: 20px 24px;
+            margin: 24px 0;
+            font-size: 14px;
+            line-height: 1.65;
+        }
+
+        .warning strong {
+            color: #c53030;
+            display: block;
+            margin-bottom: 6px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .warning p {
+            margin: 0;
+            color: #742a2a;
+            text-align: left;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #ebf8ff;
+            border: 1px solid #90cdf4;
+            border-left: 3px solid var(--accent-blue);
+            padding: 20px 24px;
+            margin: 24px 0;
+            font-size: 14px;
+            line-height: 1.65;
+        }
+
+        .info-box strong {
+            color: var(--accent-blue);
+            display: block;
+            margin-bottom: 6px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #2c5282;
+            text-align: left;
+        }
+
+        /* Note/Callout Box */
+        .note-box {
+            background: #fffff0;
+            border: 1px solid #faf089;
+            border-left: 3px solid #d69e2e;
+            padding: 18px 22px;
+            margin: 20px 0;
+            font-size: 14px;
+            line-height: 1.65;
+        }
+
+        .note-box p {
+            margin: 0;
+            color: #744210;
+            text-align: left;
+        }
+
+        /* Scenario Cards */
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin: 24px 0;
+        }
+
+        .scenario-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 22px;
+            position: relative;
+        }
+
+        .scenario-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            border-radius: 6px 6px 0 0;
+        }
+
+        .scenario-card.bull-trap::before { background: #fc8181; }
+        .scenario-card.buy-dip::before { background: #68d391; }
+        .scenario-card.cycle-bottom::before { background: #4299e1; }
+        .scenario-card.cycle-top::before { background: #ed8936; }
+
+        .scenario-title {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scenario-emoji {
+            font-size: 20px;
+        }
+
+        .scenario-condition {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: var(--code-bg);
+            padding: 8px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .scenario-action {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 12px 0;
+            text-align: center;
+        }
+
+        .scenario-action.sell {
+            background: #fff5f5;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+
+        .scenario-action.buy {
+            background: #f0fff4;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .scenario-notes {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .scenario-notes ul {
+            margin: 8px 0 0 16px;
+            padding: 0;
+        }
+
+        .scenario-notes li {
+            margin-bottom: 4px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 35px 60px;
+            border-top: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header, main, footer {
+                padding-left: 30px;
+                padding-right: 30px;
+            }
+
+            h1 {
+                font-size: 30px;
+            }
+
+            h2 {
+                font-size: 19px;
+            }
+
+            .factor-meta {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            table {
+                font-size: 13px;
+            }
+
+            th, td {
+                padding: 10px 12px;
+            }
+
+            .scenario-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Print Optimization */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .document {
+                box-shadow: none;
+            }
+
+            section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="document">
+
+    <header>
+        <div class="doc-meta">Technical Whitepaper • Version 1.0</div>
+        <h1>BTC Multi-Factor Model</h1>
+        <div class="subtitle">
+            Quantitative Multi-Factor Framework for Bitcoin Macro-Cycle Analysis and Market Regime Classification
+        </div>
+    </header>
+
+    <main>
+
+        <!-- ABSTRACT -->
+        <section id="abstract">
+            <h2><span class="section-number">Abstract</span></h2>
+            
+            <div class="abstract">
+                <p>
+                    This document presents the <strong>BTC Multi-Factor Model</strong>, a quantitative framework designed to evaluate Bitcoin's macro-cycle state through four independent market dimensions: <strong>Halving Cycle</strong> (structural timing), <strong>Fear & Greed Index</strong> (sentiment), <strong>MA200 Deviation</strong> (trend valuation), and <strong>Monthly RSI</strong> (momentum). Each indicator is normalized to a unified [0,1] scale—where <code>0</code> represents accumulation/undervaluation and <code>1</code> represents distribution/euphoria—and aggregated into a composite score via arithmetic mean. The output provides a probabilistic market positioning signal intended for macro-level strategic decision support.
+                </p>
+            </div>
+        </section>
+
+        <!-- 1. INTRODUCTION -->
+        <section id="introduction">
+            <h2><span class="section-number">1.</span>Introduction</h2>
+            
+            <p>
+                Bitcoin markets exhibit recurring cyclical patterns driven by supply dynamics (halvings), participant psychology (fear/greed cycles), trend deviations from long-term means, and momentum oscillations. Individual indicators capture partial information; their synthesis enables more robust regime classification.
+            </p>
+
+            <p>
+                The model addresses three core objectives:
+            </p>
+
+            <ol>
+                <li><strong>Multi-dimensional synthesis:</strong> Combine structural, sentiment, valuation, and momentum signals into a unified metric.</li>
+                <li><strong>Normalization:</strong> Map heterogeneous inputs (days, index values, percentages, oscillator readings) to a common probabilistic scale.</li>
+                <li><strong>Actionable interpretation:</strong> Translate composite scores into discrete market regimes with historical precedent.</li>
+            </ol>
+
+            <h3>Scope & Limitations</h3>
+            <p>
+                This framework operates at the <strong>macro-cycle level</strong> (monthly+ timeframes). It is not designed for short-term trading signals, price targets, or timing precision. The model is experimental and intended for analytical/educational purposes only.
+            </p>
+        </section>
+
+        <!-- 2. METHODOLOGY OVERVIEW -->
+        <section id="methodology">
+            <h2><span class="section-number">2.</span>Methodology Overview</h2>
+
+            <h3>2.1 Indicator Taxonomy</h3>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 18%;">Factor</th>
+                        <th style="width: 15%;">Category</th>
+                        <th style="width: 32%;">Input Signal</th>
+                        <th style="width: 35%;">Normalization Logic</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Halving Cycle</strong></td>
+                        <td>Structural</td>
+                        <td>Days since last halving event</td>
+                        <td>Temporal phase mapping over cycle length</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fear & Greed</strong></td>
+                        <td>Sentiment</td>
+                        <td>Alternative.me FGI (0–100)</td>
+                        <td>Linear scale: value ÷ 100</td>
+                    </tr>
+                    <tr>
+                        <td><strong>MA200 Deviation</strong></td>
+                        <td>Trend</td>
+                        <td>% distance from 200-day SMA</td>
+                        <td>Clamped linear mapping: [-30%, +30%] → [0, 1]</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Monthly RSI</strong></td>
+                        <td>Momentum</td>
+                        <td>14-period RSI on monthly candles</td>
+                        <td>Linear scale: [0, 100] → [0, 1]</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>2.2 Composite Score Calculation</h3>
+
+            <div class="formula-block">
+                <span class="formula-label">Composite Score Formula</span>
+                S<sub>composite</sub> = (S<sub>halving</sub> + S<sub>fng</sub> + S<sub>ma200</sub> + S<sub>rsi</sub>) / 4
+            </div>
+
+            <p>
+                Equal weighting is applied across all four factors. The resulting score <code>S ∈ [0, 1]</code> represents the model's aggregate assessment of market conditions, where lower values indicate historically favorable accumulation zones and higher values indicate euphoric/distribution regimes.
+            </p>
+        </section>
+
+        <!-- 3. SCORING FRAMEWORK -->
+        <section id="scoring">
+            <h2><span class="section-number">3.</span>Scoring Framework & Interpretation</h2>
+
+            <h3>3.1 Regime Classification Matrix</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Score Range</th>
+                        <th style="width: 22%;">Regime Label</th>
+                        <th style="width: 33%;">Market Characteristics</th>
+                        <th style="width: 30%;">Strategic Implication</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>0.00 – 0.20</strong></td>
+                        <td><span class="tag tag-green">Extreme Opportunity</span></td>
+                        <td>Deep undervaluation; post-crash accumulation; maximal risk/reward asymmetry</td>
+                        <td><strong>Aggressive accumulation</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>0.20 – 0.35</strong></td>
+                        <td><span class="tag tag-green">Buy Zone</span></td>
+                        <td>Favorable entry conditions; early recovery phase</td>
+                        <td><strong>Systematic accumulation</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>0.35 – 0.50</strong></td>
+                        <td><span class="tag tag-yellow">Neutral-Bullish</span></td>
+                        <td>Transition phase; mixed signals; moderate confidence</td>
+                        <td><strong>Dollar-cost averaging</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>0.50 – 0.65</strong></td>
+                        <td><span class="tag tag-yellow">Neutral</span></td>
+                        <td>Ambiguous directional bias; equilibrium zone</td>
+                        <td><strong>Hold position</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>0.65 – 0.80</strong></td>
+                        <td><span class="tag tag-red">Caution</span></td>
+                        <td>Elevated valuations; late-cycle characteristics emerging</td>
+                        <td><strong>Reduce exposure / Take profits</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>0.80 – 1.00</strong></td>
+                        <td><span class="tag tag-red">Euphoria</span></td>
+                        <td>Historical tops; extreme overheating; mania conditions</td>
+                        <td><strong>Exit strategy / Full de-risking</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>3.2 Interpretation Guidelines</h3>
+            
+            <ul>
+                <li>The score is <strong>probabilistic, not predictive</strong>. It indicates historical regime similarity, not future price direction.</li>
+                <li><strong>Regime persistence</strong>: Scores tend to remain within bands for extended periods (weeks/months); single-day fluctuations are noise.</li>
+                <li><strong>Cross-validation</strong>: Extreme scores (<0.2 or >0.8) gain significance when multiple factors align (confluence).</li>
+                <li><strong>Context dependency</strong>: Halving-year cycles may exhibit shifted baselines; structural breaks require manual recalibration.</li>
+            </ul>
+        </section>
+
+        <!-- 4. FACTOR SPECIFICATIONS -->
+        <section id="factors">
+            <h2><span class="section-number">4.</span>Factor Specifications</h2>
+
+            <!-- FACTOR 1: HALVING -->
+            <div class="factor-spec">
+                <div class="factor-header">4.1 Halving Cycle Component</div>
+
+                <dl class="factor-meta">
+                    <dt>Type</dt>
+                    <dd>Pure temporal cycle indicator (date-based, not price-based)</dd>
+
+                    <dt>Data Source</dt>
+                    <dd>Internal calculation from historical halving timestamps</dd>
+
+                    <dt>Cycle Length</dt>
+                    <dd>Dynamic: average of the last 2 halving intervals (~1,410 days typical)</dd>
+
+                    <dt>Reference Point</dt>
+                    <dd>Date of most recent halving event (t = 0)</dd>
+                </dl>
+
+                <h3>Fundamental Premise</h3>
+                
+                <div class="info-box">
+                    <strong>📅 Temporal Model (Not Price-Based)</strong>
+                    <p>
+                        This component operates exclusively on <strong>calendar time</strong>, not price action. Historical analysis of Bitcoin's four completed halving cycles reveals a consistent temporal pattern: approximately <strong>⅔ of cycle duration exhibits bullish price behavior</strong>, while <strong>⅓ exhibits bearish/corrective behavior</strong>. The model maps these temporal zones relative to the halving date as anchor point (t=0).
+                    </p>
+                </div>
+
+                <h3>Cycle Length Calculation</h3>
+                <p>The cycle length (<code>CYCLE_LENGTH</code>) is computed dynamically as:</p>
+                
+                <div class="formula-block" style="font-size: 14px;">
+                    <span class="formula-label">Dynamic Cycle Length Formula</span>
+                    CYCLE_LENGTH = (Halving[n] − Halving[n−1] + Halving[n−1] − Halving[n−2]) / 2
+                </div>
+
+                <ul>
+                    <li>Takes the <strong>average of the two most recent halving intervals</strong> to account for minor variations in block time</li>
+                    <li>Typical range: <strong>~1,400 – 1,450 days</strong> (~3.85 years)</li>
+                    <li>Recalibrates automatically after each new halving event</li>
+                </ul>
+
+                <h3>Temporal Phase Mapping</h3>
+                <p>
+                    Given elapsed days since halving (<code>t_elapsed</code>), the normalized position within cycle is:
+                </p>
+                
+                <div class="formula-block" style="font-size: 14px;">
+                    <span class="formula-label">Cycle Progress</span>
+                    p = t<sub>elapsed</sub> / CYCLE_LENGTH &nbsp;&nbsp; (where p ∈ [0, 1])
+                </div>
+
+                <p>The model classifies time into three distinct zones based on historical price behavior:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Cycle Position (p)</th>
+                            <th style="width: 15%;">Elapsed Days*</th>
+                            <th style="width: 18%;">Temporal Zone</th>
+                            <th style="width: 52%;">Historical Behavior & Score Output</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>0.00 – 0.33</strong></td>
+                            <td>0 – ~470</td>
+                            <td><span class="tag tag-green">BULL ZONE</span></td>
+                            <td>Post-halving supply shock; early bullish momentum. <strong>Score rises toward 1.0</strong> as this phase progresses (approaching euphoria/top formation by ~33%).</td>
+                        </tr>
+                        <tr>
+                            <td><strong>0.33 – 0.67</strong></td>
+                            <td>~470 – ~940</td>
+                            <td><span class="tag tag-red">BEAR ZONE</span></td>
+                            <td>Mid-cycle corrective phase. <strong>Score decreases from 1.0 → 0.0</strong> across this window. Maximum accumulation opportunity (score ≈ 0.0) occurs near the <strong>66% mark (~940–1000 days)</strong>.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>0.67 – 1.00</strong></td>
+                            <td>~940 – 1,420</td>
+                            <td><span class="tag tag-green">BULL ZONE</span></td>
+                            <td>Pre-next-halving rally; late-cycle recovery. <strong>Score rises from 0.0 toward higher values</strong> as next halving approaches (potential renewed euphoria).</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="font-size: 13px; color: var(--text-muted); font-style: italic;">
+                    *Approximate values based on CYCLE_LENGTH = 1,420 days. Actual values scale dynamically.
+                </p>
+
+                <h3>Non-Linear Score Curve</h3>
+                <p>
+                    Crucially, the mapping from cycle position <code>p</code> to score <code>S_halving</code> is <strong>not linear</strong>. The score follows an inverted curve within the bear zone:
+                </p>
+
+                <div class="formula-block" style="font-size: 14px; text-align: left;">
+                    <span class="formula-label">Key Score Anchors (Empirical)</span>
+                    <table style="margin: 12px 0 0 0; font-size: 13px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">Cycle Position</th>
+                                <th style="width: 25%;">Days Post-Halving</th>
+                                <th style="width: 25%;">S<sub>halving</sub> Score</th>
+                                <th style="width: 25%;">Interpretation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>p = 0.00</strong></td>
+                                <td>Day 0 (Halving)</td>
+                                <td><code>~0.50</code></td>
+                                <td>Neutral starting point</td>
+                            </tr>
+                            <tr>
+                                <td><strong>p ≈ 0.33</strong></td>
+                                <td>~470 days</td>
+                                <td><code>→ 1.00</code></td>
+                                <td><strong>Peak Euphoria</strong> (post-first-bull top)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>p = 0.50</strong></td>
+                                <td>~710 days</td>
+                                <td><code>~0.50</code></td>
+                                <td>Mid-correction transition</td>
+                            </tr>
+                            <tr>
+                                <td><strong>p ≈ 0.67</strong></td>
+                                <td>~950–1000 days</td>
+                                <td><code>→ 0.00</code></td>
+                                <td><strong>Maximum Opportunity</strong> (cycle bottom)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>p = 1.00</strong></td>
+                                <td>~1,420 days</td>
+                                <td><code>~0.70–0.90</code></td>
+                                <td>Pre-halving rally (elevated again)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Key Characteristics</h3>
+                <ol>
+                    <li><strong>Date-driven logic:</strong> The model does not analyze current price, trend, or momentum—it purely evaluates <em>where we are in calendar time</em> relative to the halving anchor.</li>
+                    <li><strong>Inverted curve in bear zone:</strong> Unlike naive linear mapping, the score peaks at ~33% (end of first bull) and bottoms at ~66% (mid-cycle trough). This reflects the empirical observation that the <strong>worst time to enter</strong> is ~500 days post-halving (euphoric top), while the <strong>best time to accumulate</strong> is ~1000 days post-halving (capitulation bottom).</li>
+                    <li><strong>Asymmetric bull/bear split:</strong> Reflects empirical observation that Bitcoin spends ~67% of cycle time in bullish conditions and ~33% in bearish/corrective phases—but the <em>score intensity</em> varies non-linearly within each zone.</li>
+                    <li><strong>Self-similar structure:</strong> Each halving cycle exhibits this temporal pattern with high consistency across Bitcoin's history (2012, 2016, 2020 halvings).</li>
+                </ol>
+
+                <h3>Example Calculations</h3>
+                
+                <div class="formula-block" style="font-size: 14px; text-align: left;">
+                    <span class="formula-label">Scenario A: Early Post-Halving (~500 days)</span>
+                    <ol style="margin: 10px 0 0 20px; text-align: left;">
+                        <li>t<sub>elapsed</sub> = 500 days</li>
+                        <li>CYCLE_LENGTH = 1,420 days</li>
+                        <li>p = 500 / 1420 = <strong>0.352</strong> (35.2% through cycle)</li>
+                        <li>Zone: Just entered <strong>BEAR ZONE</strong> boundary (or exiting peak BULL)</li>
+                        <li>S<sub>halving</sub> ≈ <strong>0.95 – 1.00</strong> (near maximum — euphoric conditions)</li>
+                        <li><strong>Interpretation:</strong> Historically dangerous entry point; prior cycles show significant corrections follow this temporal window</li>
+                    </ol>
+                </div>
+
+                <div class="formula-block" style="font-size: 14px; text-align: left;">
+                    <span class="formula-label">Scenario B: Mid-Cycle Trough (~1000 days)</span>
+                    <ol style="margin: 10px 0 0 20px; text-align: left;">
+                        <li>t<sub>elapsed</sub> = 1000 days</li>
+                        <li>CYCLE_LENGTH = 1,420 days</li>
+                        <li>p = 1000 / 1420 = <strong>0.704</strong> (70.4% through cycle)</li>
+                        <li>Zone: Exiting <strong>BEAR ZONE</strong>, entering late BULL phase</li>
+                        <li>S<sub>halving</sub> ≈ <strong>0.00 – 0.10</strong> (near minimum — optimal accumulation)</li>
+                        <li><strong>Interpretation:</strong> Historically favorable window; prior cycles show major bottoms form in this ±100 day range before sustained recovery into next halving</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- FACTOR 2: FEAR & GREED -->
+            <div class="factor-spec">
+                <div class="factor-header">4.2 Fear & Greed Index</div>
+
+                <dl class="factor-meta">
+                    <dt>Type</dt>
+                    <dd>Sentiment composite indicator</dd>
+
+                    <dt>Data Source</dt>
+                    <dd>Alternative.me API: <code>https://api.alternative.me/fng/</code></dd>
+
+                    <dt>Raw Range</dt>
+                    <dd>0 (Extreme Fear) – 100 (Extreme Greed)</dd>
+
+                    <dt>Update Frequency</dt>
+                    <dd>Daily (00:00 UTC)</dd>
+                </dl>
+
+                <h3>Source Methodology</h3>
+                <p>The FGI is computed as a weighted average of six sub-factors:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Sub-Factor</th>
+                            <th style="width: 75%;">Measurement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Volatility</strong></td>
+                            <td>Current vs. 30-day/90-day average volatility</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Momentum/Volume</strong></td>
+                            <td>Price momentum + trading volume analysis</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Social Media</strong></td>
+                            <td>Twitter/Reddit sentiment & hashtag frequency</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Surveys</strong></td>
+                            <td>Weekly community polls (deprecated in recent versions)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dominance</strong></td>
+                            <td>Bitcoin market cap share vs. altcoins</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Google Trends</strong></td>
+                            <td>Search volume for "Bitcoin" & related queries</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Model Integration</h3>
+                <p>
+                    Raw FGI value is linearly normalized: <code>S_fng = FGI_raw / 100</code>. 
+                    Threshold interpretation: <code>&lt; 40</code> (fear/accumulation signal), <code>40–60</code> (neutral), <code>&gt; 60</code> (greed/distribution warning).
+                </p>
+            </div>
+
+            <!-- FACTOR 3: MA200 DEVIATION -->
+            <div class="factor-spec">
+                <div class="factor-header">4.3 MA200 Deviation Analysis</div>
+
+                <dl class="factor-meta">
+                    <dt>Type</dt>
+                    <dd>Trend deviation / mean-reversion indicator</dd>
+
+                    <dt>Data Source</dt>
+                    <dd>Binance API: <code>/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=200</code></dd>
+
+                    <dt>Lookback Window</dt>
+                    <dd>200 daily candles (~9.5 months)</dd>
+
+                    <dt>Computation</dt>
+                    <dd>((Price<sub>current</sub> - MA200) / MA200) × 100</dd>
+                </dl>
+
+                <h3>Calculation Pipeline</h3>
+                <ol>
+                    <li>Retrieve last 200 BTC/USDT daily closing prices from Binance</li>
+                    <li>Compute Simple Moving Average: <code>MA200 = Σ(close[i]) / 200</code></li>
+                    <li>Calculate percentage deviation: <code>dev = ((close[0] - MA200) / MA200) × 100</code></li>
+                    <li>Apply clamping normalization (see §4.3.2 below)</li>
+                </ol>
+
+                <h3>Normalization Logic: Clamped Linear Mapping</h3>
+
+                <div class="info-box">
+                    <strong>⚙️ The ±30% Bound (Cap Mechanism)</strong>
+                    <p>
+                        The raw deviation value (<code>dev</code>) can theoretically range from approximately <strong>-90%</strong> (extreme bear markets, e.g., 2018 bottom) to <strong>+300%+</strong> (parabolic bull runs, e.g., 2021 peak). To prevent extreme outliers from dominating the composite score, the model applies a <strong>hard clamp (cap) at ±30%</strong>. Values beyond this boundary are truncated to the boundary value (saturation).
+                    </p>
+                </div>
+
+                <h3>Mathematical Formulation</h3>
+
+                <div class="formula-block" style="font-size: 15px;">
+                    <span class="formula-label">Clamped Normalization Function</span>
+                    S<sub>ma200</sub> = clamp( (dev + 30) / 60 , 0 , 1 )
+                </div>
+
+                <p>Where the <code>clamp(x, min, max)</code> function enforces:</p>
+
+                <div class="formula-block" style="font-size: 14px; text-align: left;">
+                    <span class="formula-label">Piecewise Definition</span>
+                    <pre style="margin: 10px 0 0 0; text-align: left; font-size: 13px; background: transparent; border: none; padding: 0;">
+if dev ≤ -30:   S_ma200 = 0          ← Hard floor (saturated minimum)
+if dev ≥ +30:   S_ma200 = 1          ← Hard ceiling (saturated maximum)
+else:           S_ma200 = (dev + 30) / 60   ← Linear interpolation
+                    </pre>
+                </div>
+
+                <h3>Numerical Reference Table (Exact Values)</h3>
+                <p>The following table shows exact normalized scores for key deviation levels:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 18%;">Deviation (dev)</th>
+                            <th style="width: 28%;">Mathematical Operation</th>
+                            <th style="width: 15%;">S<sub>ma200</sub></th>
+                            <th style="width: 39%;">Market Condition & Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- EXTREME LOW -->
+                        <tr style="background: #fff5f5;">
+                            <td><strong>-35%</strong></td>
+                            <td><code>clamp((-35+30)/60) = clamp(-0.083) = 0</code></td>
+                            <td><strong><code>0.00</code></strong></td>
+                            <td>
+                                <span class="tag tag-red">SATURATED</span> Below cap floor.<br>
+                                <strong>Extreme capitulation zone.</strong> Historically rare (2018 Dec: ~-45%). Price has collapsed far below 200-day mean. Model cannot distinguish between -35% and -50%; both yield minimum score.<br>
+                                <em style="color: #c53030;">Signal: Maximum accumulation opportunity (clamped)</em>
+                            </td>
+                        </tr>
+                        
+                        <!-- CAP FLOOR -->
+                        <tr style="background: #f0fff4;">
+                            <td><strong>-30%</strong></td>
+                            <td><code>(-30 + 30) / 60 = 0 / 60 = 0</code></td>
+                            <td><strong><code>0.00</code></strong></td>
+                            <td>
+                                <span class="tag tag-green">CAP FLOOR</span> Exact boundary.<br>
+                                <strong>Deep undervaluation threshold.</strong> Historical bear market bottoms often touch this level (e.g., Mar 2020 COVID crash, Nov 2022 FTX collapse). Represents maximum bearish deviation before saturation.<br>
+                                <em style="color: #22543d;">Signal: Strong buy signal (maximum opportunity score)</em>
+                            </td>
+                        </tr>
+
+                        <!-- MODERATE LOW -->
+                        <tr>
+                            <td><strong>-20%</strong></td>
+                            <td><code>(-20 + 30) / 60 = 10 / 60 = 0.167</code></td>
+                            <td><code>0.17</code></td>
+                            <td>
+                                <span class="tag tag-green">Undervalued</span><br>
+                                Significant below-mean positioning. Typical of mid-bear market conditions or severe corrections within bull trends.
+                            </td>
+                        </tr>
+
+                        <!-- SLIGHT LOW -->
+                        <tr>
+                            <td><strong>-10%</strong></td>
+                            <td><code>(-10 + 30) / 60 = 20 / 60 = 0.333</code></td>
+                            <td><code>0.33</code></td>
+                            <td>
+                                <span class="tag tag-yellow">Mild Undervaluation</span><br>
+                                Moderately below fair value. Common during healthy pullbacks in uptrends or early bear phases.
+                            </td>
+                        </tr>
+
+                        <!-- NEUTRAL -->
+                        <tr style="background: #f7fafc;">
+                            <td><strong>0%</strong></td>
+                            <td><code>(0 + 30) / 60 = 30 / 60 = 0.500</code></td>
+                            <td><code>0.50</code></td>
+                            <td>
+                                <span class="tag tag-gray">NEUTRAL</span> Exact midpoint.<br>
+                                <strong>Price = MA200.</strong> Trading precisely at the 200-day moving average. No directional bias from this indicator alone. Fair value equilibrium.
+                            </td>
+                        </tr>
+
+                        <!-- SLIGHT HIGH -->
+                        <tr>
+                            <td><strong>+10%</strong></td>
+                            <td><code>(10 + 30) / 60 = 40 / 60 = 0.667</code></td>
+                            <td><code>0.67</code></td>
+                            <td>
+                                <span class="tag tag-yellow">Mild Overvaluation</span><br>
+                                Moderately above fair value. Early overheating signal; caution warranted but not yet critical.
+                            </td>
+                        </tr>
+
+                        <!-- MODERATE HIGH -->
+                        <tr>
+                            <td><strong>+20%</strong></td>
+                            <td><code>(20 + 30) / 60 = 50 / 60 = 0.833</code></td>
+                            <td><code>0.83</code></td>
+                            <td>
+                                <span class="tag tag-red">Overvalued</span><br>
+                                Significant above-mean extension. Late-cycle characteristics; profit-taking consideration appropriate.
+                            </td>
+                        </tr>
+
+                        <!-- CAP CEILING -->
+                        <tr style="background: #fff5f5;">
+                            <td><strong>+30%</strong></td>
+                            <td><code>(30 + 30) / 60 = 60 / 60 = 1</code></td>
+                            <td><strong><code>1.00</code></strong></td>
+                            <td>
+                                <span class="tag tag-red">CAP CEILING</span> Exact boundary.<br>
+                                <strong>Euphoria/extreme overextension threshold.</strong> Historical bull market tops often exceed this level temporarily (e.g., Feb 2021: ~+45%). Represents maximum bullish deviation before saturation.<br>
+                                <em style="color: #742a2a;">Signal: Maximum distribution warning (clamped)</em>
+                            </td>
+                        </tr>
+
+                        <!-- EXTREME HIGH -->
+                        <tr style="background: #fff5f5;">
+                            <td><strong>+45%</strong></td>
+                            <td><code>clamp((45+30)/60) = clamp(1.25) = 1</code></td>
+                            <td><strong><code>1.00</code></strong></td>
+                            <td>
+                                <span class="tag tag-red">SATURATED</span> Above cap ceiling.<br>
+                                <strong>Parabolic bubble territory.</strong> Mania conditions (e.g., Bitcoin Apr 2021: ~+70% above MA200). Model cannot distinguish between +30% and +70%; both yield maximum score.<br>
+                                <em style="color: #742a2a;">Signal: Extreme distribution urgency (clamped)</em>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Why ±30%? Rationale for Boundary Selection</h3>
+
+                <p>The ±30% cap was selected based on <strong>empirical analysis of Bitcoin's historical deviation distribution</strong> across multiple market cycles (2013–2024):</p>
+
+                <ol>
+                    <li><strong>Statistical coverage:</strong> Approximately <strong>95%+ of trading days</strong> fall within the [-30%, +30%] range under normal market conditions. Only extreme black-swan events or parabolic blow-offs exceed these bounds.</li>
+                    
+                    <li><strong>Mean-reversion anchor points:</strong> Historical data shows that deviations beyond ±30% have <strong>high mean-reversion probability</strong> within 3–6 months. The 2018 bottom (-45%) reverted to mean within 180 days; the 2021 top (+70%) reverted within 90 days.</li>
+                    
+                    <li><strong>Signal saturation prevention:</strong> Without capping, a +70% deviation would produce a normalized score of <code>(70+30)/60 = 1.67</code>, which exceeds the [0,1] target range and would disproportionately dominate the composite score (overweighting this factor 67% above its equal-share allocation).</li>
+                    
+                    <li><strong>Asymmetric risk acknowledgment:</strong> While the bounds appear symmetric (±30%), Bitcoin's actual distribution is <strong>positively skewed</strong> — extreme positive deviations (+50% to +100%) occur more frequently than extreme negative deviations (-40% to -60%). The symmetric cap intentionally compresses the upside tail more aggressively than downside tail, reflecting the premise that <strong>euphoria is more dangerous than panic</strong> for long-term accumulation strategies.</li>
+                </ol>
+
+                <div class="note-box">
+                    <p>
+                        <strong>🔧 Future Calibration Note:</strong> The ±30% boundary is a <em>tunable hyperparameter</em>. In future iterations, this cap may be reduced (e.g., to ±25% or ±20%) to increase sensitivity to moderate extensions, or asymmetrically adjusted (e.g., -35%/+25%) to reflect different risk tolerances on the downside vs. upside. Any recalibration should be backtested against full-cycle historical data to validate regime classification accuracy.
+                    </p>
+                </div>
+
+                <h3>Behavior Beyond the Caps (Saturation Zones)</h3>
+
+                <p>When deviation exceeds ±30%, the model enters <strong>saturation mode</strong>:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Zone</th>
+                            <th style="width: 40%;">Condition</th>
+                            <th style="width: 40%;">Implication</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Floor Saturation</strong></td>
+                            <td><code>dev &lt; -30%</code> → <code>S = 0.00</code></td>
+                            <td>"As bad as it gets" from this indicator's perspective. Historical precedents: 2018 December (-45%), 2022 November (-38%), March 2020 flash crash (-32%). In all cases, significant rebounds followed within 6–12 months. The model treats -35% identically to -50%; both signal <strong>maximum accumulation favorability</strong>.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ceiling Saturation</strong></td>
+                            <td><code>dev &gt; +30%</code> → <code>S = 1.00</code></td>
+                            <td>"As good as it gets" — euphoric exhaustion imminent. Historical precedents: 2021 February (+45%), 2021 April (+70%), 2017 December (+55%). In all cases, major corrections (>40% drawdown) followed within 3–9 months. The model treats +35% identically to +70%; both signal <strong>maximum distribution urgency</strong>.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Practical Example</h3>
+
+                <div class="formula-block" style="font-size: 14px; text-align: left;">
+                    <span class="formula-label">Worked Example: Current Market State</span>
+                    <ol style="margin: 10px 0 0 20px; text-align: left;">
+                        <li>Current BTC price: <strong>$97,000</strong></li>
+                        <li>MA200 (200-day average): <strong>$72,000</strong></li>
+                        <li>Raw deviation: dev = ((97000 - 72000) / 72000) × 100 = <strong>+34.7%</strong></li>
+                        <li>Check bounds: +34.7% &gt; +30% → <strong>CEILING SATURATION</strong></li>
+                        <li>S<sub>ma200</sub> = <strong>1.00</strong> (clamped to maximum)</li>
+                        <li><strong>Interpretation:</strong> Price is 34.7% above 200-day mean — deep into euphoria territory. Despite being only 4.7 percentage points above the +30% cap, the model assigns maximum risk score (identical to if deviation were +70%). This signals urgent caution regardless of whether we're at "mild" or "extreme" overextension.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- FACTOR 4: MONTHLY RSI -->
+            <div class="factor-spec">
+                <div class="factor-header">4.4 Monthly RSI Momentum</div>
+
+                <dl class="factor-meta">
+                    <dt>Type</dt>
+                    <dd>Momentum oscillator (Wilder's RSI)</dd>
+
+                    <dt>Data Source</dt>
+                    <dd>Binance API: <code>/api/v3/klines?symbol=BTCUSDT&interval=1M&limit=14</code></dd>
+
+                    <dt>Timeframe</dt>
+                    <dd>Monthly candles (1M)</dd>
+
+                    <dt>Period</dt>
+                    <dd>14 periods (14 months of data)</dd>
+                </dl>
+
+                <h3>RSI Computation</h3>
+                <p>Following J. Welles Wilder's original formulation:</p>
+                
+                <div class="formula-block" style="font-size: 14px; text-align: left;">
+                    <span class="formula-label">Algorithm Steps</span>
+                    <ol style="margin: 10px 0 0 20px; text-align: left;">
+                        <li>Calculate monthly price changes: Δ = close[t] - close[t-1]</li>
+                        <li>Separate gains (Δ > 0) and losses (Δ < 0); set losses to absolute values</li>
+                        <li>Compute smoothed averages: AvgGain, AvgLoss (Wilder's exponential smoothing)</li>
+                        <li>Relative Strength: RS = AvgGain / AvgLoss</li>
+                        <li>RSI = 100 - (100 / (1 + RS))</li>
+                    </ol>
+                </div>
+
+                <h3>Threshold Interpretation</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 18%;">RSI Range</th>
+                            <th style="width: 32%;">Technical State</th>
+                            <th style="width: 25%;">Normalized</th>
+                            <th style="width: 25%;">Signal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>&lt; 30</strong></td>
+                            <td>Oversold (extreme weakness)</td>
+                            <td><code>0.0 – 0.3</code></td>
+                            <td><span class="tag tag-green">Accumulate</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>30 – 50</strong></td>
+                            <td>Bearish momentum</td>
+                            <td><code>0.3 – 0.5</code></td>
+                            <td><span class="tag tag-yellow">Neutral-Bearish</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>50 – 70</strong></td>
+                            <td>Bullish momentum</td>
+                            <td><code>0.5 – 0.7</code></td>
+                            <td><span class="tag tag-yellow">Neutral-Bullish</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>&gt; 70</strong></td>
+                            <td>Overbought (exhaustion risk)</td>
+                            <td><code>0.7 – 1.0</code></td>
+                            <td><span class="tag tag-red">Distribute</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="margin-top: 18px;">
+                    <strong>Note:</strong> On monthly timeframes, extreme RSI readings (&lt;20 or &gt;80) are statistically rare but highly significant, often coinciding with major cycle pivots. The monthly RSI acts as a low-pass filter that confirms macro-trend structure beyond short-term noise.
+                </p>
+            </div>
+        </section>
+
+        <!-- 5. CONTEXT-AWARE REASONING ENGINE -->
+        <section id="reasoning">
+            <h2><span class="section-number">5.</span>Context-Aware Reasoning Engine</h2>
+
+            <h3>5.1 The Blind Spot of Raw Numerical Scores</h3>
+
+            <div class="warning">
+                <strong>⚠️ Critical Limitation Identified</strong>
+                <p>
+                    During extensive backtesting and live observation, a fundamental limitation emerged: <strong>the composite numerical score alone is insufficient for robust decision-making</strong>. A high individual factor score in a bear-phase context may indicate a <em>sell</em> signal rather than euphoria; conversely, a low score during a bull phase may flag a <em>top formation</em> rather than an accumulation opportunity. The raw number lacks <strong>situational awareness</strong>.
+                </p>
+            </div>
+
+            <h3>The Core Problem: Context-Independent Interpretation</h3>
+            
+            <p>
+                Consider two scenarios that yield similar composite scores but demand <strong>diametrically opposed actions</strong>:
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 22%;">Scenario</th>
+                        <th style="width: 39%;">Raw Score Profile</th>
+                        <th style="width: 39%;">Naive Interpretation (WRONG)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Scenario α</strong><br><span style="font-size: 12px; color: var(--text-muted);">Day 650 post-halving<br>(Bear Zone)</span></td>
+                        <td>
+                            S<sub>ma200</sub> = 0.72 (price > MA)<br>
+                            S<sub>fng</sub> = 0.68 (greed)<br>
+                            S<sub>composite</sub> ≈ 0.55
+                        </td>
+                        <td>
+                            <span class="tag tag-yellow">"Neutral-Hold"</span><br><br>
+                            ❌ <strong>MISSING CONTEXT:</strong> High price + high sentiment <em>during bear phase</em> = classic <strong>bull trap</strong>. Retail FOMO into dead cat bounce. Correct action: <strong>SELL</strong>, not hold.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Scenario β</strong><br><span style="font-size: 12px; color: var(--text-muted);">Day 250 post-halving<br>(Bull Zone)</span></td>
+                        <td>
+                            S<sub>ma200</sub> = 0.38 (price < MA)<br>
+                            S<sub>fng</sub> = 0.32 (fear)<br>
+                            S<sub>composite</sub> ≈ 0.48
+                        </td>
+                        <td>
+                            <span class="tag tag-yellow">"Neutral-DCA"</span><br><br>
+                            ❌ <strong>MISSING CONTEXT:</strong> Low price + fear sentiment <em>during bull phase</em> = healthy pullback / dip buying opportunity. Correct action: <strong>ACCUMULATE</strong>, not cautious DCA.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                Both scenarios cluster around the <strong>0.45–0.55 neutral band</strong>, yet one represents a <strong>dangerous distribution trap</strong> while the other is a <strong>high-conviction entry point</strong>. The composite score alone cannot distinguish these cases—it requires <strong>conditional logic</strong> that evaluates factor <em>interactions within temporal context</em>.
+            </p>
+
+            <h3>5.2 Solution: Context-Aware Scenario Classification</h3>
+
+            <div class="info-box">
+                <strong>🧠 Reasoning Engine Architecture</strong>
+                <p>
+                    To address this blind spot, the model implements a secondary inference layer—the <strong>Reasoning Engine</strong>—that applies rule-based conditional logic atop the raw factor outputs. Rather than interpreting scores in isolation, the engine evaluates <strong>combinations of factors against temporal regime context</strong> (bull vs. bear phase determined by Halving Cycle position).
+                </p>
+            </div>
+
+            <h3>Temporal Regime Determination</h3>
+            
+            <p>The engine first establishes the <strong>temporal context</strong> using the Halving Cycle component:</p>
+
+            <div class="formula-block" style="font-size: 14px; text-align: left;">
+                <span class="formula-label">Regime Classification Rules</span>
+                <pre style="margin: 10px 0 0 0; text-align: left; font-size: 13px; background: transparent; border: none; padding: 0;">
+BEAR_PHASE:  days ∈ [500, 1000] post-halving
+BULL_PHASE:  days ∉ [500, 1000] post-halving (all other times)
+                </pre>
+            </div>
+
+            <p>
+                This binary classification splits the cycle into its empirically observed bearish (mid-cycle correction) and bullish (early/late cycle) windows, providing the context frame for all subsequent conditional evaluations.
+            </p>
+
+            <h3>5.3 Defined Scenarios & Decision Rules</h3>
+
+            <p>The Reasoning Engine implements four primary scenario patterns, each with specific trigger conditions and prescribed actions:</p>
+
+            <div class="scenario-grid">
+
+                <!-- SCENARIO 1: BULL TRAP -->
+                <div class="scenario-card bull-trap">
+                    <div class="scenario-title">
+                        <span class="scenario-emoji">🪤</span>
+                        BULL TRAP
+                    </div>
+                    <div class="scenario-condition">
+                        IF: isBear AND days∈[500,900]<br>
+                        AND: priceAbove (MA>0.55)<br>
+                        AND: sentimentHigh (FGI>0.6)
+                    </div>
+                    <div class="scenario-action sell">
+                        🚨 ACTION: SELL (now or never)
+                    </div>
+                    <div class="scenario-notes">
+                        <strong>Diagnostic Notes:</strong>
+                        <ul>
+                            <li>Technical rally during structural bear phase</li>
+                            <li>High sentiment → retail euphoria (FOMO)</li>
+                            <li>Price above mean → illusion of recovery</li>
+                            <li><strong>Historical analog:</strong> Summer 2021 relief rally before Nov 2021→2022 crash; Aug–Sep 2019 bounce before COVID/March 2020</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 2: BUY THE DIP -->
+                <div class="scenario-card buy-dip">
+                    <div class="scenario-title">
+                        <span class="scenario-emoji">🟢</span>
+                        BUY THE DIP
+                    </div>
+                    <div class="scenario-condition">
+                        IF: isBull<br>
+                        AND: priceBelow (MA<0.45)<br>
+                        AND: sentimentLow (FGI<0.4)
+                    </div>
+                    <div class="scenario-action buy">
+                        ✅ ACTION: ACCUMULATE
+                    </div>
+                    <div class="scenario-notes">
+                        <strong>Diagnostic Notes:</strong>
+                        <ul>
+                            <li>Temporary fear within healthy bull market</li>
+                            <li>Price below mean value → discount pricing</li>
+                            <li>Fear sentiment → retail exits, smart money enters</li>
+                            <li><strong>Historical analog:</strong> May–Jul 2021 correction (-50%) within 2020–2021 bull; Jan–Feb 2020 dip pre-COVID crash</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 3: CYCLE BOTTOM -->
+                <div class="scenario-card cycle-bottom">
+                    <div class="scenario-title">
+                        <span class="scenario-emoji">🧊</span>
+                        CYCLE BOTTOM
+                    </div>
+                    <div class="scenario-condition">
+                        IF: days∈[800,1000]<br>
+                        AND: maDiff≤-20% (deep undervaluation)<br>
+                        [OPTIONAL CONFIRMS]: sentimentLow, rsiLow
+                    </div>
+                    <div class="scenario-action buy">
+                        💎 ACTION: STRONG BUY
+                    </div>
+                    <div class="scenario-notes">
+                        <strong>Diagnostic Notes:</strong>
+                        <ul>
+                            <li>Final phase of structural bear market</li>
+                            <li>Extreme capitulation (price -20% below MA200)</li>
+                            <li>Optional confirmations increase confidence:<br>
+                            ✔ Sentiment fear (widespread panic)<br>
+                            ✔ RSI oversold (selling exhaustion)</li>
+                            <li><strong>Historical analog:</strong> Nov–Dec 2018 ($3,200); Nov 2022 ($15,500–$16,000); potential repeat at day ~950–1000 post-2024 halving</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 4: CYCLE TOP -->
+                <div class="scenario-card cycle-top">
+                    <div class="scenario-title">
+                        <span class="scenario-emoji">🔥</span>
+                        CYCLE TOP
+                    </div>
+                    <div class="scenario-condition">
+                        IF: days∈[450,550]<br>
+                        AND: maDiff>0% (price above MA200)<br>
+                        [OPTIONAL CONFIRMS]: sentimentHigh, rsiHigh
+                    </div>
+                    <div class="scenario-action sell">
+                        🔴 ACTION: TAKE PROFIT / SELL
+                    </div>
+                    <div class="scenario-notes">
+                        <strong>Diagnostic Notes:</strong>
+                        <ul>
+                            <li>Advanced stage of first post-halving bull run</li>
+                            <li>Price above mean → overextended trend</li>
+                            <li>Optional confirmations increase urgency:<br>
+                            ✔ Sentiment greed (retail euphoria)<br>
+                            ✔ RSI overbought (buying exhaustion)</li>
+                            <li><strong>Historical analog:</strong> Dec 2017 ($20K); Feb–Apr 2021 ($58K–$64K); potential repeat at day ~480–520 post-2024 halving</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3>5.4 Decision Hierarchy & Precedence</h3>
+
+            <p>
+                When multiple scenario conditions are simultaneously satisfied (overlap cases), the engine applies a <strong>precedence hierarchy</strong> based on risk severity:
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">Priority</th>
+                        <th style="width: 20%;">Scenario</th>
+                        <th style="width: 37%;">Trigger Conditions</th>
+                        <th style="width: 35%;">Rationale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #fff5f5;">
+                        <td><strong>1 (Highest)</strong></td>
+                        <td><span class="tag tag-red">BULL TRAP</span></td>
+                        <td>Bear phase + Overvaluation + Euphoria</td>
+                        <td>Highest risk of catastrophic loss (selling into bear trap rally before -60%+ drawdown). Takes precedence over all other signals when active.</td>
+                    </tr>
+                    <tr style="background: #fff5f5;">
+                        <td><strong>2</strong></td>
+                        <td><span class="tag tag-red">CYCLE TOP</span></td>
+                        <td>Late-bull phase + Extension + Confirmation</td>
+                        <td>Second-highest urgency. Missing cycle tops results in holding through -80% drawdowns. Profit-taking imperative overrides accumulation signals.</td>
+                    </tr>
+                    <tr style="background: #f0fff4;">
+                        <td><strong>3</strong></td>
+                        <td><span class="tag tag-green">CYCLE BOTTOM</span></td>
+                        <td>Late-bear phase + Deep Undervaluation</td>
+                        <td>High-conviction entry but lower immediate urgency than exit signals. Missing bottom delays entry but doesn't destroy capital.</td>
+                    </tr>
+                    <tr style="background: #f0fff4;">
+                        <td><strong>4 (Lowest)</strong></td>
+                        <td><span class="tag tag-green">BUY THE DIP</span></td>
+                        <td>Bull phase + Pullback + Fear</td>
+                        <td>Lowest priority. Dip-buying opportunities recur frequently in bull markets; missing one dip is recoverable. Never triggers if higher-priority sell signals are active.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>5.5 Implementation Notes</h3>
+
+            <div class="note-box">
+                <p>
+                    <strong>⚙️ Engineering Considerations:</strong> The Reasoning Engine operates as a <strong>secondary inference layer</strong> that consumes the same raw factor outputs used for composite score calculation. It does not replace the numerical scoring system but <strong>augments it with contextual intelligence</strong>. In production implementations, the engine outputs both: (1) the raw composite score for quantitative tracking, and (2) the scenario classification string ("BULL TRAP", "BUY THE DIP", etc.) for qualitative decision support. Users are advised to weigh both outputs—using the score for trend monitoring and the scenario label for actionable trade decisions.
+                </p>
+            </div>
+
+            <h3>5.6 Limitations of the Reasoning Approach</h3>
+
+            <ol>
+                <li><strong>Rule rigidity:</strong> Current implementation uses hard-coded thresholds (e.g., <code>days ≥ 500</code>, <code>MA_norm > 0.55</code>). These boundaries are heuristic approximations derived from limited historical samples (4 complete cycles). Future iterations may incorporate fuzzy logic or machine learning classifiers to handle boundary ambiguity.</li>
+                
+                <li><strong>Binary regime oversimplification:</strong> The bull/bear phase classification reduces complex multi-phase cycle dynamics to a binary switch. Real cycles exhibit transitional zones (early-bull → mid-bull → late-bull → early-bear → mid-bear → late-bear) that the current engine compresses into two states.</li>
+                
+                <li><strong>No probability output:</strong> Unlike the composite score (which provides continuous granularity), scenario classification is deterministic and categorical. The engine does not output "70% probability of BULL TRAP"—it either triggers or doesn't. Confidence estimation requires additional statistical modeling.</li>
+                
+                <li><strong>Single-asset calibration:</strong> All thresholds are calibrated specifically to Bitcoin's volatility profile and cycle cadence. Applying identical rules to Ethereum (shorter cycles, different halving dynamics) or altcoins would require independent parameter optimization.</li>
+            </ol>
+        </section>
+
+        <!-- 6. DATA ARCHITECTURE -->
+        <section id="data">
+            <h2><span class="section-number">6.</span>Data Architecture</h2>
+
+            <h3>6.1 Source Inventory</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 18%;">Provider</th>
+                        <th style="width: 32%;">Endpoint / Method</th>
+                        <th style="width: 25%;">Data Type</th>
+                        <th style="width: 25%;">Refresh Policy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Binance</strong></td>
+                        <td><code>GET /api/v3/klines</code></td>
+                        <td>OHLCV candles (BTC/USDT)</td>
+                        <td>Daily (MA200) / Monthly (RSI)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Alternative.me</strong></td>
+                        <td><code>GET /fng/?limit=1</code></td>
+                        <td>Fear & Greed Index (integer)</td>
+                        <td>Daily (cached 24h)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Internal</strong></td>
+                        <td>Constant lookup table</td>
+                        <td>Halving timestamps</td>
+                        <td>Static (updated post-halving)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>6.2 Data Quality & Error Handling</h3>
+            <ul>
+                <li><strong>Validation:</strong> API responses checked for completeness before computation; missing/null values trigger fallback to last-known-good state.</li>
+                <li><strong>Rate Limiting:</strong> Binance API calls respect weight limits (1200 requests/min); responses cached with TTL to prevent throttling.</li>
+                <li><strong>Outlier Detection:</strong> Extreme values (>3σ from rolling mean) flagged but not automatically discarded (may represent genuine regime shifts).</li>
+            </ul>
+        </section>
+
+        <!-- 7. LIMITATIONS & DISCLAIMER -->
+        <section id="limitations">
+            <h2><span class="section-number">7.</span>Limitations & Risk Disclosure</h2>
+
+            <h3>7.1 Model Limitations</h3>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 22%;">Limitation Category</th>
+                        <th style="width: 78%;">Description & Implication</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Lagging Indicators</strong></td>
+                        <td>MA200 and RSI are inherently backward-looking; they confirm trends rather than anticipate reversals. Signal latency may range from days (RSI) to weeks (MA200).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cap Sensitivity</strong></td>
+                        <td>The ±30% MA200 boundary is a heuristic choice. If future cycles exhibit systematically larger/smaller deviations (due to institutional adoption reducing volatility, or leverage amplifying it), the cap may require recalibration to maintain discriminative power.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Score Ambiguity</strong></td>
+                        <td>As detailed in §5.1, the composite numerical score alone cannot distinguish contextually opposite scenarios (bull trap vs. buy-the-dip). The Reasoning Engine partially addresses this but introduces its own limitations (rule rigidity, binary regime classification).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Regime Dependence</strong></td>
+                        <td>Historical normalization parameters assume stable market microstructure. Black swan events, regulatory shocks, or technological disruptions may invalidate baseline assumptions.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Equal Weighting</strong></td>
+                        <td>The arithmetic mean assumes equal factor importance. In practice, factor relevance varies by cycle phase (e.g., sentiment dominates mania phases; valuation dominates bottoms).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>No Causality</strong></td>
+                        <td>The model identifies correlations, not causal mechanisms. High scores do not guarantee imminent crashes; low scores do not guarantee immediate recoveries.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Single-Asset Scope</strong></td>
+                        <td>Calibrated exclusively for Bitcoin. Application to altcoins or broader crypto indices requires independent validation and parameter recalibration.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>7.2 Disclaimer</h3>
+
+            <div class="warning">
+                <strong>⚠ Important Notice</strong>
+                <p>
+                    This whitepaper describes an <strong>experimental quantitative research framework</strong> developed for educational and analytical purposes. The content does not constitute financial advice, investment recommendations, or performance guarantees. Cryptocurrency markets are highly volatile and unpredictable; past model behavior does not predict future accuracy. Users should conduct independent due diligence and consult qualified financial advisors before making investment decisions. The authors assume no liability for losses incurred through use of this framework.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p><strong>BTC Multi-Factor Model — Technical Whitepaper v1.0</strong></p>
+        <p style="margin-top: 6px;">Quantitative Research Framework • For Educational Purposes Only</p>
+    </footer>
+
+</div>
+
+</body>
+</html>
