@@ -657,6 +657,27 @@
             transform: translateX(5px);
         }
 
+		.wp-link {
+    display: inline-block;
+    margin-top: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent-cyan);
+    text-decoration: none;
+    letter-spacing: 1.5px;
+    padding: 6px 14px;
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    border-radius: 8px;
+    background: rgba(34, 211, 238, 0.05);
+    transition: all 0.3s ease;
+}
+
+.wp-link:hover {
+    background: rgba(34, 211, 238, 0.12);
+    box-shadow: var(--glow-blue);
+    transform: translateY(-2px);
+}
+		
         /* Loading State */
         .loading {
             display: flex;
@@ -758,6 +779,7 @@
             <span class="pulse-dot"></span>
             <span>LIVE DATA</span>
         </div>
+		<a href="./wp/" class="wp-link">📄 White Paper</a>
     </div>
 
     <!-- Output Container -->
