@@ -245,18 +245,37 @@
             transition: width 1s ease;
             position: relative;
         }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
+		
+		.progress-fill {
+		    position: relative;
+		    overflow: hidden;
+		}
+		
+		.progress-fill::after {
+		    content: '';
+		    position: absolute;
+		    top: 0;
+		    left: -60%;
+		    width: 60%;
+		    height: 100%;
+		    background: linear-gradient(
+		        90deg,
+		        transparent,
+		        rgba(255,255,255,0.25),
+		        transparent
+		    );
+		    animation: shimmerMove 1.8s linear infinite;
+		}
+		
+		@keyframes shimmerMove {
+		    0% {
+		        left: -60%;
+		    }
+		    100% {
+		        left: 120%;
+		    }
+		}
+		
         @keyframes shimmer {
             0% { transform: translateX(-100%); }
             100% { transform: translateX(100%); }
