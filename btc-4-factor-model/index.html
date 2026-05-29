@@ -1066,7 +1066,7 @@ function reasoningDataV2(halvingObj, fearGreedNorm, maNorm, rsiNorm, maDiff) {
     const days = halvingObj.raw;
 
     let scenario = "NEUTRAL";
-    let action = "HOLD";
+    let action = "scenario confirmed by reasoning";
     let notes = [];
 
     const isBear = days >= 500 && days <= 1000;
@@ -1086,17 +1086,17 @@ function reasoningDataV2(halvingObj, fearGreedNorm, maNorm, rsiNorm, maDiff) {
     // =========================
     if (isBear && days >= 500 && days <= 900 && priceAbove && sentimentHigh) {
         scenario = "BULL TRAP";
-        action = "SELL (ora o mai più)";
+        action = "DE-ACCUMULATE";
         notes.push("rialzo in fase bear");
         notes.push("sentiment alto → retail euforico");
     }
 
     // =========================
-    // 🟢 BUY THE DIP
+    // 🪤 BEAR TRAP
     // =========================
     else if (isBull && priceBelow && sentimentLow) {
-        scenario = "BUY THE DIP";
-        action = "ACCUMULO";
+        scenario = "BEAR TRAP";
+        action = "ACCUMULATE";
         notes.push("paura in bull market");
         notes.push("prezzo sotto valore medio");
     }
@@ -1106,7 +1106,7 @@ function reasoningDataV2(halvingObj, fearGreedNorm, maNorm, rsiNorm, maDiff) {
     // =========================
     else if (days >= 800 && days <= 1000 && maDiff <= -20) {
         scenario = "CYCLE BOTTOM";
-        action = "STRONG BUY";
+        action = "STRONG BUY (all-in)";
 
         notes.push("fase finale bear");
 
@@ -1124,7 +1124,7 @@ function reasoningDataV2(halvingObj, fearGreedNorm, maNorm, rsiNorm, maDiff) {
     // =========================
     else if (days >= 450 && days <= 550 && maDiff > 0) {
         scenario = "CYCLE TOP";
-        action = "TAKE PROFIT / SELL";
+        action = "STRONG SELL";
 
         notes.push("fase avanzata bull");
 
@@ -1359,17 +1359,7 @@ async function run() {
             📋 Analysis Breakdown
         </h2>
 		
-		<!-- Explanation (reasoning) -->
-		<div class="scale-mini">
-			<span style="color: var(--accent-purple); font-weight: 700;">V2 SCENARIO LAYER</span>
-			<span>🪤 BULL TRAP → distribution fake rally</span>
-			<span>🧊 CYCLE BOTTOM → accumulation zone</span>
-			<span>🔥 CYCLE TOP → euphoria exit zone</span>
-			<span>🟢 BUY THE DIP → bullish pullback</span>
-			<span>⚪ DEFAULT → neutral / no edge</span>
-		</div>
-			
-        <div class="reasoning-grid">
+		<div class="reasoning-grid">
             
             <!-- Regime -->
             <div class="reasoning-card">
