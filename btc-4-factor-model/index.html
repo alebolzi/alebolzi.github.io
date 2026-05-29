@@ -59,18 +59,83 @@
             z-index: 0;
         }
 		
+        /* =========================
+           🔥 BTC PRICE (RESTYLED)
+        ========================= */
 		.btc-price {
-		    margin-top: 10px;
-		    font-family: 'Share Tech Mono', monospace;
-		    font-size: 1.1rem;
+            position: relative;
+            margin: 22px auto 0 auto;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.35rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+
 		    color: var(--accent-cyan);
-		    letter-spacing: 2px;
-		    padding: 8px 18px;
+            text-align: center;
+
+            padding: 14px 26px;
+            width: fit-content;
+            min-width: 260px;
+
+            border-radius: 14px;
+            border: 1px solid rgba(34, 211, 238, 0.25);
+
+            background: linear-gradient(
+                135deg,
+                rgba(34, 211, 238, 0.08),
+                rgba(167, 139, 250, 0.05)
+            );
+
+            box-shadow:
+                0 0 25px rgba(34, 211, 238, 0.12),
+                inset 0 0 15px rgba(34, 211, 238, 0.05);
+
+            overflow: hidden;
+        }
+
+        /* shimmer elegante centrale */
+        .btc-price::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -60%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255,255,255,0.18),
+                transparent
+            );
+            animation: btcShimmer 2.2s linear infinite;
+        }
+
+        @keyframes btcShimmer {
+            0% { left: -60%; }
+            100% { left: 120%; }
+        }
+
+        /* stato loading (non usato nel JS ma pronto) */
+        .btc-price.loading-state {
+            color: rgba(34, 211, 238, 0.6);
+            font-size: 1.1rem;
+            letter-spacing: 4px;
+        }
+
+        .btc-price.loading-state::after {
+            content: '';
 		    display: inline-block;
-		    border: 1px solid rgba(34, 211, 238, 0.3);
-		    border-radius: 10px;
-		    background: rgba(34, 211, 238, 0.05);
-		    box-shadow: 0 0 15px rgba(34, 211, 238, 0.1);
+            margin-left: 12px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            animation: btcPulse 1.2s infinite ease-in-out;
+        }
+
+        @keyframes btcPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.8); opacity: 0.3; }
 		}
         .container {
             max-width: 1400px;
@@ -814,7 +879,6 @@
     	Loading BTC price...
 	</div>
 
-    <!-- Output Container -->
     <div id="output">
         <div class="loading">
             <div class="loader"></div>
@@ -1437,4 +1501,3 @@ run();
 
 </body>
 </html>
-
