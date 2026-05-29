@@ -1317,15 +1317,23 @@ async function run() {
                     <div class="average-signal-small ${signalClass}">${label}</div>
                 </div>
 
+  // if (final <= 0.2) 	   { label = "HARD BUY"; signalClass = 'signal-hard-buy'; } // da 0 a 0.2
+  //       else if (final <= 0.3) { label = "BUY"; signalClass = 'signal-buy'; }
+  //       else if (final <= 0.4) { label = "BUY / DCA"; signalClass = 'signal-dca'; }
+  //       else if (final <= 0.6) { label = "HOLD"; signalClass = 'signal-hold'; }
+  //       else if (final <= 0.7) { label = "SELL OPPORTUNITY"; signalClass = 'signal-sell-opp'; }
+  //       else if (final <= 0.8) { label = "SELL"; signalClass = 'signal-sell'; }
+  //       else 				   { label = "HARD SELL"; signalClass = 'signal-hard-sell'; } // da 0.8 a 1
+
                 <div class="scale-mini">
-<span>0.00–0.15 HARD BUY </span>
-<span>0.15–0.30 BUY</span>
-<span>0.30–0.45 ACCUMULATION / DCA</span>
-<span>0.45–0.60 NEUTRAL</span>
-<span>0.60–0.75 DISTRIBUTION WARNING</span>
-<span>0.75–0.90 SELL</span>
-<span>0.90–1.00 HARD SELL </span>
-                </div>
+					<span>0–0.2 HARD BUY </span>
+					<span>0.2–0.3 BUY</span>
+					<span>0.3–0.4 DCA</span>
+					<span>0.4–0.6 NEUTRAL</span>
+					<span>0.6–0.7 SELL OPPORTUNITY</span>
+					<span>0.7–0.8 SELL</span>
+					<span>0.8–1 HARD SELL </span>
+				</div>
             </div>
 
             <!-- SCENARIO DETECTION - HERO SECTION -->
