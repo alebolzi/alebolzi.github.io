@@ -63,80 +63,40 @@
            🔥 BTC PRICE (RESTYLED)
         ========================= */
 		.btc-price {
-            position: relative;
-            margin: 22px auto 0 auto;
+            margin: 25px auto 40px auto;
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.35rem;
+            font-size: 1.6rem;
+            font-weight: 900;
             letter-spacing: 3px;
-            text-transform: uppercase;
-
 		    color: var(--accent-cyan);
             text-align: center;
 
-            padding: 14px 26px;
+            padding: 14px 28px;
             width: fit-content;
             min-width: 260px;
 
+            border: 1px solid rgba(34, 211, 238, 0.35);
             border-radius: 14px;
-            border: 1px solid rgba(34, 211, 238, 0.25);
-
-            background: linear-gradient(
-                135deg,
-                rgba(34, 211, 238, 0.08),
-                rgba(167, 139, 250, 0.05)
-            );
+            background: rgba(34, 211, 238, 0.06);
 
             box-shadow:
-                0 0 25px rgba(34, 211, 238, 0.12),
-                inset 0 0 15px rgba(34, 211, 238, 0.05);
+                0 0 15px rgba(34, 211, 238, 0.15),
+                0 0 40px rgba(56, 189, 248, 0.08);
 
-            overflow: hidden;
+            text-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
+
+            transition: all 0.3s ease;
         }
 
-        /* shimmer elegante centrale */
-        .btc-price::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -60%;
-            width: 60%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255,255,255,0.18),
-                transparent
-            );
-            animation: btcShimmer 2.2s linear infinite;
+        .btc-price:hover {
+            transform: scale(1.03);
+            box-shadow:
+                0 0 25px rgba(34, 211, 238, 0.25),
+                0 0 60px rgba(56, 189, 248, 0.12);
         }
 
-        @keyframes btcShimmer {
-            0% { left: -60%; }
-            100% { left: 120%; }
-        }
+        /* (RESTO IDENTICO - NON TOCCATO) */
 
-        /* stato loading (non usato nel JS ma pronto) */
-        .btc-price.loading-state {
-            color: rgba(34, 211, 238, 0.6);
-            font-size: 1.1rem;
-            letter-spacing: 4px;
-        }
-
-        .btc-price.loading-state::after {
-            content: '';
-		    display: inline-block;
-            margin-left: 12px;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--accent-cyan);
-            animation: btcPulse 1.2s infinite ease-in-out;
-        }
-
-        @keyframes btcPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.8); opacity: 0.3; }
-		}
         .container {
             max-width: 1400px;
             margin: 0 auto;
