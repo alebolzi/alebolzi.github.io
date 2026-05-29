@@ -58,7 +58,20 @@
             pointer-events: none;
             z-index: 0;
         }
-
+		
+		.btc-price {
+		    margin-top: 10px;
+		    font-family: 'Share Tech Mono', monospace;
+		    font-size: 1.1rem;
+		    color: var(--accent-cyan);
+		    letter-spacing: 2px;
+		    padding: 8px 18px;
+		    display: inline-block;
+		    border: 1px solid rgba(34, 211, 238, 0.3);
+		    border-radius: 10px;
+		    background: rgba(34, 211, 238, 0.05);
+		    box-shadow: 0 0 15px rgba(34, 211, 238, 0.1);
+		}
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -797,6 +810,10 @@
 		<a href="wp.html" class="wp-link">📄 White Paper</a>
     </div>
 
+	<div class="btc-price" id="btcPrice">
+    	Loading BTC price...
+	</div>
+
     <!-- Output Container -->
     <div id="output">
         <div class="loading">
@@ -838,6 +855,11 @@
 const HALVING_DATE = new Date("2024-04-20");
 const CYCLE_LENGTH = 1410;
 
+async function getBTCPrice() {
+	const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT");
+	const data = await res.json();
+	return parseFloat(data.price);
+}
 // =======================
 // HALVING
 // =======================
@@ -1161,6 +1183,9 @@ async function run() {
 		const sum = halvingObj.norm + fearGreedNorm + ma.norm + rsiObj.norm;
 		const final = sum / 4;
 
+		const btcPrice = await getBTCPrice();
+		document.getElementById("btcPrice").innerHTML = `BTC: $${btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+		
 		const reasoning = reasoningData(
 			halvingObj,
 			fearGreedNorm,
