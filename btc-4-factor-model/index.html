@@ -1248,7 +1248,7 @@ async function run() {
 		const final = sum / 4;
 
 		const btcPrice = await getBTCPrice();
-		document.getElementById("btcPrice").innerHTML = `BTC: $${btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+		document.getElementById("btcPrice").innerHTML = `$${btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 		
 		const reasoning = reasoningData(
 			halvingObj,
