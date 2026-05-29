@@ -62,40 +62,75 @@
         /* =========================
            🔥 BTC PRICE (RESTYLED)
         ========================= */
+		
 		.btc-price {
-            margin: 25px auto 40px auto;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.6rem;
-            font-weight: 900;
-            letter-spacing: 3px;
-		    color: var(--accent-cyan);
+            margin: 25px auto 45px auto;
             text-align: center;
 
-            padding: 14px 28px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+
+            color: #ff9a3c; /* arancione caldo */
             width: fit-content;
-            min-width: 260px;
 
-            border: 1px solid rgba(34, 211, 238, 0.35);
-            border-radius: 14px;
-            background: rgba(34, 211, 238, 0.06);
+            position: relative;
 
-            box-shadow:
-                0 0 15px rgba(34, 211, 238, 0.15),
-                0 0 40px rgba(56, 189, 248, 0.08);
+            text-shadow:
+                0 0 10px rgba(255, 154, 60, 0.6),
+                0 0 30px rgba(255, 120, 40, 0.35),
+                0 0 60px rgba(255, 90, 0, 0.15);
 
-            text-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
-
-            transition: all 0.3s ease;
+            animation: btcPulse 3.5s ease-in-out infinite;
         }
 
-        .btc-price:hover {
-            transform: scale(1.03);
-            box-shadow:
-                0 0 25px rgba(34, 211, 238, 0.25),
-                0 0 60px rgba(56, 189, 248, 0.12);
+        /* glow dietro vero */
+        .btc-price::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            width: 160%;
+            height: 250%;
+
+            background: radial-gradient(
+                circle,
+                rgba(255, 140, 60, 0.25),
+                transparent 70%
+            );
+
+            filter: blur(18px);
+            z-index: -1;
+            opacity: 0.9;
+            animation: glowBreath 4s ease-in-out infinite;
         }
 
-        /* (RESTO IDENTICO - NON TOCCATO) */
+        /* leggero lampeggio vivo */
+        @keyframes btcPulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.85;
+                transform: scale(1.03);
+            }
+        }
+
+        /* glow che respira */
+        @keyframes glowBreath {
+            0%, 100% {
+                opacity: 0.6;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.08);
+            }
+        }
 
         .container {
             max-width: 1400px;
@@ -835,9 +870,7 @@
 		<a href="wp.html" class="wp-link">📄 White Paper</a>
     </div>
 
-	<div class="btc-price" id="btcPrice">
-    	Loading BTC price...
-	</div>
+	<div class="btc-price" id="btcPrice"></div>
 
     <div id="output">
         <div class="loading">
@@ -1367,13 +1400,13 @@ async function run() {
                 </div>
 
                 <div class="scale-mini">
-					<span>0–0.2 HARD BUY </span>
-					<span>0.2–0.3 BUY</span>
-					<span>0.3–0.4 DCA</span>
-					<span>0.4–0.6 NEUTRAL</span>
-					<span>0.6–0.7 SELL OPPORTUNITY</span>
-					<span>0.7–0.8 SELL</span>
-					<span>0.8–1 HARD SELL </span>
+					<span>0-.2 HARD BUY </span>
+					<span>.2-.3 BUY</span>
+					<span>.3-.4 DCA</span>
+					<span>.4-.6 NEUTRAL</span>
+					<span>.6-.7 SELL OPPORTUNITY</span>
+					<span>.7-.8 SELL</span>
+					<span>.8-1 HARD SELL </span>
 				</div>
             </div>
 
