@@ -160,7 +160,6 @@
 
         .comparison-section { margin-top: 60px; border-top: 5px solid black; padding-top: 40px; }
         .comparison-section.hidden { display: none !important; }
-
         .comparison-title { font-size: 2rem; margin-bottom: 30px; letter-spacing: 2px; }
 
         .comparison-item {
@@ -228,18 +227,12 @@
             font-weight: bold; vertical-align: middle; transition: all 0.2s;
         }
 
-        /* === STATI NOTIFICA === */
         #notifToggle.notif-off { background: #e0e0e0; }
         #notifToggle.notif-off .toggle-status { background: #999; color: white; border-color: #999; }
-
         #notifToggle.notif-on { background: #00ff88; }
         #notifToggle.notif-on .toggle-status { background: black; color: white; }
-
         #notifToggle.notif-blocked { background: #ff3b30; }
         #notifToggle.notif-blocked .toggle-status { background: black; color: white; }
-
-        #notifToggle.active { background: #00ff88; }
-        #notifToggle.active .toggle-status { background: black; color: white; }
 
         .toggle-box.active { background: #00ff88; box-shadow: 8px 8px 0px rgba(0,0,0,1); }
         .toggle-box.active .toggle-status { background: black; color: white; }
@@ -254,9 +247,20 @@
 
         .segment-editor {
             border: 4px solid black; padding: 18px 22px; margin-bottom: 15px;
-            background: white; box-shadow: 6px 6px 0px rgba(0,0,0,1); text-align: left; transition: transform 0.2s;
+            background: white; box-shadow: 6px 6px 0px rgba(0,0,0,1); text-align: left;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
         .segment-editor:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0px rgba(0,0,0,1); }
+
+        /* FIX: Input e select sempre cliccabili anche dentro elementi magnetic */
+        .seg-field input,
+        .seg-field select {
+            pointer-events: auto !important;
+            position: relative !important;
+            z-index: 200 !important;
+            cursor: text !important;
+        }
+        .seg-field select { cursor: pointer !important; }
 
         .seg-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -268,12 +272,13 @@
             background: white; border: 2px solid black; padding: 4px 12px;
             font-family: var(--font); font-size: 0.9rem; cursor: pointer;
             text-transform: uppercase; letter-spacing: 1px; transition: all 0.15s;
-            position: relative; z-index: 100;
+            position: relative; z-index: 200;
+            pointer-events: auto !important;
         }
         .seg-delete:hover { background: var(--accent); color: white; border-color: var(--accent); }
 
         .seg-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
-        .seg-field { display: flex; flex-direction: column; gap: 4px; }
+        .seg-field { display: flex; flex-direction: column; gap: 4px; pointer-events: auto !important; }
         .seg-field label { font-size: 0.7rem; color: #999; font-family: sans-serif; text-transform: uppercase; letter-spacing: 1px; }
 
         .seg-field input, .seg-field select {
@@ -477,7 +482,7 @@
         // ============================================
         // STATO
         // ============================================
-        let notifState = 'off'; // 'off', 'on', 'blocked'
+        let notifState = 'off';
         let notifEnabled = false;
         let settingsOpen = false;
         let lastStateKey = '';
@@ -499,7 +504,7 @@
             elements.forEach(elem => {
                 const children = elem.querySelectorAll('*');
                 children.forEach(child => {
-                    if (!child.closest('.input-wrapper') && !child.closest('.hours-input-box') && !child.closest('.seg-field') && !child.closest('.seg-delete')) {
+                    if (!child.closest('.seg-field') && !child.closest('.seg-delete') && !child.closest('.input-wrapper') && !child.closest('.hours-input-box')) {
                         child.style.pointerEvents = 'none';
                     }
                 });
@@ -518,7 +523,7 @@
                 if (!magneticObjects.some(o => o.element === elem)) {
                     const children = elem.querySelectorAll('*');
                     children.forEach(child => {
-                        if (!child.closest('.input-wrapper') && !child.closest('.hours-input-box') && !child.closest('.seg-field') && !child.closest('.seg-delete')) {
+                        if (!child.closest('.seg-field') && !child.closest('.seg-delete') && !child.closest('.input-wrapper') && !child.closest('.hours-input-box')) {
                             child.style.pointerEvents = 'none';
                         }
                     });
@@ -561,7 +566,17 @@
                 obj.currentScale = (obj.currentScale || 1) + ((targetScale - (obj.currentScale || 1)) * 0.1);
                 obj.currentRotation = (obj.currentRotation || parseFloat(obj.rotation)) + ((targetRotation - (obj.currentRotation || parseFloat(obj.rotation))) * 0.1);
 
-                obj.element.style.transform = `translate(${obj.x}px, ${obj.y}px) rotate(${obj.currentRotation}deg) scale(${obj.currentScale})`;
+                // Soglia: snap a 0 quando i valori sono minuscoli (evita re-render continui)
+                const fx = Math.abs(obj.x) < 0.05 ? 0 : obj.x;
+                const fy = Math.abs(obj.y) < 0.05 ? 0 : obj.y;
+                const fs = Math.abs((obj.currentScale || 1) - 1) < 0.002 ? 1 : (obj.currentScale || 1);
+                const fr = Math.abs((obj.currentRotation || 0) - parseFloat(obj.rotation)) < 0.05 ? parseFloat(obj.rotation) : (obj.currentRotation || 0);
+
+                if (fx === 0 && fy === 0 && fs === 1 && fr === parseFloat(obj.rotation)) {
+                    obj.element.style.transform = '';
+                } else {
+                    obj.element.style.transform = `translate(${fx}px, ${fy}px) rotate(${fr}deg) scale(${fs})`;
+                }
             });
             requestAnimationFrame(animateMagnets);
         }
@@ -602,7 +617,7 @@
         }
 
         // ============================================
-        // CALCOLO STATO - fonte unica della verità
+        // CALCOLO STATO
         // ============================================
         function getTimeData() {
             const now = new Date();
@@ -616,7 +631,6 @@
         function getCurrentState(td) {
             if (!td) td = getTimeData();
             const { mins, secs, dow } = td;
-
             if (dow === 0 || dow === 6) return { state: 'weekend', seg: null, next: null, cd: 0, segCd: 0, prog: 0, idx: -1 };
 
             for (let i = 0; i < schedule.length; i++) {
@@ -630,7 +644,6 @@
             if (schedule.length && mins < t2m(schedule[0].start)) {
                 return { state: 'before', seg: null, idx: -1, next: schedule[0], cd: Math.max(0, t2m(schedule[0].start) * 60 - secs), segCd: 0, prog: 0 };
             }
-
             return { state: 'after', seg: null, next: null, cd: 0, segCd: 0, prog: 1, idx: -1 };
         }
 
@@ -673,17 +686,15 @@
         }
 
         // ============================================
-        // AGGIORNAMENTO UI PRINCIPALE
+        // AGGIORNAMENTO UI
         // ============================================
         function updateDisplay() {
             const td = getTimeData();
             const st = getCurrentState(td);
             const now = new Date();
 
-            // Orologio
             currentTimeEl.textContent = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            // Counter principale
             let label = '', counterColor = 'var(--accent)', statusText = 'ATTESA', statusClass = 'waiting';
             let boxBg = 'white', counterText = '--:--:--', isPulsing = true;
 
@@ -720,7 +731,6 @@
             statusIndicator.className = 'status-indicator ' + statusClass;
             mainCounterBox.classList.toggle('running-animation', isPulsing);
 
-            // Stat cards
             const nb = findNextOfType('break', td);
             const nbEl = document.getElementById('nextBreak');
             if (nb) { nbEl.textContent = fmtCountdown(nb.cd); nbEl.className = 'stat-value highlight'; }
@@ -750,20 +760,17 @@
             const wr = getWorkRemaining(td);
             document.getElementById('workRemaining').textContent = (st.state === 'after' || st.state === 'weekend') ? '0:00:00' : fmtCountdown(wr);
 
-            // Timeline (senza tick)
             updateTimeline(st, td);
 
-            // Meme quote
             quoteTimer++;
             const stateKey = st.state;
             if (stateKey !== lastStateKey || quoteTimer > 30) { lastStateKey = stateKey; quoteTimer = 0; rotateQuote(stateKey); }
 
-            // Notifiche
             checkNotifications(st, td);
         }
 
         // ============================================
-        // TIMELINE - build + update separati (no tick)
+        // TIMELINE
         // ============================================
         function buildTimelineHTML(td) {
             const container = document.getElementById('timeline');
@@ -815,6 +822,7 @@
                     valEl.style.color = '';
                     unitEl.textContent = 'completato';
                 } else {
+                    // Countdown alla FINE del segmento futuro
                     valEl.textContent = fmtShort(Math.max(0, e * 60 - td.secs));
                     valEl.style.color = '';
                     unitEl.textContent = 'alla fine';
@@ -824,18 +832,11 @@
 
         function updateTimeline(st, td) {
             if (!td) td = getTimeData();
-            // Ricostruisci HTML solo quando cambia il segmento corrente
-            if (st.idx !== lastTimelineIdx) {
-                lastTimelineIdx = st.idx;
-                buildTimelineHTML(td);
-            }
-            // Aggiorna solo i valori testuali (no DOM thrash)
+            if (st.idx !== lastTimelineIdx) { lastTimelineIdx = st.idx; buildTimelineHTML(td); }
             updateTimelineValues(td);
         }
 
-        function forceTimelineRebuild() {
-            lastTimelineIdx = -999;
-        }
+        function forceTimelineRebuild() { lastTimelineIdx = -999; }
 
         // ============================================
         // MEME QUOTES
@@ -852,94 +853,116 @@
         memeQuoteEl.addEventListener('click', () => { rotateQuote(lastStateKey || 'work'); quoteTimer = 0; });
 
         // ============================================
-        // NOTIFICHE - tre stati: off / on / blocked
+        // NOTIFICHE: -2 min + inizio evento
         // ============================================
         notifToggle.addEventListener('click', () => {
             if (!('Notification' in window)) { toast('Notifiche non supportate!'); return; }
 
             if (notifState === 'on') {
-                // Turn OFF → grigio
-                notifState = 'off';
-                notifEnabled = false;
-                updateNotifUI();
-                toast('🔕 Notifiche disattivate');
-                return;
+                notifState = 'off'; notifEnabled = false;
+                updateNotifUI(); toast('🔕 Notifiche disattivate'); return;
             }
 
             if (notifState === 'blocked') {
-                toast('Bloccate dal browser! Abilitale nelle impostazioni del browser.');
-                return;
+                toast('Bloccate dal browser! Abilitale nelle impostazioni.'); return;
             }
 
             // Stato 'off' → prova ad accendere
             if (Notification.permission === 'granted') {
-                notifState = 'on';
-                notifEnabled = true;
-                updateNotifUI();
-                toast('🔔 Notifiche attivate!');
+                notifState = 'on'; notifEnabled = true;
+                updateNotifUI(); toast('🔔 Notifiche attivate!');
             } else if (Notification.permission === 'denied') {
-                notifState = 'blocked';
-                notifEnabled = false;
-                updateNotifUI();
-                toast('Notifiche bloccate dal browser!');
+                notifState = 'blocked'; notifEnabled = false;
+                updateNotifUI(); toast('Notifiche bloccate dal browser!');
             } else {
                 Notification.requestPermission().then(perm => {
                     if (perm === 'granted') {
-                        notifState = 'on';
-                        notifEnabled = true;
-                        updateNotifUI();
-                        toast('🔔 Notifiche attivate!');
+                        notifState = 'on'; notifEnabled = true;
+                        updateNotifUI(); toast('🔔 Notifiche attivate!');
                     } else if (perm === 'denied') {
-                        notifState = 'blocked';
-                        notifEnabled = false;
-                        updateNotifUI();
-                        toast('Notifiche bloccate!');
+                        notifState = 'blocked'; notifEnabled = false;
+                        updateNotifUI(); toast('Notifiche bloccate!');
                     }
-                    // 'default' (dismissed) resta 'off'
                 });
             }
         });
 
         function updateNotifUI() {
             notifToggle.classList.remove('notif-on', 'notif-off', 'notif-blocked', 'active');
-            if (notifState === 'on') {
-                notifToggle.classList.add('notif-on');
-                notifStatus.textContent = 'ON';
-            } else if (notifState === 'blocked') {
-                notifToggle.classList.add('notif-blocked');
-                notifStatus.textContent = 'NO';
-            } else {
-                notifToggle.classList.add('notif-off');
-                notifStatus.textContent = 'OFF';
-            }
+            if (notifState === 'on') { notifToggle.classList.add('notif-on'); notifStatus.textContent = 'ON'; }
+            else if (notifState === 'blocked') { notifToggle.classList.add('notif-blocked'); notifStatus.textContent = 'NO'; }
+            else { notifToggle.classList.add('notif-off'); notifStatus.textContent = 'OFF'; }
         }
 
         function checkNotifications(st, td) {
             if (!notifEnabled || Notification.permission !== 'granted') return;
-            if (td.secs % 60 > 2) return;
 
             const dateStr = new Date().toDateString();
 
             schedule.forEach((seg, i) => {
-                const key = `${dateStr}-${i}-${seg.start}`;
-                if (td.mins === t2m(seg.start) && !notifiedEvents.has(key)) {
-                    notifiedEvents.add(key);
-                    const msgs = {
-                        work: { title: '💼 Riprendi a lavorare!', body: `${seg.label} (${seg.start} – ${seg.end})` },
-                        break: { title: '☕ PAUSA!', body: `${seg.label} - Goditela! (${seg.start} – ${seg.end})` },
-                        lunch: { title: '🍽️ PRANZO!', body: `${seg.label} - Buon appetito! (${seg.start} – ${seg.end})` },
-                    };
-                    const m = msgs[seg.type] || msgs.work;
-                    try { new Notification(m.title, { body: m.body, tag: `pt-${i}-${seg.start}` }); } catch (e) {}
+                const startMin = t2m(seg.start);
+
+                // Notifica 2 minuti prima
+                const warnMin = startMin - 2;
+                if (warnMin >= 0 && td.mins === warnMin && td.secs % 60 <= 2) {
+                    const key2 = `${dateStr}-${i}-2min`;
+                    if (!notifiedEvents.has(key2)) {
+                        notifiedEvents.add(key2);
+                        const typeName = seg.type === 'work' ? 'LAVORO' : seg.type === 'break' ? 'PAUSA' : 'PRANZO';
+                        const typeEmoji = seg.type === 'work' ? '💼' : seg.type === 'break' ? '☕' : '🍽️';
+                        try {
+                            new Notification(`⏰ Tra 2 minuti: ${typeName}!`, {
+                                body: `${typeEmoji} ${seg.label} inizia alle ${seg.start}`,
+                                tag: `pt-${i}-2min`
+                            });
+                        } catch (e) {}
+                    }
+                }
+
+                // Notifica all'inizio dell'evento
+                if (td.mins === startMin && td.secs % 60 <= 2) {
+                    const keyS = `${dateStr}-${i}-start`;
+                    if (!notifiedEvents.has(keyS)) {
+                        notifiedEvents.add(keyS);
+                        const msgs = {
+                            work: { title: '💼 Riprendi a lavorare!', body: `${seg.label} (${seg.start} – ${seg.end})` },
+                            break: { title: '☕ PAUSA!', body: `${seg.label} - Goditela! (${seg.start} – ${seg.end})` },
+                            lunch: { title: '🍽️ PRANZO!', body: `${seg.label} - Buon appetito! (${seg.start} – ${seg.end})` },
+                        };
+                        const m = msgs[seg.type] || msgs.work;
+                        try {
+                            new Notification(m.title, { body: m.body, tag: `pt-${i}-start` });
+                        } catch (e) {}
+                    }
                 }
             });
 
+            // Fine giornata: avviso 2 min prima + all'inizio
             if (schedule.length) {
                 const lastEnd = t2m(schedule[schedule.length - 1].end);
-                const eodKey = `${dateStr}-end`;
-                if (td.mins === lastEnd && !notifiedEvents.has(eodKey)) {
-                    notifiedEvents.add(eodKey);
-                    try { new Notification('🏠 GIORNATA FINITA!', { body: 'Sei libero! Stacca tutto!' }); } catch (e) {}
+
+                const eodWarn = lastEnd - 2;
+                if (eodWarn >= 0 && td.mins === eodWarn && td.secs % 60 <= 2) {
+                    const keyW = `${dateStr}-end-2min`;
+                    if (!notifiedEvents.has(keyW)) {
+                        notifiedEvents.add(keyW);
+                        try {
+                            new Notification('⏰ Tra 2 minuti: FINE GIORNATA!', {
+                                body: 'Preparati a staccare!',
+                                tag: 'pt-eod-2min'
+                            });
+                        } catch (e) {}
+                    }
+                }
+
+                if (td.mins === lastEnd && td.secs % 60 <= 2) {
+                    const eodKey = `${dateStr}-end`;
+                    if (!notifiedEvents.has(eodKey)) {
+                        notifiedEvents.add(eodKey);
+                        try {
+                            new Notification('🏠 GIORNATA FINITA!', { body: 'Sei libero! Stacca tutto!' });
+                        } catch (e) {}
+                    }
                 }
             }
         }
@@ -1026,21 +1049,15 @@
             });
             schedule.sort((a, b) => t2m(a.start) - t2m(b.start));
             localStorage.setItem('pt_sched', JSON.stringify(schedule));
-            confettiDone = false;
-            notifiedEvents.clear();
-            forceTimelineRebuild();
-            toast('Orari salvati!');
-            renderSettings();
+            confettiDone = false; notifiedEvents.clear(); forceTimelineRebuild();
+            toast('Orari salvati!'); renderSettings();
         });
 
         document.getElementById('resetSettingsBtn').addEventListener('click', () => {
             schedule = JSON.parse(JSON.stringify(DEFAULTS));
             localStorage.removeItem('pt_sched');
-            confettiDone = false;
-            notifiedEvents.clear();
-            forceTimelineRebuild();
-            toast('Orari ripristinati ai default!');
-            renderSettings();
+            confettiDone = false; notifiedEvents.clear(); forceTimelineRebuild();
+            toast('Orari ripristinati ai default!'); renderSettings();
         });
 
         // ============================================
@@ -1055,9 +1072,8 @@
         }
 
         // ============================================
-        // INIT + LOOP
+        // INIT
         // ============================================
-        // Stato iniziale notifiche dal browser
         if ('Notification' in window) {
             if (Notification.permission === 'denied') { notifState = 'blocked'; }
             else { notifState = 'off'; }
