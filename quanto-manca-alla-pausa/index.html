@@ -218,7 +218,6 @@
         }
 
         .toggle-box:hover { transform: translate(-2px, -2px); box-shadow: 10px 10px 0px rgba(0,0,0,1); }
-
         .toggle-text { font-size: 1.2rem; font-family: var(--font); letter-spacing: 1px; }
 
         .toggle-status {
@@ -252,14 +251,7 @@
         }
         .segment-editor:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0px rgba(0,0,0,1); }
 
-        /* FIX: Input e select sempre cliccabili anche dentro elementi magnetic */
-        .seg-field input,
-        .seg-field select {
-            pointer-events: auto !important;
-            position: relative !important;
-            z-index: 200 !important;
-            cursor: text !important;
-        }
+        .seg-field input, .seg-field select { pointer-events: auto !important; position: relative !important; z-index: 200 !important; cursor: text !important; }
         .seg-field select { cursor: pointer !important; }
 
         .seg-header {
@@ -272,8 +264,7 @@
             background: white; border: 2px solid black; padding: 4px 12px;
             font-family: var(--font); font-size: 0.9rem; cursor: pointer;
             text-transform: uppercase; letter-spacing: 1px; transition: all 0.15s;
-            position: relative; z-index: 200;
-            pointer-events: auto !important;
+            position: relative; z-index: 200; pointer-events: auto !important;
         }
         .seg-delete:hover { background: var(--accent); color: white; border-color: var(--accent); }
 
@@ -491,6 +482,7 @@
         let confettiDone = false;
         const notifiedEvents = new Set();
         let lastTimelineIdx = -999;
+        let swReg = null; // Registrazione Service Worker
 
         // ============================================
         // SISTEMA MAGNETICO
@@ -566,7 +558,6 @@
                 obj.currentScale = (obj.currentScale || 1) + ((targetScale - (obj.currentScale || 1)) * 0.1);
                 obj.currentRotation = (obj.currentRotation || parseFloat(obj.rotation)) + ((targetRotation - (obj.currentRotation || parseFloat(obj.rotation))) * 0.1);
 
-                // Soglia: snap a 0 quando i valori sono minuscoli (evita re-render continui)
                 const fx = Math.abs(obj.x) < 0.05 ? 0 : obj.x;
                 const fy = Math.abs(obj.y) < 0.05 ? 0 : obj.y;
                 const fs = Math.abs((obj.currentScale || 1) - 1) < 0.002 ? 1 : (obj.currentScale || 1);
@@ -766,7 +757,7 @@
             const stateKey = st.state;
             if (stateKey !== lastStateKey || quoteTimer > 30) { lastStateKey = stateKey; quoteTimer = 0; rotateQuote(stateKey); }
 
-            checkNotifications(st, td);
+            checkNotifications(td);
         }
 
         // ============================================
@@ -822,7 +813,6 @@
                     valEl.style.color = '';
                     unitEl.textContent = 'completato';
                 } else {
-                    // Countdown alla FINE del segmento futuro
                     valEl.textContent = fmtShort(Math.max(0, e * 60 - td.secs));
                     valEl.style.color = '';
                     unitEl.textContent = 'alla fine';
@@ -853,9 +843,36 @@
         memeQuoteEl.addEventListener('click', () => { rotateQuote(lastStateKey || 'work'); quoteTimer = 0; });
 
         // ============================================
-        // NOTIFICHE: -2 min + inizio evento
+        // NOTIFICHE WINDOWS VIA SERVICE WORKER
         // ============================================
-        notifToggle.addEventListener('click', () => {
+        async function initSW() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    swReg = await navigator.serviceWorker.register('sw.js');
+                    await navigator.serviceWorker.ready;
+                    console.log('Service Worker pronto per le notifiche');
+                } catch (e) {
+                    console.error('Errore registrazione Service Worker:', e);
+                }
+            }
+        }
+
+        // Registra il SW all'avvio
+        initSW();
+
+        function sendNotif(title, body, tag) {
+            if (swReg) {
+                swReg.showNotification(title, { 
+                    body: body, 
+                    tag: tag, 
+                    icon: 'https://github.githubassets.com/favicons/favicon.png' 
+                });
+            } else {
+                try { new Notification(title, { body: body, tag: tag }); } catch (e) {}
+            }
+        }
+
+        notifToggle.addEventListener('click', async () => {
             if (!('Notification' in window)) { toast('Notifiche non supportate!'); return; }
 
             if (notifState === 'on') {
@@ -867,23 +884,19 @@
                 toast('Bloccate dal browser! Abilitale nelle impostazioni.'); return;
             }
 
-            // Stato 'off' → prova ad accendere
-            if (Notification.permission === 'granted') {
+            const perm = await Notification.requestPermission();
+            if (perm === 'granted') {
+                if (!swReg) await initSW(); // Assicurati che il SW sia pronto
                 notifState = 'on'; notifEnabled = true;
                 updateNotifUI(); toast('🔔 Notifiche attivate!');
-            } else if (Notification.permission === 'denied') {
+                // Test immediato
+                sendNotif('🔥 SISTEMA ATTIVO', 'Notifiche Windows attivate con successo!', 'pt-test');
+            } else if (perm === 'denied') {
                 notifState = 'blocked'; notifEnabled = false;
                 updateNotifUI(); toast('Notifiche bloccate dal browser!');
             } else {
-                Notification.requestPermission().then(perm => {
-                    if (perm === 'granted') {
-                        notifState = 'on'; notifEnabled = true;
-                        updateNotifUI(); toast('🔔 Notifiche attivate!');
-                    } else if (perm === 'denied') {
-                        notifState = 'blocked'; notifEnabled = false;
-                        updateNotifUI(); toast('Notifiche bloccate!');
-                    }
-                });
+                notifState = 'off'; notifEnabled = false;
+                updateNotifUI();
             }
         });
 
@@ -894,75 +907,55 @@
             else { notifToggle.classList.add('notif-off'); notifStatus.textContent = 'OFF'; }
         }
 
-        function checkNotifications(st, td) {
+        function checkNotifications(td) {
             if (!notifEnabled || Notification.permission !== 'granted') return;
 
             const dateStr = new Date().toDateString();
 
+            if (checkNotifications.lastDay !== dateStr) {
+                notifiedEvents.clear();
+                checkNotifications.lastDay = dateStr;
+            }
+
             schedule.forEach((seg, i) => {
                 const startMin = t2m(seg.start);
-
-                // Notifica 2 minuti prima
                 const warnMin = startMin - 2;
-                if (warnMin >= 0 && td.mins === warnMin && td.secs % 60 <= 2) {
-                    const key2 = `${dateStr}-${i}-2min`;
-                    if (!notifiedEvents.has(key2)) {
-                        notifiedEvents.add(key2);
-                        const typeName = seg.type === 'work' ? 'LAVORO' : seg.type === 'break' ? 'PAUSA' : 'PRANZO';
-                        const typeEmoji = seg.type === 'work' ? '💼' : seg.type === 'break' ? '☕' : '🍽️';
-                        try {
-                            new Notification(`⏰ Tra 2 minuti: ${typeName}!`, {
-                                body: `${typeEmoji} ${seg.label} inizia alle ${seg.start}`,
-                                tag: `pt-${i}-2min`
-                            });
-                        } catch (e) {}
-                    }
+
+                const key2 = `${dateStr}-${i}-2min`;
+                if (warnMin >= 0 && td.mins === warnMin && !notifiedEvents.has(key2)) {
+                    notifiedEvents.add(key2);
+                    const typeName = seg.type === 'work' ? 'LAVORO' : seg.type === 'break' ? 'PAUSA' : 'PRANZO';
+                    const typeEmoji = seg.type === 'work' ? '💼' : seg.type === 'break' ? '☕' : '🍽️';
+                    sendNotif(`⏰ Tra 2 minuti: ${typeName}!`, `${typeEmoji} ${seg.label} inizia alle ${seg.start}`, `pt-${i}-2min`);
                 }
 
-                // Notifica all'inizio dell'evento
-                if (td.mins === startMin && td.secs % 60 <= 2) {
-                    const keyS = `${dateStr}-${i}-start`;
-                    if (!notifiedEvents.has(keyS)) {
-                        notifiedEvents.add(keyS);
-                        const msgs = {
-                            work: { title: '💼 Riprendi a lavorare!', body: `${seg.label} (${seg.start} – ${seg.end})` },
-                            break: { title: '☕ PAUSA!', body: `${seg.label} - Goditela! (${seg.start} – ${seg.end})` },
-                            lunch: { title: '🍽️ PRANZO!', body: `${seg.label} - Buon appetito! (${seg.start} – ${seg.end})` },
-                        };
-                        const m = msgs[seg.type] || msgs.work;
-                        try {
-                            new Notification(m.title, { body: m.body, tag: `pt-${i}-start` });
-                        } catch (e) {}
-                    }
+                const keyS = `${dateStr}-${i}-start`;
+                if (td.mins === startMin && !notifiedEvents.has(keyS)) {
+                    notifiedEvents.add(keyS);
+                    const msgs = {
+                        work: { title: '💼 Riprendi a lavorare!', body: `${seg.label} (${seg.start} – ${seg.end})` },
+                        break: { title: '☕ PAUSA!', body: `${seg.label} - Goditela! (${seg.start} – ${seg.end})` },
+                        lunch: { title: '🍽️ PRANZO!', body: `${seg.label} - Buon appetito! (${seg.start} – ${seg.end})` },
+                    };
+                    const m = msgs[seg.type] || msgs.work;
+                    sendNotif(m.title, m.body, `pt-${i}-start`);
                 }
             });
 
-            // Fine giornata: avviso 2 min prima + all'inizio
             if (schedule.length) {
                 const lastEnd = t2m(schedule[schedule.length - 1].end);
-
                 const eodWarn = lastEnd - 2;
-                if (eodWarn >= 0 && td.mins === eodWarn && td.secs % 60 <= 2) {
-                    const keyW = `${dateStr}-end-2min`;
-                    if (!notifiedEvents.has(keyW)) {
-                        notifiedEvents.add(keyW);
-                        try {
-                            new Notification('⏰ Tra 2 minuti: FINE GIORNATA!', {
-                                body: 'Preparati a staccare!',
-                                tag: 'pt-eod-2min'
-                            });
-                        } catch (e) {}
-                    }
+
+                const keyW = `${dateStr}-end-2min`;
+                if (eodWarn >= 0 && td.mins === eodWarn && !notifiedEvents.has(keyW)) {
+                    notifiedEvents.add(keyW);
+                    sendNotif('⏰ Tra 2 minuti: FINE GIORNATA!', 'Preparati a staccare!', 'pt-eod-2min');
                 }
 
-                if (td.mins === lastEnd && td.secs % 60 <= 2) {
-                    const eodKey = `${dateStr}-end`;
-                    if (!notifiedEvents.has(eodKey)) {
-                        notifiedEvents.add(eodKey);
-                        try {
-                            new Notification('🏠 GIORNATA FINITA!', { body: 'Sei libero! Stacca tutto!' });
-                        } catch (e) {}
-                    }
+                const eodKey = `${dateStr}-end`;
+                if (td.mins === lastEnd && !notifiedEvents.has(eodKey)) {
+                    notifiedEvents.add(eodKey);
+                    sendNotif('🏠 GIORNATA FINITA!', 'Sei libero! Stacca tutto!', 'pt-eod');
                 }
             }
         }
@@ -1072,7 +1065,7 @@
         }
 
         // ============================================
-        // INIT
+        // INIT + WEB WORKER (per evitare throttling)
         // ============================================
         if ('Notification' in window) {
             if (Notification.permission === 'denied') { notifState = 'blocked'; }
@@ -1081,7 +1074,15 @@
         updateNotifUI();
 
         updateDisplay();
-        setInterval(updateDisplay, 1000);
+
+        try {
+            const workerCode = `setInterval(() => postMessage('tick'), 1000);`;
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const worker = new Worker(URL.createObjectURL(blob));
+            worker.onmessage = () => updateDisplay();
+        } catch(e) {
+            setInterval(updateDisplay, 1000);
+        }
     </script>
 </body>
 </html>
