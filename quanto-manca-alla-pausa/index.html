@@ -418,15 +418,6 @@
 
     <script>
         // ============================================
-        // CONFIGURAZIONE EFFETTO MAGNETICO
-        // ============================================
-        const MAX_MAGNETIC_STRENGTH = 0.08;
-        const MAGNETIC_RANGE = 600;
-        const SMOOTHING = 0.05;
-        const HOVER_SCALE = 1.05;
-        const HOVER_ROTATION_LIMIT = 5;
-
-        // ============================================
         // ORARI DEFAULT
         // ============================================
         const DEFAULTS = [
@@ -442,6 +433,105 @@
         let schedule = JSON.parse(localStorage.getItem('pt_sched')) || JSON.parse(JSON.stringify(DEFAULTS));
 
         // ============================================
+        // WEB WORKER INLINE (Gestisce il tempo e le notifiche in background)
+        // ============================================
+        const workerCode = `
+          let schedule = [];
+          const notifiedEvents = new Set();
+          let lastDay = '';
+
+          function t2m(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+
+          self.onmessage = function(e) {
+            if (e.data.type === 'schedule') {
+              schedule = e.data.schedule;
+              notifiedEvents.clear(); // Resetta le notifiche se cambia lo schedule
+            }
+          };
+
+          setInterval(() => {
+            // Manda un tick al thread principale per aggiornare la UI
+            self.postMessage({ type: 'tick' });
+
+            if (!schedule.length) return;
+
+            const now = new Date();
+            const mins = now.getHours() * 60 + now.getMinutes();
+            const dateStr = now.toDateString();
+
+            if (lastDay !== dateStr) {
+              notifiedEvents.clear();
+              lastDay = dateStr;
+            }
+
+            schedule.forEach((seg, i) => {
+              const startMin = t2m(seg.start);
+              const warnMin = startMin - 2;
+
+              const key2 = dateStr + '-' + i + '-2min';
+              if (warnMin >= 0 && mins === warnMin && !notifiedEvents.has(key2)) {
+                notifiedEvents.add(key2);
+                const typeName = seg.type === 'work' ? 'LAVORO' : seg.type === 'break' ? 'PAUSA' : 'PRANZO';
+                const typeEmoji = seg.type === 'work' ? '💼' : seg.type === 'break' ? '☕' : '🍽️';
+                self.postMessage({ type: 'notify', title: '⏰ Tra 2 minuti: ' + typeName + '!', body: typeEmoji + ' ' + seg.label + ' inizia alle ' + seg.start, tag: 'pt-' + i + '-2min' });
+              }
+
+              const keyS = dateStr + '-' + i + '-start';
+              if (mins === startMin && !notifiedEvents.has(keyS)) {
+                notifiedEvents.add(keyS);
+                const msgs = {
+                  work: { title: '💼 Riprendi a lavorare!', body: seg.label + ' (' + seg.start + ' – ' + seg.end + ')' },
+                  break: { title: '☕ PAUSA!', body: seg.label + ' - Goditela! (' + seg.start + ' – ' + seg.end + ')' },
+                  lunch: { title: '🍽️ PRANZO!', body: seg.label + ' - Buon appetito! (' + seg.start + ' – ' + seg.end + ')' },
+                };
+                const m = msgs[seg.type] || msgs.work;
+                self.postMessage({ type: 'notify', title: m.title, body: m.body, tag: 'pt-' + i + '-start' });
+              }
+            });
+
+            // Fine giornata
+            if (schedule.length) {
+              const lastEnd = t2m(schedule[schedule.length-1].end);
+              const eodWarn = lastEnd - 2;
+              const keyW = dateStr + '-end-2min';
+              if (eodWarn >= 0 && mins === eodWarn && !notifiedEvents.has(keyW)) {
+                notifiedEvents.add(keyW);
+                self.postMessage({ type: 'notify', title: '⏰ Tra 2 minuti: FINE GIORNATA!', body: 'Preparati a staccare!', tag: 'pt-eod-2min' });
+              }
+              const eodKey = dateStr + '-end';
+              if (mins === lastEnd && !notifiedEvents.has(eodKey)) {
+                notifiedEvents.add(eodKey);
+                self.postMessage({ type: 'notify', title: '🏠 GIORNATA FINITA!', body: 'Sei libero! Stacca tutto!', tag: 'pt-eod' });
+              }
+            }
+          }, 1000);
+        `;
+
+        // Creazione Worker
+        let notifWorker;
+        try {
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            notifWorker = new Worker(URL.createObjectURL(blob));
+            
+            // Il thread principale ascolta i messaggi dal Worker
+            notifWorker.onmessage = function(e) {
+                const data = e.data;
+                if (data.type === 'tick') {
+                    updateDisplay(); // Aggiorna la UI ad ogni tick
+                } else if (data.type === 'notify') {
+                    sendNotif(data.title, data.body, data.tag); // Sparaa notifica se richiesto
+                }
+            };
+
+            // Invia lo schedule iniziale al Worker
+            notifWorker.postMessage({ type: 'schedule', schedule: schedule });
+
+        } catch(e) {
+            // Fallback se il Worker non funziona
+            setInterval(updateDisplay, 1000);
+        }
+
+        // ============================================
         // MEME QUOTES
         // ============================================
         const MEME_QUOTES = {
@@ -454,7 +544,7 @@
         };
 
         // ============================================
-        // DOM
+        // DOM & STATO
         // ============================================
         const mainCounterBox = document.getElementById('mainCounterBox');
         const counterEl = document.getElementById('counter');
@@ -470,9 +560,6 @@
         const memeQuoteEl = document.getElementById('memeQuote');
         const quoteTextEl = document.getElementById('quoteText');
 
-        // ============================================
-        // STATO
-        // ============================================
         let notifState = 'off';
         let notifEnabled = false;
         let settingsOpen = false;
@@ -480,13 +567,18 @@
         let quoteIndex = {};
         let quoteTimer = 0;
         let confettiDone = false;
-        const notifiedEvents = new Set();
         let lastTimelineIdx = -999;
-        let swReg = null; // Registrazione Service Worker
+        let swReg = null; 
 
         // ============================================
         // SISTEMA MAGNETICO
         // ============================================
+        const MAX_MAGNETIC_STRENGTH = 0.08;
+        const MAGNETIC_RANGE = 600;
+        const SMOOTHING = 0.05;
+        const HOVER_SCALE = 1.05;
+        const HOVER_ROTATION_LIMIT = 5;
+
         let mouse = { x: 0, y: 0 };
         document.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
 
@@ -575,7 +667,7 @@
         animateMagnets();
 
         // ============================================
-        // UTILITY
+        // UTILITY & CALCOLO STATO
         // ============================================
         function t2m(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
         function m2t(m) { return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
@@ -607,9 +699,6 @@
             return `${m}m`;
         }
 
-        // ============================================
-        // CALCOLO STATO
-        // ============================================
         function getTimeData() {
             const now = new Date();
             return {
@@ -756,8 +845,6 @@
             quoteTimer++;
             const stateKey = st.state;
             if (stateKey !== lastStateKey || quoteTimer > 30) { lastStateKey = stateKey; quoteTimer = 0; rotateQuote(stateKey); }
-
-            checkNotifications(td);
         }
 
         // ============================================
@@ -852,21 +939,17 @@
                     await navigator.serviceWorker.ready;
                     console.log('Service Worker pronto per le notifiche');
                 } catch (e) {
-                    console.error('Errore registrazione Service Worker:', e);
+                    console.error('Errore registrazione Service Worker. Serve HTTPS o localhost:', e);
+                    toast('⚠️ Per le notifiche serve un server locale (es. Live Server)');
                 }
             }
         }
 
-        // Registra il SW all'avvio
         initSW();
 
         function sendNotif(title, body, tag) {
             if (swReg) {
-                swReg.showNotification(title, { 
-                    body: body, 
-                    tag: tag, 
-                    icon: 'https://github.githubassets.com/favicons/favicon.png' 
-                });
+                swReg.showNotification(title, { body: body, tag: tag, icon: 'https://github.githubassets.com/favicons/favicon.png' });
             } else {
                 try { new Notification(title, { body: body, tag: tag }); } catch (e) {}
             }
@@ -886,10 +969,9 @@
 
             const perm = await Notification.requestPermission();
             if (perm === 'granted') {
-                if (!swReg) await initSW(); // Assicurati che il SW sia pronto
+                if (!swReg) await initSW();
                 notifState = 'on'; notifEnabled = true;
                 updateNotifUI(); toast('🔔 Notifiche attivate!');
-                // Test immediato
                 sendNotif('🔥 SISTEMA ATTIVO', 'Notifiche Windows attivate con successo!', 'pt-test');
             } else if (perm === 'denied') {
                 notifState = 'blocked'; notifEnabled = false;
@@ -905,59 +987,6 @@
             if (notifState === 'on') { notifToggle.classList.add('notif-on'); notifStatus.textContent = 'ON'; }
             else if (notifState === 'blocked') { notifToggle.classList.add('notif-blocked'); notifStatus.textContent = 'NO'; }
             else { notifToggle.classList.add('notif-off'); notifStatus.textContent = 'OFF'; }
-        }
-
-        function checkNotifications(td) {
-            if (!notifEnabled || Notification.permission !== 'granted') return;
-
-            const dateStr = new Date().toDateString();
-
-            if (checkNotifications.lastDay !== dateStr) {
-                notifiedEvents.clear();
-                checkNotifications.lastDay = dateStr;
-            }
-
-            schedule.forEach((seg, i) => {
-                const startMin = t2m(seg.start);
-                const warnMin = startMin - 2;
-
-                const key2 = `${dateStr}-${i}-2min`;
-                if (warnMin >= 0 && td.mins === warnMin && !notifiedEvents.has(key2)) {
-                    notifiedEvents.add(key2);
-                    const typeName = seg.type === 'work' ? 'LAVORO' : seg.type === 'break' ? 'PAUSA' : 'PRANZO';
-                    const typeEmoji = seg.type === 'work' ? '💼' : seg.type === 'break' ? '☕' : '🍽️';
-                    sendNotif(`⏰ Tra 2 minuti: ${typeName}!`, `${typeEmoji} ${seg.label} inizia alle ${seg.start}`, `pt-${i}-2min`);
-                }
-
-                const keyS = `${dateStr}-${i}-start`;
-                if (td.mins === startMin && !notifiedEvents.has(keyS)) {
-                    notifiedEvents.add(keyS);
-                    const msgs = {
-                        work: { title: '💼 Riprendi a lavorare!', body: `${seg.label} (${seg.start} – ${seg.end})` },
-                        break: { title: '☕ PAUSA!', body: `${seg.label} - Goditela! (${seg.start} – ${seg.end})` },
-                        lunch: { title: '🍽️ PRANZO!', body: `${seg.label} - Buon appetito! (${seg.start} – ${seg.end})` },
-                    };
-                    const m = msgs[seg.type] || msgs.work;
-                    sendNotif(m.title, m.body, `pt-${i}-start`);
-                }
-            });
-
-            if (schedule.length) {
-                const lastEnd = t2m(schedule[schedule.length - 1].end);
-                const eodWarn = lastEnd - 2;
-
-                const keyW = `${dateStr}-end-2min`;
-                if (eodWarn >= 0 && td.mins === eodWarn && !notifiedEvents.has(keyW)) {
-                    notifiedEvents.add(keyW);
-                    sendNotif('⏰ Tra 2 minuti: FINE GIORNATA!', 'Preparati a staccare!', 'pt-eod-2min');
-                }
-
-                const eodKey = `${dateStr}-end`;
-                if (td.mins === lastEnd && !notifiedEvents.has(eodKey)) {
-                    notifiedEvents.add(eodKey);
-                    sendNotif('🏠 GIORNATA FINITA!', 'Sei libero! Stacca tutto!', 'pt-eod');
-                }
-            }
         }
 
         // ============================================
@@ -1042,15 +1071,23 @@
             });
             schedule.sort((a, b) => t2m(a.start) - t2m(b.start));
             localStorage.setItem('pt_sched', JSON.stringify(schedule));
-            confettiDone = false; notifiedEvents.clear(); forceTimelineRebuild();
-            toast('Orari salvati!'); renderSettings();
+            
+            // Aggiorna il Worker con il nuovo schedule!
+            if (notifWorker) notifWorker.postMessage({ type: 'schedule', schedule: schedule });
+
+            confettiDone = false; forceTimelineRebuild();
+            toast('Orari salvati!'); renderSettings(); updateDisplay();
         });
 
         document.getElementById('resetSettingsBtn').addEventListener('click', () => {
             schedule = JSON.parse(JSON.stringify(DEFAULTS));
             localStorage.removeItem('pt_sched');
-            confettiDone = false; notifiedEvents.clear(); forceTimelineRebuild();
-            toast('Orari ripristinati ai default!'); renderSettings();
+            
+            // Aggiorna il Worker con il nuovo schedule!
+            if (notifWorker) notifWorker.postMessage({ type: 'schedule', schedule: schedule });
+
+            confettiDone = false; forceTimelineRebuild();
+            toast('Orari ripristinati ai default!'); renderSettings(); updateDisplay();
         });
 
         // ============================================
@@ -1065,24 +1102,14 @@
         }
 
         // ============================================
-        // INIT + WEB WORKER (per evitare throttling)
+        // INIT
         // ============================================
         if ('Notification' in window) {
             if (Notification.permission === 'denied') { notifState = 'blocked'; }
             else { notifState = 'off'; }
         }
         updateNotifUI();
-
         updateDisplay();
-
-        try {
-            const workerCode = `setInterval(() => postMessage('tick'), 1000);`;
-            const blob = new Blob([workerCode], { type: 'application/javascript' });
-            const worker = new Worker(URL.createObjectURL(blob));
-            worker.onmessage = () => updateDisplay();
-        } catch(e) {
-            setInterval(updateDisplay, 1000);
-        }
     </script>
 </body>
 </html>
