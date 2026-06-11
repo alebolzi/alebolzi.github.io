@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAUSA TRACKER</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #000000;
+            --accent: #ff3b30;
+            --font: 'Impact', 'Arial Black', sans-serif;
+            --green: #00ff88;
+            --yellow: #ffcc00;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-transform: uppercase;
+            overflow-x: hidden;
+            cursor: default;
+            padding: 40px 20px;
+        }
+
+        main { text-align: center; max-width: 800px; width: 100%; z-index: 1; }
+
+        h1 { 
+            font-size: 4rem; line-height: 1; margin-bottom: 15px; 
+            pointer-events: none; user-select: none;
+            will-change: transform;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+            letter-spacing: -2px;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem; margin-bottom: 50px; font-family: var(--font);
+            letter-spacing: 2px; pointer-events: none; user-select: none;
+            will-change: transform;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            color: #666;
+        }
+
+        .input-section { margin-bottom: 35px; }
+
+        .input-box {
+            border: 5px solid black; padding: 25px 35px; background: white;
+            box-shadow: 12px 12px 0px rgba(0,0,0,1); display: inline-block;
+            will-change: transform; user-select: none;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            max-width: 500px; width: 100%;
+        }
+
+        .input-label {
+            font-size: 1.3rem; display: block; border-bottom: 4px solid black;
+            padding-bottom: 12px; margin-bottom: 15px; pointer-events: none; letter-spacing: 1px;
+        }
+
+        .input-wrapper { position: relative; }
+
+        .input-wrapper input {
+            width: 100%; font-size: 3rem; font-family: var(--font);
+            border: 4px solid black; padding: 15px 20px; background: white;
+            color: black; outline: none; text-align: center; letter-spacing: 2px;
+            cursor: text; position: relative; z-index: 100;
+        }
+
+        .input-wrapper input::placeholder { color: #ccc; }
+        .input-wrapper input:focus { background: #ffffcc; }
+
+        #resetBtn {
+            background: black; color: white; border: none; padding: 18px 45px;
+            font-family: var(--font); font-size: 1.6rem; cursor: pointer;
+            text-transform: uppercase; box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            will-change: transform; display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.2s;
+            margin: 10px 0 35px 0; letter-spacing: 2px;
+        }
+
+        #resetBtn:hover { background-color: var(--accent); transform: translate(-3px, -3px); box-shadow: 11px 11px 0px rgba(0,0,0,1); }
+        #resetBtn:active { transform: translate(2px, 2px) !important; box-shadow: 6px 6px 0px rgba(0,0,0,1) !important; }
+
+        .counter-box {
+            border: 6px solid black; padding: 30px 50px; margin: 30px auto;
+            display: inline-block; background: white; box-shadow: 15px 15px 0px rgba(0,0,0,1);
+            will-change: transform; user-select: none;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s, background-color 0.5s;
+            min-width: 400px;
+        }
+
+        .counter-box.hidden { opacity: 0; pointer-events: none; position: absolute; visibility: hidden; }
+
+        .label {
+            font-size: 1.4rem; display: block; border-bottom: 4px solid black;
+            padding-bottom: 12px; margin-bottom: 15px; pointer-events: none; letter-spacing: 1px;
+        }
+
+        #counter {
+            font-size: 5.5rem; line-height: 1; display: inline-block; pointer-events: none;
+            color: var(--accent); font-family: 'Courier New', monospace; letter-spacing: -2px;
+            transition: color 0.5s;
+        }
+
+        .timer-small {
+            margin-top: 20px; display: inline-block; border: 3px solid black;
+            padding: 8px 20px; background: #f0f0f0; font-family: 'Courier New', monospace;
+            font-size: 1.3rem; letter-spacing: 2px; color: black;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+        }
+
+        .timer-small .timer-label {
+            font-size: 0.75rem; color: #666; font-family: var(--font);
+            margin-right: 8px; text-transform: uppercase;
+        }
+
+        .status-indicator {
+            display: inline-block; margin-left: 10px; padding: 4px 12px;
+            font-size: 0.85rem; border: 2px solid black; background: white;
+            font-family: sans-serif; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;
+        }
+
+        .status-indicator.running { background: #00ff88; color: black; }
+        .status-indicator.waiting { background: #ffcc00; color: black; }
+        .status-indicator.stopped { background: #ccc; color: black; }
+        .status-indicator.onbreak { background: #00ff88; color: black; }
+        .status-indicator.onlunch { background: #ffcc00; color: black; }
+        .status-indicator.free { background: #00ff88; color: black; }
+
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px; margin-top: 50px;
+        }
+
+        .stats-grid.hidden { display: none !important; }
+
+        .stat-card {
+            border: 5px solid black; padding: 25px 20px; background: white;
+            box-shadow: 10px 10px 0px rgba(0,0,0,1); will-change: transform; user-select: none;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); text-align: center;
+        }
+
+        .stat-card:hover { transform: translate(-3px, -3px); box-shadow: 13px 13px 0px rgba(0,0,0,1); }
+
+        .stat-label {
+            font-size: 1.1rem; border-bottom: 3px solid black; padding-bottom: 8px;
+            margin-bottom: 12px; letter-spacing: 1px; color: #666;
+        }
+
+        .stat-value { font-size: 2.2rem; color: black; font-family: 'Courier New', monospace; line-height: 1.2; }
+        .stat-value.highlight { color: var(--accent); font-size: 2.8rem; }
+        .stat-value.done-val { color: #999; font-size: 1.4rem; font-family: var(--font); }
+
+        .comparison-section { margin-top: 60px; border-top: 5px solid black; padding-top: 40px; }
+        .comparison-section.hidden { display: none !important; }
+
+        .comparison-title { font-size: 2rem; margin-bottom: 30px; letter-spacing: 2px; }
+
+        .comparison-item {
+            border: 4px solid black; padding: 20px 25px; margin-bottom: 20px;
+            background: white; box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            display: flex; justify-content: space-between; align-items: center;
+            transition: transform 0.2s, opacity 0.3s;
+        }
+
+        .comparison-item:hover { transform: translate(-2px, -2px); box-shadow: 10px 10px 0px rgba(0,0,0,1); }
+        .comparison-item.you { background: #ffffcc; border-color: var(--accent); }
+        .comparison-item.past-item { opacity: 0.4; }
+        .comparison-item.break-item { border-left: 8px solid var(--green); }
+        .comparison-item.lunch-item { border-left: 8px solid var(--yellow); }
+        .comparison-item.work-item { border-left: 8px solid var(--accent); }
+
+        .comparison-left { text-align: left; flex: 1; }
+        .comparison-name { font-size: 1.4rem; margin-bottom: 5px; }
+        .comparison-desc { font-size: 1rem; color: #666; font-family: sans-serif; text-transform: none; }
+        .comparison-right { text-align: right; }
+        .comparison-value { font-size: 2rem; color: var(--accent); font-family: 'Courier New', monospace; }
+        .comparison-unit { font-size: 0.9rem; color: #666; font-family: sans-serif; text-transform: none; }
+
+        footer {
+            margin-top: 60px; font-family: sans-serif; font-size: 0.85rem;
+            opacity: 0.5; text-align: center; padding: 0 20px; pointer-events: none; text-transform: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .subtitle { font-size: 1.3rem; }
+            .counter-box { min-width: auto; width: 100%; }
+            #counter { font-size: 3.5rem; }
+            .input-wrapper input { font-size: 2rem; }
+            #resetBtn { font-size: 1.3rem; padding: 15px 30px; }
+            .stat-value { font-size: 1.6rem; }
+            .stat-value.highlight { font-size: 2rem; }
+            .comparison-item { flex-direction: column; text-align: center; gap: 15px; }
+            .comparison-left, .comparison-right { text-align: center; }
+            .timer-small { font-size: 1.1rem; }
+            .toggle-text { font-size: 1rem; }
+            .seg-row { flex-direction: column; align-items: stretch; }
+            .seg-field.name-field input { width: 100%; }
+            .settings-actions { flex-direction: column; align-items: center; }
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .running-animation { animation: pulse 1s ease-in-out infinite; }
+
+        .toggle-section { margin: 25px 0; display: inline-block; }
+
+        .toggle-box {
+            border: 4px solid black; padding: 18px 28px; background: white;
+            box-shadow: 8px 8px 0px rgba(0,0,0,1); display: inline-block;
+            cursor: pointer; user-select: none; transition: all 0.2s; position: relative; z-index: 50;
+        }
+
+        .toggle-box:hover { transform: translate(-2px, -2px); box-shadow: 10px 10px 0px rgba(0,0,0,1); }
+
+        .toggle-text { font-size: 1.2rem; font-family: var(--font); letter-spacing: 1px; }
+
+        .toggle-status {
+            display: inline-block; margin-left: 10px; padding: 3px 10px;
+            font-size: 0.85rem; border: 2px solid black; background: white;
+            font-weight: bold; vertical-align: middle; transition: all 0.2s;
+        }
+
+        /* === STATI NOTIFICA === */
+        #notifToggle.notif-off { background: #e0e0e0; }
+        #notifToggle.notif-off .toggle-status { background: #999; color: white; border-color: #999; }
+
+        #notifToggle.notif-on { background: #00ff88; }
+        #notifToggle.notif-on .toggle-status { background: black; color: white; }
+
+        #notifToggle.notif-blocked { background: #ff3b30; }
+        #notifToggle.notif-blocked .toggle-status { background: black; color: white; }
+
+        #notifToggle.active { background: #00ff88; }
+        #notifToggle.active .toggle-status { background: black; color: white; }
+
+        .toggle-box.active { background: #00ff88; box-shadow: 8px 8px 0px rgba(0,0,0,1); }
+        .toggle-box.active .toggle-status { background: black; color: white; }
+
+        .meme-box { margin-top: 40px; display: inline-block; cursor: pointer; }
+        .meme-box .toggle-text { font-style: italic; font-family: sans-serif; text-transform: none; font-size: 1.1rem; color: #666; transition: color 0.3s; }
+        .meme-box:hover .toggle-text { color: var(--accent); }
+
+        .settings-panel { margin-top: 30px; border-top: 5px solid black; padding-top: 30px; display: none; }
+        .settings-panel.visible { display: block; }
+        .settings-title { font-size: 1.8rem; margin-bottom: 25px; letter-spacing: 2px; }
+
+        .segment-editor {
+            border: 4px solid black; padding: 18px 22px; margin-bottom: 15px;
+            background: white; box-shadow: 6px 6px 0px rgba(0,0,0,1); text-align: left; transition: transform 0.2s;
+        }
+        .segment-editor:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0px rgba(0,0,0,1); }
+
+        .seg-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; border-bottom: 3px solid black; padding-bottom: 8px;
+        }
+        .seg-number { font-size: 1rem; color: #666; letter-spacing: 1px; }
+
+        .seg-delete {
+            background: white; border: 2px solid black; padding: 4px 12px;
+            font-family: var(--font); font-size: 0.9rem; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px; transition: all 0.15s;
+            position: relative; z-index: 100;
+        }
+        .seg-delete:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+        .seg-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+        .seg-field { display: flex; flex-direction: column; gap: 4px; }
+        .seg-field label { font-size: 0.7rem; color: #999; font-family: sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+        .seg-field input, .seg-field select {
+            font-family: var(--font); font-size: 1.1rem; border: 3px solid black;
+            padding: 8px 12px; background: white; color: black; outline: none;
+            text-align: center; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .seg-field input:focus, .seg-field select:focus { background: #ffffcc; }
+        .seg-field.name-field input { width: 180px; text-align: left; font-family: sans-serif; text-transform: none; font-size: 0.95rem; }
+
+        .settings-actions { margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+
+        .btn-save {
+            background: black; color: white; border: none; padding: 15px 40px;
+            font-family: var(--font); font-size: 1.3rem; cursor: pointer;
+            text-transform: uppercase; box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            letter-spacing: 2px; transition: transform 0.2s, background-color 0.2s;
+        }
+        .btn-save:hover { background-color: var(--green); color: black; transform: translate(-3px, -3px); box-shadow: 11px 11px 0px rgba(0,0,0,1); }
+
+        .btn-add {
+            background: white; color: black; border: 4px solid black; padding: 15px 40px;
+            font-family: var(--font); font-size: 1.3rem; cursor: pointer;
+            text-transform: uppercase; box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            letter-spacing: 2px; transition: transform 0.2s;
+        }
+        .btn-add:hover { transform: translate(-3px, -3px); box-shadow: 11px 11px 0px rgba(0,0,0,1); }
+
+        .btn-reset-settings {
+            background: white; color: var(--accent); border: 4px solid var(--accent);
+            padding: 15px 40px; font-family: var(--font); font-size: 1.3rem; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 2px; transition: transform 0.2s, background-color 0.2s;
+        }
+        .btn-reset-settings:hover { background: var(--accent); color: white; transform: translate(-2px, -2px); }
+
+        .toggle-row { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+
+        .progress-container {
+            border: 3px solid black; height: 22px; background: white;
+            margin-top: 15px; position: relative; box-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+        }
+        .progress-fill { height: 100%; background: var(--accent); transition: width 1s linear; }
+        .progress-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-family: var(--font); font-size: 0.75rem; letter-spacing: 1px; color: black;
+            text-shadow: 0 0 4px white, 0 0 4px white; z-index: 2;
+        }
+
+        .settings-bottom { margin-top: 50px; border-top: 5px solid black; padding-top: 40px; }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetto { position: fixed; top: -10px; pointer-events: none; z-index: 1000; animation: confettiFall 3s ease-in forwards; }
+
+        @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100px); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 class="magnetic-text" data-rotate="0">QUANTO MANCA?</h1>
+            <div class="subtitle magnetic-text" data-rotate="0">alla pausa</div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-box magnetic notif-off" id="notifToggle" data-rotate="0">
+                <span class="toggle-text">🔔 NOTIFICHE</span>
+                <span class="toggle-status" id="notifStatus">OFF</span>
+            </div>
+        </div>
+
+        <div class="counter-box magnetic" id="mainCounterBox" data-rotate="-2">
+            <span class="label" id="counterLabel">⏱️ PROSSIMO EVENTO TRA:</span>
+            <div id="counter">--:--:--</div>
+            <div class="timer-small" style="margin-top: 20px;">
+                <span class="timer-label">🕐 ORA:</span>
+                <span id="currentTime">00:00:00</span>
+                <span class="status-indicator waiting" id="statusIndicator">ATTESA</span>
+            </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card magnetic" data-rotate="1">
+                <div class="stat-label">☕ PROSSIMA PAUSA</div>
+                <div class="stat-value highlight" id="nextBreak">--:--:--</div>
+            </div>
+            <div class="stat-card magnetic" data-rotate="-1">
+                <div class="stat-label">🍽️ PRANZO</div>
+                <div class="stat-value" id="nextLunch">--:--:--</div>
+            </div>
+            <div class="stat-card magnetic" data-rotate="2">
+                <div class="stat-label">🏠 FINE GIORNATA</div>
+                <div class="stat-value highlight" id="endOfDay">--:--:--</div>
+            </div>
+            <div class="stat-card magnetic" data-rotate="-2">
+                <div class="stat-label">⏱️ FASE CORRENTE</div>
+                <div class="stat-value" id="currentPhase">--:--:--</div>
+            </div>
+            <div class="stat-card magnetic" data-rotate="1">
+                <div class="stat-label">📊 PROGRESSO</div>
+                <div class="stat-value highlight" id="dayProgress">0%</div>
+                <div class="progress-container">
+                    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                    <span class="progress-text" id="progressText">0%</span>
+                </div>
+            </div>
+            <div class="stat-card magnetic" data-rotate="-1">
+                <div class="stat-label">💼 LAVORO RIMANENTE</div>
+                <div class="stat-value" id="workRemaining">--:--:--</div>
+            </div>
+        </div>
+
+        <div class="comparison-section" id="timelineSection">
+            <h2 class="comparison-title magnetic-text" data-rotate="0">📋 LA TUA GIORNATA</h2>
+            <div id="timeline"></div>
+        </div>
+
+        <div class="meme-box">
+            <div class="toggle-box magnetic" id="memeQuote" data-rotate="1">
+                <span class="toggle-text" id="quoteText">"Caricamento saggezza..."</span>
+            </div>
+        </div>
+
+        <div class="settings-bottom">
+            <div class="toggle-box magnetic" id="settingsToggle" data-rotate="0">
+                <span class="toggle-text">⚙️ IMPOSTAZIONI ORARI</span>
+                <span class="toggle-status" id="settingsStatus">CHIUSO</span>
+            </div>
+            <div class="settings-panel" id="settingsPanel">
+                <div class="settings-title magnetic-text" data-rotate="0">⚙️ IMPOSTAZIONI ORARI</div>
+                <div id="settingsEditor"></div>
+                <div class="settings-actions">
+                    <button class="btn-add magnetic" id="addSegmentBtn" data-rotate="0">+ AGGIUNGI</button>
+                    <button class="btn-save magnetic" id="saveSettingsBtn" data-rotate="1">💾 SALVA</button>
+                    <button class="btn-reset-settings magnetic" id="resetSettingsBtn" data-rotate="-1">↺ RESET DEFAULT</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>* Aggiorna in tempo reale. Clicca la frase per una nuova quote. Nessun dato salvato su server.</footer>
+
+    <script>
+        // ============================================
+        // CONFIGURAZIONE EFFETTO MAGNETICO
+        // ============================================
+        const MAX_MAGNETIC_STRENGTH = 0.08;
+        const MAGNETIC_RANGE = 600;
+        const SMOOTHING = 0.05;
+        const HOVER_SCALE = 1.05;
+        const HOVER_ROTATION_LIMIT = 5;
+
+        // ============================================
+        // ORARI DEFAULT
+        // ============================================
+        const DEFAULTS = [
+            { start:'08:30', end:'10:15', type:'work',  label:'Lavoro Mattina' },
+            { start:'10:15', end:'10:30', type:'break', label:'Pausa Caffè' },
+            { start:'10:30', end:'12:30', type:'work',  label:'Lavoro Mattina' },
+            { start:'12:30', end:'14:00', type:'lunch', label:'Pausa Pranzo' },
+            { start:'14:00', end:'16:15', type:'work',  label:'Lavoro Pomeriggio' },
+            { start:'16:15', end:'16:30', type:'break', label:'Pausa Caffè' },
+            { start:'16:30', end:'18:00', type:'work',  label:'Home Stretch' },
+        ];
+
+        let schedule = JSON.parse(localStorage.getItem('pt_sched')) || JSON.parse(JSON.stringify(DEFAULTS));
+
+        // ============================================
+        // MEME QUOTES
+        // ============================================
+        const MEME_QUOTES = {
+            before: ["Dormi. Il codice può aspettare.","Goditi gli ultimi minuti di libertà.","Perché sei già sveglio?","Il letto è caldo. Il codice no."],
+            work: ["Resisti, la pausa è vicina.","Stai fingendo di lavorare. Lo sanno tutti.","Browser aperto, foglio excel pronto, faccia seria.","Hai guardato l'orologio 47 volte oggi.","Non è lunedì, ma ci prova lo stesso.","Se il codice compila, è già una vittoria.","Ctrl+C, Ctrl+V, così si va avanti.","Ogni minuto è un minuto in meno."],
+            break: ["CORRI! La pausa non aspetta!","Goditela, dura tipo 15 minuti.","Hai meritato questo momento. Forse.","Tempo limite: bevi il caffè veloce.","La pausa è una bugia che ci raccontiamo."],
+            lunch: ["Il pranzo è sacro.","La pasta aspetta nessuno.","Mangia, prega, torna a codare.","Buon appetito, guerriero.","Un'ora di libertà. Non sprecarla."],
+            after: ["LIBERTÀ! Sei sopravvissuto!","Stacca tutto, hai fatto il tuo dovere.","Sei libero come un uccello. Un uccello stanco.","Domani si ricomincia. Purtroppo.","Ora puoi piangere in pace. A casa.","Hai dato il 40%? È sufficiente."],
+            weekend: ["È weekend! Che ci fai qui?","Vai fuori, c'è un mondo vero.","Questo sito non dovrebbe esistere di weekend."],
+        };
+
+        // ============================================
+        // DOM
+        // ============================================
+        const mainCounterBox = document.getElementById('mainCounterBox');
+        const counterEl = document.getElementById('counter');
+        const counterLabel = document.getElementById('counterLabel');
+        const currentTimeEl = document.getElementById('currentTime');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const notifToggle = document.getElementById('notifToggle');
+        const notifStatus = document.getElementById('notifStatus');
+        const settingsToggle = document.getElementById('settingsToggle');
+        const settingsStatus = document.getElementById('settingsStatus');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const settingsEditor = document.getElementById('settingsEditor');
+        const memeQuoteEl = document.getElementById('memeQuote');
+        const quoteTextEl = document.getElementById('quoteText');
+
+        // ============================================
+        // STATO
+        // ============================================
+        let notifState = 'off'; // 'off', 'on', 'blocked'
+        let notifEnabled = false;
+        let settingsOpen = false;
+        let lastStateKey = '';
+        let quoteIndex = {};
+        let quoteTimer = 0;
+        let confettiDone = false;
+        const notifiedEvents = new Set();
+        let lastTimelineIdx = -999;
+
+        // ============================================
+        // SISTEMA MAGNETICO
+        // ============================================
+        let mouse = { x: 0, y: 0 };
+        document.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+        const magneticObjects = [];
+
+        function initMagnetic(elements) {
+            elements.forEach(elem => {
+                const children = elem.querySelectorAll('*');
+                children.forEach(child => {
+                    if (!child.closest('.input-wrapper') && !child.closest('.hours-input-box') && !child.closest('.seg-field') && !child.closest('.seg-delete')) {
+                        child.style.pointerEvents = 'none';
+                    }
+                });
+                magneticObjects.push({ element: elem, x: 0, y: 0, rotation: elem.getAttribute('data-rotate') || 0, isHovered: false });
+            });
+        }
+
+        initMagnetic(document.querySelectorAll('.magnetic'));
+        initMagnetic(document.querySelectorAll('.magnetic-text'));
+
+        function refreshMagnetics() {
+            for (let i = magneticObjects.length - 1; i >= 0; i--) {
+                if (!document.body.contains(magneticObjects[i].element)) magneticObjects.splice(i, 1);
+            }
+            document.querySelectorAll('.magnetic').forEach(elem => {
+                if (!magneticObjects.some(o => o.element === elem)) {
+                    const children = elem.querySelectorAll('*');
+                    children.forEach(child => {
+                        if (!child.closest('.input-wrapper') && !child.closest('.hours-input-box') && !child.closest('.seg-field') && !child.closest('.seg-delete')) {
+                            child.style.pointerEvents = 'none';
+                        }
+                    });
+                    magneticObjects.push({ element: elem, x: 0, y: 0, rotation: elem.getAttribute('data-rotate') || 0, isHovered: false });
+                }
+            });
+            document.querySelectorAll('.magnetic-text').forEach(elem => {
+                if (!magneticObjects.some(o => o.element === elem)) {
+                    magneticObjects.push({ element: elem, x: 0, y: 0, rotation: elem.getAttribute('data-rotate') || 0, isHovered: false });
+                }
+            });
+        }
+
+        function animateMagnets() {
+            magneticObjects.forEach(obj => {
+                const rect = obj.element.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const distX = mouse.x - centerX;
+                const distY = mouse.y - centerY;
+                const distance = Math.sqrt(distX * distX + distY * distY);
+                const isMouseOver = distance < 100;
+                let targetX = 0, targetY = 0, targetRotation = parseFloat(obj.rotation), targetScale = 1;
+
+                if (isMouseOver) {
+                    const intensity = (MAGNETIC_RANGE - distance) / MAGNETIC_RANGE;
+                    targetX = distX * intensity * MAX_MAGNETIC_STRENGTH;
+                    targetY = distY * intensity * MAX_MAGNETIC_STRENGTH;
+                    const normalizedX = Math.max(-1, Math.min(1, distX / (rect.width / 2)));
+                    targetRotation += normalizedX * HOVER_ROTATION_LIMIT;
+                    targetScale = HOVER_SCALE;
+                } else if (distance < MAGNETIC_RANGE) {
+                    const intensity = (MAGNETIC_RANGE - distance) / MAGNETIC_RANGE;
+                    targetX = distX * intensity * MAX_MAGNETIC_STRENGTH;
+                    targetY = distY * intensity * MAX_MAGNETIC_STRENGTH;
+                }
+
+                obj.x += (targetX - obj.x) * SMOOTHING;
+                obj.y += (targetY - obj.y) * SMOOTHING;
+                obj.currentScale = (obj.currentScale || 1) + ((targetScale - (obj.currentScale || 1)) * 0.1);
+                obj.currentRotation = (obj.currentRotation || parseFloat(obj.rotation)) + ((targetRotation - (obj.currentRotation || parseFloat(obj.rotation))) * 0.1);
+
+                obj.element.style.transform = `translate(${obj.x}px, ${obj.y}px) rotate(${obj.currentRotation}deg) scale(${obj.currentScale})`;
+            });
+            requestAnimationFrame(animateMagnets);
+        }
+
+        animateMagnets();
+
+        // ============================================
+        // UTILITY
+        // ============================================
+        function t2m(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+        function m2t(m) { return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+
+        function fmtCountdown(totalSec) {
+            if (totalSec <= 0) return '00:00:00';
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = Math.floor(totalSec % 60);
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        function fmtShort(totalSec) {
+            if (totalSec <= 0) return '0s';
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = Math.floor(totalSec % 60);
+            if (h > 0) return `${h}h ${m}m ${s}s`;
+            if (m > 0) return `${m}m ${s}s`;
+            return `${s}s`;
+        }
+
+        function fmtDuration(startT, endT) {
+            const d = t2m(endT) - t2m(startT);
+            const h = Math.floor(d / 60);
+            const m = d % 60;
+            if (h > 0 && m > 0) return `${h}h ${m}m`;
+            if (h > 0) return `${h}h`;
+            return `${m}m`;
+        }
+
+        // ============================================
+        // CALCOLO STATO - fonte unica della verità
+        // ============================================
+        function getTimeData() {
+            const now = new Date();
+            return {
+                mins: now.getHours() * 60 + now.getMinutes(),
+                secs: now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds(),
+                dow: now.getDay()
+            };
+        }
+
+        function getCurrentState(td) {
+            if (!td) td = getTimeData();
+            const { mins, secs, dow } = td;
+
+            if (dow === 0 || dow === 6) return { state: 'weekend', seg: null, next: null, cd: 0, segCd: 0, prog: 0, idx: -1 };
+
+            for (let i = 0; i < schedule.length; i++) {
+                const s = t2m(schedule[i].start), e = t2m(schedule[i].end);
+                if (mins >= s && mins < e) {
+                    const tot = (e - s) * 60, el = secs - s * 60;
+                    return { state: schedule[i].type, seg: schedule[i], idx: i, next: (i + 1 < schedule.length) ? schedule[i + 1] : null, cd: Math.max(0, e * 60 - secs), segCd: Math.max(0, e * 60 - secs), prog: Math.min(1, Math.max(0, el / tot)) };
+                }
+            }
+
+            if (schedule.length && mins < t2m(schedule[0].start)) {
+                return { state: 'before', seg: null, idx: -1, next: schedule[0], cd: Math.max(0, t2m(schedule[0].start) * 60 - secs), segCd: 0, prog: 0 };
+            }
+
+            return { state: 'after', seg: null, next: null, cd: 0, segCd: 0, prog: 1, idx: -1 };
+        }
+
+        function findNextOfType(type, td) {
+            if (!td) td = getTimeData();
+            for (let i = 0; i < schedule.length; i++) {
+                if (schedule[i].type === type && t2m(schedule[i].start) > td.mins) {
+                    return { seg: schedule[i], cd: Math.max(0, t2m(schedule[i].start) * 60 - td.secs) };
+                }
+            }
+            return null;
+        }
+
+        function getEndOfDayCd(td) {
+            if (!td) td = getTimeData();
+            if (!schedule.length) return 0;
+            return Math.max(0, t2m(schedule[schedule.length - 1].end) * 60 - td.secs);
+        }
+
+        function getWorkRemaining(td) {
+            if (!td) td = getTimeData();
+            let total = 0;
+            for (let i = 0; i < schedule.length; i++) {
+                if (schedule[i].type !== 'work') continue;
+                const s = t2m(schedule[i].start), e = t2m(schedule[i].end);
+                if (td.mins >= e) continue;
+                if (td.mins < s) { total += (e - s) * 60; }
+                else { total += Math.max(0, e * 60 - td.secs); }
+            }
+            return total;
+        }
+
+        function getDayProgress(td) {
+            if (!td) td = getTimeData();
+            if (!schedule.length) return 0;
+            const ds = t2m(schedule[0].start) * 60, de = t2m(schedule[schedule.length - 1].end) * 60;
+            if (td.secs < ds) return 0;
+            if (td.secs > de) return 1;
+            return (td.secs - ds) / (de - ds);
+        }
+
+        // ============================================
+        // AGGIORNAMENTO UI PRINCIPALE
+        // ============================================
+        function updateDisplay() {
+            const td = getTimeData();
+            const st = getCurrentState(td);
+            const now = new Date();
+
+            // Orologio
+            currentTimeEl.textContent = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            // Counter principale
+            let label = '', counterColor = 'var(--accent)', statusText = 'ATTESA', statusClass = 'waiting';
+            let boxBg = 'white', counterText = '--:--:--', isPulsing = true;
+
+            switch (st.state) {
+                case 'weekend':
+                    label = '🏖️ È WEEKEND!'; counterText = 'RIPOSA!'; counterColor = 'var(--green)';
+                    statusText = '🏖️ WEEKEND'; statusClass = 'stopped'; isPulsing = false; break;
+                case 'before':
+                    label = '💼 INIZIO LAVORO TRA:'; counterText = fmtCountdown(st.cd);
+                    statusText = '⏳ PRIMA'; statusClass = 'waiting'; break;
+                case 'work':
+                    if (st.next) {
+                        if (st.next.type === 'break') label = '☕ PROSSIMA PAUSA TRA:';
+                        else if (st.next.type === 'lunch') label = '🍽️ PRANZO TRA:';
+                        else label = '⏱️ PROSSIMO EVENTO TRA:';
+                    } else { label = '🏠 FINE GIORNATA TRA:'; }
+                    counterText = fmtCountdown(st.cd); statusText = '▶ LAVORO'; statusClass = 'running'; break;
+                case 'break':
+                    label = '💼 RIPRESA LAVORO TRA:'; counterText = fmtCountdown(st.cd);
+                    counterColor = 'var(--green)'; statusText = '☕ PAUSA'; statusClass = 'onbreak'; boxBg = '#e6fff0'; break;
+                case 'lunch':
+                    label = '💼 RIPRESA LAVORO TRA:'; counterText = fmtCountdown(st.cd);
+                    counterColor = '#cc9900'; statusText = '🍽️ PRANZO'; statusClass = 'onlunch'; boxBg = '#fffde6'; break;
+                case 'after':
+                    label = '🎉 GIORNATA FINITA!'; counterText = 'LIBERO!'; counterColor = 'var(--green)';
+                    statusText = '✓ FINITO'; statusClass = 'free'; boxBg = '#e6fff0'; isPulsing = false; spawnConfetti(); break;
+            }
+
+            counterLabel.textContent = label;
+            counterEl.textContent = counterText;
+            counterEl.style.color = counterColor;
+            mainCounterBox.style.backgroundColor = boxBg;
+            statusIndicator.textContent = statusText;
+            statusIndicator.className = 'status-indicator ' + statusClass;
+            mainCounterBox.classList.toggle('running-animation', isPulsing);
+
+            // Stat cards
+            const nb = findNextOfType('break', td);
+            const nbEl = document.getElementById('nextBreak');
+            if (nb) { nbEl.textContent = fmtCountdown(nb.cd); nbEl.className = 'stat-value highlight'; }
+            else { nbEl.textContent = '✓ FATTO'; nbEl.className = 'stat-value done-val'; }
+
+            const nl = findNextOfType('lunch', td);
+            const nlEl = document.getElementById('nextLunch');
+            if (nl) { nlEl.textContent = fmtCountdown(nl.cd); nlEl.className = 'stat-value'; }
+            else { nlEl.textContent = '✓ FATTO'; nlEl.className = 'stat-value done-val'; }
+
+            const eodCd = getEndOfDayCd(td);
+            const eodEl = document.getElementById('endOfDay');
+            if (st.state === 'after') { eodEl.textContent = '✓ FINITO'; eodEl.className = 'stat-value done-val'; }
+            else if (st.state === 'weekend') { eodEl.textContent = '—'; eodEl.className = 'stat-value highlight'; }
+            else { eodEl.textContent = fmtCountdown(eodCd); eodEl.className = 'stat-value highlight'; }
+
+            const cpEl = document.getElementById('currentPhase');
+            if (st.seg) { cpEl.textContent = fmtCountdown(st.segCd); cpEl.style.color = st.state === 'break' ? 'var(--green)' : st.state === 'lunch' ? '#cc9900' : ''; }
+            else { cpEl.textContent = '—'; cpEl.style.color = ''; }
+
+            const dp = getDayProgress(td);
+            const dpPct = Math.round(dp * 100);
+            document.getElementById('dayProgress').textContent = dpPct + '%';
+            document.getElementById('progressFill').style.width = dpPct + '%';
+            document.getElementById('progressText').textContent = dpPct + '%';
+
+            const wr = getWorkRemaining(td);
+            document.getElementById('workRemaining').textContent = (st.state === 'after' || st.state === 'weekend') ? '0:00:00' : fmtCountdown(wr);
+
+            // Timeline (senza tick)
+            updateTimeline(st, td);
+
+            // Meme quote
+            quoteTimer++;
+            const stateKey = st.state;
+            if (stateKey !== lastStateKey || quoteTimer > 30) { lastStateKey = stateKey; quoteTimer = 0; rotateQuote(stateKey); }
+
+            // Notifiche
+            checkNotifications(st, td);
+        }
+
+        // ============================================
+        // TIMELINE - build + update separati (no tick)
+        // ============================================
+        function buildTimelineHTML(td) {
+            const container = document.getElementById('timeline');
+            let html = '';
+            schedule.forEach((seg, i) => {
+                const s = t2m(seg.start), e = t2m(seg.end);
+                const isPast = td.mins >= e;
+                const isCurrent = td.mins >= s && td.mins < e;
+                const typeEmoji = seg.type === 'work' ? '💼' : seg.type === 'break' ? '☕' : '🍽️';
+                const typeClass = seg.type + '-item';
+                const rot = (i % 2 === 0) ? 0 : (i % 4 === 1 ? 1 : -1);
+
+                let itemClass = 'comparison-item magnetic';
+                if (isCurrent) itemClass += ' you ' + typeClass;
+                else if (isPast) itemClass += ' past-item ' + typeClass;
+                else itemClass += ' ' + typeClass;
+
+                html += `<div class="${itemClass}" data-rotate="${rot}" id="tl-${i}">
+                    <div class="comparison-left">
+                        <div class="comparison-name">${typeEmoji} ${seg.start} – ${seg.end}</div>
+                        <div class="comparison-desc">${seg.label} · ${fmtDuration(seg.start, seg.end)}</div>
+                    </div>
+                    <div class="comparison-right">
+                        <div class="comparison-value" id="tl-val-${i}" style="font-size:1.3rem"></div>
+                        <div class="comparison-unit" id="tl-unit-${i}"></div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+            refreshMagnetics();
+        }
+
+        function updateTimelineValues(td) {
+            schedule.forEach((seg, i) => {
+                const s = t2m(seg.start), e = t2m(seg.end);
+                const isPast = td.mins >= e;
+                const isCurrent = td.mins >= s && td.mins < e;
+
+                const valEl = document.getElementById(`tl-val-${i}`);
+                const unitEl = document.getElementById(`tl-unit-${i}`);
+                if (!valEl || !unitEl) return;
+
+                if (isCurrent) {
+                    valEl.textContent = fmtShort(Math.max(0, e * 60 - td.secs));
+                    valEl.style.color = 'var(--accent)';
+                    unitEl.textContent = 'rimanenti';
+                } else if (isPast) {
+                    valEl.textContent = '✓';
+                    valEl.style.color = '';
+                    unitEl.textContent = 'completato';
+                } else {
+                    valEl.textContent = fmtShort(Math.max(0, e * 60 - td.secs));
+                    valEl.style.color = '';
+                    unitEl.textContent = 'alla fine';
+                }
+            });
+        }
+
+        function updateTimeline(st, td) {
+            if (!td) td = getTimeData();
+            // Ricostruisci HTML solo quando cambia il segmento corrente
+            if (st.idx !== lastTimelineIdx) {
+                lastTimelineIdx = st.idx;
+                buildTimelineHTML(td);
+            }
+            // Aggiorna solo i valori testuali (no DOM thrash)
+            updateTimelineValues(td);
+        }
+
+        function forceTimelineRebuild() {
+            lastTimelineIdx = -999;
+        }
+
+        // ============================================
+        // MEME QUOTES
+        // ============================================
+        function rotateQuote(state) {
+            const quotes = MEME_QUOTES[state] || MEME_QUOTES.work;
+            if (quoteIndex[state] === undefined) quoteIndex[state] = Math.floor(Math.random() * quotes.length);
+            quoteIndex[state] = (quoteIndex[state] + 1) % quotes.length;
+            quoteTextEl.style.opacity = '0';
+            setTimeout(() => { quoteTextEl.textContent = `"${quotes[quoteIndex[state]]}"`; quoteTextEl.style.opacity = '1'; }, 200);
+        }
+
+        quoteTextEl.style.transition = 'opacity 0.3s';
+        memeQuoteEl.addEventListener('click', () => { rotateQuote(lastStateKey || 'work'); quoteTimer = 0; });
+
+        // ============================================
+        // NOTIFICHE - tre stati: off / on / blocked
+        // ============================================
+        notifToggle.addEventListener('click', () => {
+            if (!('Notification' in window)) { toast('Notifiche non supportate!'); return; }
+
+            if (notifState === 'on') {
+                // Turn OFF → grigio
+                notifState = 'off';
+                notifEnabled = false;
+                updateNotifUI();
+                toast('🔕 Notifiche disattivate');
+                return;
+            }
+
+            if (notifState === 'blocked') {
+                toast('Bloccate dal browser! Abilitale nelle impostazioni del browser.');
+                return;
+            }
+
+            // Stato 'off' → prova ad accendere
+            if (Notification.permission === 'granted') {
+                notifState = 'on';
+                notifEnabled = true;
+                updateNotifUI();
+                toast('🔔 Notifiche attivate!');
+            } else if (Notification.permission === 'denied') {
+                notifState = 'blocked';
+                notifEnabled = false;
+                updateNotifUI();
+                toast('Notifiche bloccate dal browser!');
+            } else {
+                Notification.requestPermission().then(perm => {
+                    if (perm === 'granted') {
+                        notifState = 'on';
+                        notifEnabled = true;
+                        updateNotifUI();
+                        toast('🔔 Notifiche attivate!');
+                    } else if (perm === 'denied') {
+                        notifState = 'blocked';
+                        notifEnabled = false;
+                        updateNotifUI();
+                        toast('Notifiche bloccate!');
+                    }
+                    // 'default' (dismissed) resta 'off'
+                });
+            }
+        });
+
+        function updateNotifUI() {
+            notifToggle.classList.remove('notif-on', 'notif-off', 'notif-blocked', 'active');
+            if (notifState === 'on') {
+                notifToggle.classList.add('notif-on');
+                notifStatus.textContent = 'ON';
+            } else if (notifState === 'blocked') {
+                notifToggle.classList.add('notif-blocked');
+                notifStatus.textContent = 'NO';
+            } else {
+                notifToggle.classList.add('notif-off');
+                notifStatus.textContent = 'OFF';
+            }
+        }
+
+        function checkNotifications(st, td) {
+            if (!notifEnabled || Notification.permission !== 'granted') return;
+            if (td.secs % 60 > 2) return;
+
+            const dateStr = new Date().toDateString();
+
+            schedule.forEach((seg, i) => {
+                const key = `${dateStr}-${i}-${seg.start}`;
+                if (td.mins === t2m(seg.start) && !notifiedEvents.has(key)) {
+                    notifiedEvents.add(key);
+                    const msgs = {
+                        work: { title: '💼 Riprendi a lavorare!', body: `${seg.label} (${seg.start} – ${seg.end})` },
+                        break: { title: '☕ PAUSA!', body: `${seg.label} - Goditela! (${seg.start} – ${seg.end})` },
+                        lunch: { title: '🍽️ PRANZO!', body: `${seg.label} - Buon appetito! (${seg.start} – ${seg.end})` },
+                    };
+                    const m = msgs[seg.type] || msgs.work;
+                    try { new Notification(m.title, { body: m.body, tag: `pt-${i}-${seg.start}` }); } catch (e) {}
+                }
+            });
+
+            if (schedule.length) {
+                const lastEnd = t2m(schedule[schedule.length - 1].end);
+                const eodKey = `${dateStr}-end`;
+                if (td.mins === lastEnd && !notifiedEvents.has(eodKey)) {
+                    notifiedEvents.add(eodKey);
+                    try { new Notification('🏠 GIORNATA FINITA!', { body: 'Sei libero! Stacca tutto!' }); } catch (e) {}
+                }
+            }
+        }
+
+        // ============================================
+        // CONFETTI
+        // ============================================
+        function spawnConfetti() {
+            if (confettiDone) return;
+            confettiDone = true;
+            const colors = ['#ff3b30', '#00ff88', '#ffcc00', '#000000', '#ffffff'];
+            for (let i = 0; i < 50; i++) {
+                const el = document.createElement('div');
+                el.className = 'confetto';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.width = (6 + Math.random() * 12) + 'px';
+                el.style.height = (6 + Math.random() * 12) + 'px';
+                el.style.background = colors[Math.floor(Math.random() * colors.length)];
+                el.style.border = '2px solid black';
+                el.style.animationDelay = Math.random() * 2 + 's';
+                el.style.animationDuration = (2 + Math.random() * 3) + 's';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 6000);
+            }
+        }
+
+        // ============================================
+        // IMPOSTAZIONI
+        // ============================================
+        settingsToggle.addEventListener('click', () => {
+            settingsOpen = !settingsOpen;
+            if (settingsOpen) {
+                settingsPanel.classList.add('visible');
+                settingsToggle.classList.add('active');
+                settingsStatus.textContent = 'APERTO';
+                renderSettings();
+                setTimeout(() => { settingsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+            } else {
+                settingsPanel.classList.remove('visible');
+                settingsToggle.classList.remove('active');
+                settingsStatus.textContent = 'CHIUSO';
+            }
+        });
+
+        function renderSettings() {
+            let html = '';
+            schedule.forEach((seg, i) => {
+                const rot = (i % 2 === 0) ? 0 : (i % 3 === 1 ? 1 : -1);
+                html += `<div class="segment-editor magnetic" data-idx="${i}" data-rotate="${rot}">
+                    <div class="seg-header">
+                        <span class="seg-number">SEGMENTO ${i + 1}</span>
+                        ${schedule.length > 1 ? `<button class="seg-delete" onclick="removeSegment(${i})">✕ RIMUOVI</button>` : ''}
+                    </div>
+                    <div class="seg-row">
+                        <div class="seg-field name-field"><label>NOME</label><input type="text" value="${seg.label}" data-field="label" data-idx="${i}"></div>
+                    </div>
+                    <div class="seg-row">
+                        <div class="seg-field"><label>INIZIO</label><input type="time" value="${seg.start}" data-field="start" data-idx="${i}"></div>
+                        <div class="seg-field"><label>FINE</label><input type="time" value="${seg.end}" data-field="end" data-idx="${i}"></div>
+                        <div class="seg-field"><label>TIPO</label><select data-field="type" data-idx="${i}">
+                            <option value="work" ${seg.type === 'work' ? 'selected' : ''}>LAVORO</option>
+                            <option value="break" ${seg.type === 'break' ? 'selected' : ''}>PAUSA</option>
+                            <option value="lunch" ${seg.type === 'lunch' ? 'selected' : ''}>PRANZO</option>
+                        </select></div>
+                    </div>
+                </div>`;
+            });
+            settingsEditor.innerHTML = html;
+            refreshMagnetics();
+        }
+
+        window.removeSegment = function(idx) { schedule.splice(idx, 1); renderSettings(); };
+
+        document.getElementById('addSegmentBtn').addEventListener('click', () => {
+            const lastEnd = schedule.length ? schedule[schedule.length - 1].end : '09:00';
+            schedule.push({ start: lastEnd, end: m2t(t2m(lastEnd) + 60), type: 'work', label: 'Nuovo Segmento' });
+            renderSettings();
+        });
+
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+            document.querySelectorAll('#settingsEditor input, #settingsEditor select').forEach(el => {
+                const field = el.dataset.field, idx = parseInt(el.dataset.idx);
+                if (field && !isNaN(idx) && schedule[idx]) schedule[idx][field] = el.value;
+            });
+            schedule.sort((a, b) => t2m(a.start) - t2m(b.start));
+            localStorage.setItem('pt_sched', JSON.stringify(schedule));
+            confettiDone = false;
+            notifiedEvents.clear();
+            forceTimelineRebuild();
+            toast('Orari salvati!');
+            renderSettings();
+        });
+
+        document.getElementById('resetSettingsBtn').addEventListener('click', () => {
+            schedule = JSON.parse(JSON.stringify(DEFAULTS));
+            localStorage.removeItem('pt_sched');
+            confettiDone = false;
+            notifiedEvents.clear();
+            forceTimelineRebuild();
+            toast('Orari ripristinati ai default!');
+            renderSettings();
+        });
+
+        // ============================================
+        // TOAST
+        // ============================================
+        function toast(msg) {
+            const el = document.createElement('div');
+            el.textContent = msg;
+            el.style.cssText = `position:fixed;top:20px;right:20px;z-index:9999;background:black;color:#00ff88;border:3px solid #00ff88;padding:14px 28px;font-family:var(--font);font-size:1.1rem;letter-spacing:1px;text-transform:uppercase;box-shadow:6px 6px 0px rgba(0,255,136,0.3);animation:toastIn 0.3s ease forwards;`;
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.animation = 'toastOut 0.3s ease forwards'; setTimeout(() => el.remove(), 300); }, 2500);
+        }
+
+        // ============================================
+        // INIT + LOOP
+        // ============================================
+        // Stato iniziale notifiche dal browser
+        if ('Notification' in window) {
+            if (Notification.permission === 'denied') { notifState = 'blocked'; }
+            else { notifState = 'off'; }
+        }
+        updateNotifUI();
+
+        updateDisplay();
+        setInterval(updateDisplay, 1000);
+    </script>
+</body>
+</html>
