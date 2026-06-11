@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Windows Notification Test</title>
+</head>
+
+<body style="font-family:Arial;padding:40px">
+
+<h1>🔔 Notifiche Windows Test</h1>
+
+<button id="btn">Attiva e invia notifiche</button>
+
+<p id="status"></p>
+
+<script>
+let reg;
+
+document.getElementById("btn").onclick = async () => {
+
+    if (!("serviceWorker" in navigator)) {
+        alert("Service Worker non supportato");
+        return;
+    }
+
+    const perm = await Notification.requestPermission();
+    document.getElementById("status").innerText = "Permesso: " + perm;
+
+    if (perm !== "granted") {
+        alert("Permesso negato");
+        return;
+    }
+
+    reg = await navigator.serviceWorker.register("sw.js");
+
+    await navigator.serviceWorker.ready;
+
+    // 🔥 notifica immediata
+    reg.showNotification("🔥 SISTEMA ATTIVO", {
+        body: "Notifica Windows reale attivata",
+        icon: "https://github.githubassets.com/favicons/favicon.png"
+    });
+
+    // 🔁 ogni 10 secondi
+    setInterval(() => {
+
+        reg.showNotification("⏰ TEST 10s", {
+            body: "Notifica dal Service Worker",
+            icon: "https://github.githubassets.com/favicons/favicon.png"
+        });
+
+    }, 10000);
+
+};
+</script>
+
+</body>
+</html>
