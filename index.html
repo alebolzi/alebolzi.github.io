@@ -44,7 +44,6 @@
       pointer-events: none;
     }
 
-    /* ===== CURSOR DOT ===== */
     .cursor-dot {
       position: fixed;
       width: 5px;
@@ -58,7 +57,6 @@
       transition: width 0.25s ease, height 0.25s ease, background 0.25s ease, opacity 0.3s ease;
     }
 
-    /* ===== CURSOR RING — RESPIRO ===== */
     .cursor-ring {
       position: fixed;
       width: 44px;
@@ -79,52 +77,19 @@
     }
 
     @keyframes ringBreathe {
-      0%, 100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-      }
-      50% {
-        transform: translate(-50%, -50%) scale(1.12);
-        opacity: 0.5;
-      }
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+      50% { transform: translate(-50%, -50%) scale(1.12); opacity: 0.5; }
     }
 
-    /* Hover card */
-    body.cursor-hover-card .cursor-dot {
-      background: var(--hover-accent, #ff006e);
-      mix-blend-mode: normal;
-    }
-    body.cursor-hover-card .cursor-ring {
-      width: 72px;
-      height: 72px;
-      border-color: var(--hover-accent, #ff006e);
-      background: rgba(255, 0, 110, 0.04);
-      animation-duration: 2s;
-    }
+    body.cursor-hover-card .cursor-dot { background: var(--hover-accent, #ff006e); mix-blend-mode: normal; }
+    body.cursor-hover-card .cursor-ring { width: 72px; height: 72px; border-color: var(--hover-accent, #ff006e); background: rgba(255, 0, 110, 0.04); animation-duration: 2s; }
 
-    /* Hover link/social */
     body.cursor-hover-link .cursor-dot { width: 3px; height: 3px; }
-    body.cursor-hover-link .cursor-ring {
-      width: 26px;
-      height: 26px;
-      border-color: var(--accent-blue);
-      background: rgba(0, 212, 255, 0.06);
-      animation-duration: 2.5s;
-    }
+    body.cursor-hover-link .cursor-ring { width: 26px; height: 26px; border-color: var(--accent-blue); background: rgba(0, 212, 255, 0.06); animation-duration: 2.5s; }
 
-    /* Hover titolo */
-    body.cursor-hover-title .cursor-ring {
-      width: 96px;
-      height: 96px;
-      border-color: rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.015);
-      animation-duration: 4s;
-    }
+    body.cursor-hover-title .cursor-ring { width: 96px; height: 96px; border-color: rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.015); animation-duration: 4s; }
 
-    /* Docked state — quando il ring si centra su un elemento */
-    body.cursor-docked .cursor-ring {
-      animation-duration: 2.5s;
-    }
+    body.cursor-docked .cursor-ring { animation-duration: 2.5s; }
 
     .noise {
       position: fixed;
@@ -135,26 +100,11 @@
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     }
 
-    .container {
-      position: relative;
-      z-index: 2;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 24px;
-    }
-
+    .container { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
     header { text-align: center; margin-bottom: 80px; padding-top: 60px; }
 
-    .emoji-rain {
-      font-size: 48px;
-      margin-bottom: 24px;
-      animation: bounce 2s infinite;
-      display: inline-block;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-15px); }
-    }
+    .emoji-rain { font-size: 48px; margin-bottom: 24px; animation: bounce 2s infinite; display: inline-block; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 
     h1 {
       font-family: 'Space Grotesk', sans-serif;
@@ -169,181 +119,37 @@
       letter-spacing: -0.03em;
     }
 
-    .subtitle {
-      font-size: 1.25rem;
-      color: var(--text-secondary);
-      max-width: 600px;
-      margin: 0 auto 32px;
-      line-height: 1.6;
-    }
+    .subtitle { font-size: 1.25rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 32px; line-height: 1.6; }
 
-    .tagline {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      padding: 12px 24px;
-      border-radius: 100px;
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      backdrop-filter: blur(10px);
-    }
-
-    .tagline-dot {
-      width: 8px; height: 8px;
-      background: var(--accent-green);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.2); }
-    }
+    .tagline { display: inline-flex; align-items: center; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px 24px; border-radius: 100px; font-size: 0.9rem; color: var(--text-secondary); backdrop-filter: blur(10px); }
+    .tagline-dot { width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
 
     .projects-section { margin-bottom: 80px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
+    .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.75rem; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+    .project-count { background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple)); color: white; padding: 4px 14px; border-radius: 100px; font-size: 0.85rem; font-weight: 600; }
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
 
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .section-title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.75rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .project-count {
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
-      color: white;
-      padding: 4px 14px;
-      border-radius: 100px;
-      font-size: 0.85rem;
-      font-weight: 600;
-    }
-
-    .projects-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 24px;
-    }
-
-    .project-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 32px;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      text-decoration: none;
-      color: inherit;
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-    }
-
-    .project-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--card-accent), transparent);
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
+    .project-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 32px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); text-decoration: none; color: inherit; position: relative; overflow: hidden; backdrop-filter: blur(10px); }
+    .project-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--card-accent), transparent); opacity: 0; transition: opacity 0.4s ease; }
     .project-card:hover::before { opacity: 1; }
+    .project-card:hover { transform: translateY(-8px); background: var(--card-hover-bg); border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); }
 
-    .project-card:hover {
-      transform: translateY(-8px);
-      background: var(--card-hover-bg);
-      border-color: rgba(255, 255, 255, 0.15);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-    }
-
-    .preview-container {
-      position: absolute;
-      inset: 0;
-      border-radius: 20px;
-      overflow: hidden;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    .preview-image {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      transform: scale(1.05);
-      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+    .preview-container { position: absolute; inset: 0; border-radius: 20px; overflow: hidden; opacity: 0; transition: opacity 0.4s ease; pointer-events: none; z-index: 10; }
+    .preview-image { width: 100%; height: 100%; object-fit: cover; transform: scale(1.05); transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
     .project-card:hover .preview-container { opacity: 1; }
     .project-card:hover .preview-image { transform: scale(1); }
-
-    .preview-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, rgba(10,10,11,0.95) 100%);
-      z-index: 11;
-    }
+    .preview-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, rgba(10,10,11,0.95) 100%); z-index: 11; }
 
     .card-content { position: relative; z-index: 12; }
-
-    .card-icon {
-      font-size: 3rem;
-      margin-bottom: 20px;
-      display: block;
-      transition: transform 0.3s ease;
-    }
+    .card-icon { font-size: 3rem; margin-bottom: 20px; display: block; transition: transform 0.3s ease; }
     .project-card:hover .card-icon { transform: scale(1.15) rotate(5deg); }
-
-    .card-title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-bottom: 12px;
-    }
-
-    .card-description {
-      color: var(--text-secondary);
-      line-height: 1.6;
-      margin-bottom: 20px;
-      font-size: 0.95rem;
-    }
-
-    .card-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .card-tag {
-      background: rgba(255, 255, 255, 0.06);
-      padding: 6px 14px;
-      border-radius: 100px;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .card-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--card-accent);
-      font-weight: 500;
-      font-size: 0.9rem;
-      transition: gap 0.3s ease;
-    }
+    .card-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 600; margin-bottom: 12px; }
+    .card-description { color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; font-size: 0.95rem; }
+    .card-meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .card-tag { background: rgba(255, 255, 255, 0.06); padding: 6px 14px; border-radius: 100px; font-size: 0.8rem; color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .card-link { display: inline-flex; align-items: center; gap: 6px; color: var(--card-accent); font-weight: 500; font-size: 0.9rem; transition: gap 0.3s ease; }
     .project-card:hover .card-link { gap: 10px; }
     .arrow { transition: transform 0.3s ease; }
     .project-card:hover .arrow { transform: translateX(4px); }
@@ -356,52 +162,14 @@
     .card-4factor { --card-accent: var(--accent-emerald); }
     .card-realtime { --card-accent: #ff3b30; }
 
-    .preview-placeholder {
-      width: 100%; height: 100%;
-      background: linear-gradient(135deg, rgba(255,0,110,0.1) 0%, rgba(0,212,255,0.1) 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 4rem;
-      opacity: 0.3;
-    }
+    .preview-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(255,0,110,0.1) 0%, rgba(0,212,255,0.1) 100%); display: flex; align-items: center; justify-content: center; font-size: 4rem; opacity: 0.3; }
 
-    footer {
-      text-align: center;
-      padding: 60px 0 40px;
-      border-top: 1px solid var(--card-border);
-      margin-top: 40px;
-    }
-
-    .footer-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-    }
-
+    footer { text-align: center; padding: 60px 0 40px; border-top: 1px solid var(--card-border); margin-top: 40px; }
+    .footer-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
     .social-links { display: flex; gap: 16px; }
-
-    .social-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 44px; height: 44px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 1.2rem;
-      transition: all 0.3s ease;
-    }
-    .social-link:hover {
-      background: var(--card-hover-bg);
-      border-color: var(--accent-blue);
-      color: var(--accent-blue);
-      transform: translateY(-3px);
-    }
-
+    .social-link { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-size: 1.2rem; transition: all 0.3s ease; }
+    .social-link:hover { background: var(--card-hover-bg); border-color: var(--accent-blue); color: var(--accent-blue); transform: translateY(-3px); }
+    .social-link.instagram-link:hover { border-color: #e1306c; color: #e1306c; }
     .copyright { color: var(--text-secondary); font-size: 0.85rem; }
     .meme-text { font-size: 0.9rem; color: var(--text-secondary); opacity: 0.7; font-style: italic; }
 
@@ -416,30 +184,17 @@
       .cursor-dot, .cursor-ring { display: none !important; }
     }
 
-    .fade-in {
-      opacity: 0;
-      transform: translateY(30px);
-      animation: fadeInUp 0.8s ease forwards;
-    }
+    .fade-in { opacity: 0; transform: translateY(30px); animation: fadeInUp 0.8s ease forwards; }
     .fade-in:nth-child(1) { animation-delay: 0.1s; }
     .fade-in:nth-child(2) { animation-delay: 0.2s; }
     .fade-in:nth-child(3) { animation-delay: 0.3s; }
     .fade-in:nth-child(4) { animation-delay: 0.4s; }
     .fade-in:nth-child(5) { animation-delay: 0.5s; }
     .fade-in:nth-child(6) { animation-delay: 0.6s; }
-
-    @keyframes fadeInUp {
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
 
     h1:hover { animation: glitch 0.3s ease; }
-    @keyframes glitch {
-      0%, 100% { transform: translate(0); }
-      20% { transform: translate(-2px, 2px); }
-      40% { transform: translate(-2px, -2px); }
-      60% { transform: translate(2px, 2px); }
-      80% { transform: translate(2px, -2px); }
-    }
+    @keyframes glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-2px, 2px); } 40% { transform: translate(-2px, -2px); } 60% { transform: translate(2px, 2px); } 80% { transform: translate(2px, -2px); } }
   </style>
 </head>
 <body>
@@ -477,7 +232,7 @@
           <div class="card-content">
             <span class="card-icon">🐔</span>
             <h3 class="card-title">Crossy Road</h3>
-            <p class="card-description">Il classico gioco dell'attraversamento stradale ricreato da zero! Sposta il pollo attraverso il traffico senza farti schiacciare 🛣️</p>
+            <p class="card-description">Il classico gioco dell'attraversamento stradale ricreato da zero! Sposta il pollo attraverso il traffico senza farti schiacciare. Quanto lontano riesci ad arrivare? 🛣️</p>
             <div class="card-meta">
               <span class="card-tag">🎮 Gioco</span>
               <span class="card-link">Gioca ora <span class="arrow">→</span></span>
@@ -494,7 +249,7 @@
           <div class="card-content">
             <span class="card-icon">💰</span>
             <h3 class="card-title">Interesse Composto</h3>
-            <p class="card-description">Calcolatore di interesse composto super potente! Scopri come i tuoi soldi possono crescere nel tempo 📈</p>
+            <p class="card-description">Calcolatore di interesse composto super potente! Scopri come i tuoi soldi possono crescere nel tempo. Il tempo è il tuo migliore alleato finanziario 📈</p>
             <div class="card-meta">
               <span class="card-tag">🧮 Finanza</span>
               <span class="card-link">Calcola <span class="arrow">→</span></span>
@@ -511,7 +266,7 @@
           <div class="card-content">
             <span class="card-icon">📊</span>
             <h3 class="card-title">Calcolo Inflazione</h3>
-            <p class="card-description">Strumento per calcolare l'impatto dell'inflazione sul potere d'acquisto 💸</p>
+            <p class="card-description">Strumento per calcolare l'impatto dell'inflazione sul potere d'acquisto. Capisci quanto valgono davvero i tuoi soldi nel tempo 💸</p>
             <div class="card-meta">
               <span class="card-tag">📉 Economia</span>
               <span class="card-link">Analizza <span class="arrow">→</span></span>
@@ -528,7 +283,7 @@
           <div class="card-content">
             <span class="card-icon">⚖️</span>
             <h3 class="card-title">Trading vs Holding</h3>
-            <p class="card-description">Il dilemma eterno! Confronta se conviene tradare attivamente o holdare 🎯</p>
+            <p class="card-description">Il dilemma eterno! Confronta se conviene tradare attivamente o holdare e vendere alla fine. Analisi caso per caso con 1 vs 2 trade per trovare la strategia vincente 🎯</p>
             <div class="card-meta">
               <span class="card-tag">💹 Strategia</span>
               <span class="card-link">Confronta <span class="arrow">→</span></span>
@@ -545,7 +300,7 @@
           <div class="card-content">
             <span class="card-icon">🟠</span>
             <h3 class="card-title">BTC Halving Cycle</h3>
-            <p class="card-description">Indicatore ciclico da 0 a 1 che mostra dove siamo nel ciclo di Bitcoin rispetto all'halving 🚀</p>
+            <p class="card-description">Indicatore ciclico da 0 a 1 che mostra dove siamo nel ciclo di Bitcoin rispetto all'halving. Identifica zone di bottom, accumulo e top per decisioni più intelligenti 🚀</p>
             <div class="card-meta">
               <span class="card-tag">₿ Crypto</span>
               <span class="card-link">Analizza <span class="arrow">→</span></span>
@@ -562,7 +317,7 @@
           <div class="card-content">
             <span class="card-icon">🧠</span>
             <h3 class="card-title">BTC 4 Factor Model</h3>
-            <p class="card-description">Modello quantitativo avanzato: <strong>Halving Cycle</strong>, <strong>Fear & Greed</strong>, <strong>MA200</strong>, <strong>RSI</strong> 🎯</p>
+            <p class="card-description">Modello quantitativo avanzato che analizza 4 indicatori chiave: Halving Cycle, Fear & Greed Index, MA200 e RSI. Combina dati on-chain, sentiment e technical analysis per generare un segnale operativo completo su dove siamo e cosa fare 🎯</p>
             <div class="card-meta">
               <span class="card-tag">🔬 Analysis</span>
               <span class="card-link">Analizza <span class="arrow">→</span></span>
@@ -579,7 +334,7 @@
           <div class="card-content">
             <span class="card-icon">⏱️</span>
             <h3 class="card-title">Guadagno in Tempo Reale</h3>
-            <p class="card-description">Scopri quanto stai guadagnando secondo per secondo. Reality check brutale 💸</p>
+            <p class="card-description">Sei al lavoro... ma stai scrollando? 👀 Scopri quanto stai guadagnando in tempo reale secondo per secondo. Poi confrontalo con i big e fatti un reality check brutale 💸</p>
             <div class="card-meta">
               <span class="card-tag">💼 Productivity</span>
               <span class="card-link">Calcola <span class="arrow">→</span></span>
@@ -596,7 +351,7 @@
           <div class="card-content">
             <span class="card-icon">🔥</span>
             <h3 class="card-title">FIRE Calculator</h3>
-            <p class="card-description">Calcola se puoi andare in pensione anticipata grazie ai tuoi investimenti 💸</p>
+            <p class="card-description">Sei davvero libero finanziariamente o stai ancora grindando? Calcola se puoi andare in pensione anticipata grazie ai tuoi investimenti, rendimento annuo e spese mensili. Simula il tuo futuro e scopri quando raggiungerai il FIRE 💸</p>
             <div class="card-meta">
               <span class="card-tag">🏖️ Freedom</span>
               <span class="card-link">Scopri <span class="arrow">→</span></span>
@@ -613,7 +368,7 @@
           <div class="card-content">
             <span class="card-icon">☕</span>
             <h3 class="card-title">Pausa Tracker</h3>
-            <p class="card-description">Quanto manca alla prossima pausa? Countdown al secondo, notifiche e sopravvivenza lavorativa ⚡</p>
+            <p class="card-description">Conti i minuti come un detenuto il venerdì pomeriggio? 😭 Scopri esattamente quanto manca alla prossima pausa, alla pausa pranzo e alla libertà di fine giornata. Countdown in tempo reale al secondo, notifiche e sopravvivenza lavorativa garantita ⚡</p>
             <div class="card-meta">
               <span class="card-tag">⏰ Productivity</span>
               <span class="card-link">Controlla <span class="arrow">→</span></span>
@@ -630,6 +385,9 @@
           <a href="https://github.com/alebolzi" target="_blank" class="social-link" title="GitHub">
             <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           </a>
+          <a href="https://instagram.com/alebolzi" target="_blank" class="social-link instagram-link" title="Instagram">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.17.054 1.97.24 2.43.403a4.088 4.088 0 0 1 1.523.99 4.088 4.088 0 0 1 .99 1.524c.163.46.35 1.26.403 2.428.058 1.267.07 1.647.07 4.852s-.012 3.584-.07 4.85c-.054 1.17-.24 1.97-.403 2.43a4.088 4.088 0 0 1-.99 1.523 4.088 4.088 0 0 1-1.524.99c-.46.163-1.26.35-2.428.403-1.267.058-1.647.07-4.852.07s-3.584-.012-4.85-.07c-1.17-.054-1.97-.24-2.43-.403a4.088 4.088 0 0 1-1.523-.99 4.088 4.088 0 0 1-.99-1.524c-.163-.46-.35-1.26-.403-2.428C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.054-1.17.24-1.97.403-2.43a4.088 4.088 0 0 1 .99-1.523A4.088 4.088 0 0 1 5.15 2.203c.46-.163 1.26-.35 2.428-.403C8.845 1.742 9.225 1.73 12.43 1.73L12 2.163zm0 2.204c-3.15 0-3.508.012-4.755.068-1.14.052-1.76.242-2.17.402-.546.213-.935.466-1.34.87-.404.404-.657.794-.87 1.34-.16.41-.35 1.03-.402 2.17-.056 1.247-.068 1.604-.068 4.755s.012 3.508.068 4.755c.052 1.14.242 1.76.402 2.17.213.546.466.935.87 1.34.404.404.794.657 1.34.87.41.16 1.03.35 2.17.402 1.247.056 1.604.068 4.755.068s3.508-.012 4.755-.068c1.14-.052 1.76-.242 2.17-.402.546-.213.935-.466 1.34-.87.404-.404.657-.794.87-1.34.16-.41.35-1.03.402-2.17.056-1.247.068-1.604.068-4.755s-.012-3.508-.068-4.755c-.052-1.14-.242-1.76-.402-2.17a3.708 3.708 0 0 0-.87-1.34 3.708 3.708 0 0 0-1.34-.87c-.41-.16-1.03-.35-2.17-.402-1.247-.056-1.604-.068-4.755-.068zm0 3.854a3.779 3.779 0 1 0 0 7.558 3.779 3.779 0 0 0 0-7.558zm0 6.234a2.455 2.455 0 1 1 0-4.91 2.455 2.455 0 0 1 0 4.91zm5.334-6.386a.883.883 0 1 0-1.766 0 .883.883 0 0 0 1.766 0z"/></svg>
+          </a>
         </div>
         <p class="meme-text">Made with ☕ and too much enthusiasm</p>
         <p class="copyright">© 2026 alebolzi • Bolzi Lab</p>
@@ -639,9 +397,6 @@
   </div>
 
   <script>
-    // =============================================
-    // CANVAS — Orbs + Spotlight + Sparkling + Punti fermi
-    // =============================================
     const canvas = document.getElementById('bgCanvas');
     const ctx = canvas.getContext('2d');
     let W, H;
@@ -715,7 +470,6 @@
       }
     }
 
-    // --- Sparkle ---
     class Sparkle {
       constructor() { this.reset(true); }
       reset(initial) {
@@ -790,12 +544,9 @@
       }
     }
 
-    // --- Punti grossi quando il mouse è fermo ---
     const stopDots = [];
     const MAX_STOP_DOTS = 5;
-
     const mouseSpot = { x: 0, y: 0, targetX: 0, targetY: 0, radius: 500, secondaryRadius: 350, thirdRadius: 280 };
-
     const orbs = [];
     const sparkles = [];
     for (let i = 0; i < 8; i++) orbs.push(new LightOrb(i));
@@ -821,7 +572,6 @@
 
     function animate() {
       const time = performance.now() / 1000;
-
       ctx.fillStyle = '#0a0a0b';
       ctx.fillRect(0, 0, W, H);
       ctx.globalCompositeOperation = 'screen';
@@ -832,7 +582,6 @@
       mouseSpot.y = lerp(mouseSpot.y, mouseSpot.targetY, 0.04);
 
       if (mouseActive) {
-        // Spotlight bianco
         const mg = ctx.createRadialGradient(mouseSpot.x, mouseSpot.y, 0, mouseSpot.x, mouseSpot.y, Math.max(1, mouseSpot.radius));
         mg.addColorStop(0, 'rgba(255,255,255,0.04)');
         mg.addColorStop(0.3, 'rgba(255,255,255,0.02)');
@@ -842,7 +591,6 @@
         ctx.arc(mouseSpot.x, mouseSpot.y, Math.max(1, mouseSpot.radius), 0, Math.PI * 2);
         ctx.fill();
 
-        // Secondario colorato
         const hs = time * 15;
         const r2 = Math.floor(128 + 127 * Math.sin(hs * 0.0174));
         const g2 = Math.floor(128 + 127 * Math.sin(hs * 0.0174 + 2.094));
@@ -856,7 +604,6 @@
         ctx.arc(mouseSpot.x + 120, mouseSpot.y - 80, Math.max(1, mouseSpot.secondaryRadius), 0, Math.PI * 2);
         ctx.fill();
 
-        // Terziario
         const r3 = Math.floor(128 + 127 * Math.sin(hs * 0.0174 + 3.14));
         const g3 = Math.floor(128 + 127 * Math.sin(hs * 0.0174 + 5.23));
         const b3 = Math.floor(128 + 127 * Math.sin(hs * 0.0174 + 1.05));
@@ -869,26 +616,18 @@
         ctx.arc(mouseSpot.x - 100, mouseSpot.y + 100, Math.max(1, mouseSpot.thirdRadius), 0, Math.PI * 2);
         ctx.fill();
 
-        // Punti grossi quando fermo
         if (mouseSpeed < 1.5) {
           stopTimer += 0.016;
           if (stopTimer > 0.5 && time - lastDotTime > 0.4) {
-            stopDots.push({
-              x: mouseX, y: mouseY,
-              alpha: 0.7,
-              size: 3 + Math.min(stopTimer * 2, 5),
-              time: time
-            });
+            stopDots.push({ x: mouseX, y: mouseY, alpha: 0.7, size: 3 + Math.min(stopTimer * 2, 5), time: time });
             lastDotTime = time;
             if (stopDots.length > MAX_STOP_DOTS) stopDots.shift();
           }
         }
       }
 
-      // Sparkles
       for (const sp of sparkles) { sp.update(time, mouseSpot.x, mouseSpot.y); sp.draw(ctx); }
 
-      // Punti fermi: disegna e fade
       for (let i = stopDots.length - 1; i >= 0; i--) {
         const d = stopDots[i];
         const age = time - d.time;
@@ -913,77 +652,38 @@
     }
     animate();
 
-
-    // =============================================
-    // CURSOR — Dot + Ring con ritardo + Magnetic + Dock
-    // =============================================
     const cursorDot = document.getElementById('cursorDot');
     const cursorRing = document.getElementById('cursorRing');
 
     let dotX = W / 2, dotY = H / 2;
     let ringX = W / 2, ringY = H / 2;
     let cursorVisible = false;
-
-    // Magnetic: offset accumulato con lerp proprio
     let magOffsetX = 0, magOffsetY = 0;
+    let isDocked = false, dockTargetX = 0, dockTargetY = 0;
+    let hoveredEl = null, isOverInteractive = false;
 
-    // Dock: il ring si centra sull'elemento dopo 1s di fermata
-    let isDocked = false;
-    let dockTargetX = 0, dockTargetY = 0;
-    let hoveredEl = null;       // elemento sotto il mouse
-    let isOverInteractive = false;
-
-    // Tutti gli elementi che sono "link" o interattivi
     const allInteractives = document.querySelectorAll('.project-card, .social-link, .tagline, footer a');
 
-    // Traccia cosa è sotto il mouse
     allInteractives.forEach(el => {
-      el.addEventListener('mouseenter', () => {
-        hoveredEl = el;
-        isOverInteractive = true;
-      });
-      el.addEventListener('mouseleave', () => {
-        hoveredEl = null;
-        isOverInteractive = false;
-        isDocked = false;
-        document.body.classList.remove('cursor-docked');
-      });
+      el.addEventListener('mouseenter', () => { hoveredEl = el; isOverInteractive = true; });
+      el.addEventListener('mouseleave', () => { hoveredEl = null; isOverInteractive = false; isDocked = false; document.body.classList.remove('cursor-docked'); });
     });
 
     document.addEventListener('mousemove', (e) => {
       dotX = e.clientX;
       dotY = e.clientY;
-      if (!cursorVisible) {
-        cursorVisible = true;
-        cursorDot.style.opacity = '1';
-        cursorRing.style.opacity = '1';
-      }
-      // Se si muove, undock
-      if (isDocked) {
-        isDocked = false;
-        document.body.classList.remove('cursor-docked');
-      }
+      if (!cursorVisible) { cursorVisible = true; cursorDot.style.opacity = '1'; cursorRing.style.opacity = '1'; }
+      if (isDocked) { isDocked = false; document.body.classList.remove('cursor-docked'); }
     });
 
-    document.addEventListener('mouseleave', () => {
-      cursorVisible = false;
-      cursorDot.style.opacity = '0';
-      cursorRing.style.opacity = '0';
-      isDocked = false;
-    });
+    document.addEventListener('mouseleave', () => { cursorVisible = false; cursorDot.style.opacity = '0'; cursorRing.style.opacity = '0'; isDocked = false; });
 
-    // Posizione finale del ring (usata per il magnetic calc)
     let finalRingX = W / 2, finalRingY = H / 2;
 
     function animateCursor() {
-      const now = performance.now() / 1000;
-
-      // Dot: 1:1
       cursorDot.style.left = dotX + 'px';
       cursorDot.style.top = dotY + 'px';
 
-      // ---- LOGICA DOCK ----
-      // Se fermo su un interattivo da >1s → dock al centro
       if (isOverInteractive && hoveredEl && !isDocked && mouseSpeed < 1.5) {
         stopTimer_check += 0.016;
         if (stopTimer_check > 1.0) {
@@ -995,16 +695,11 @@
         }
       }
 
-      // Reset dock timer quando si muove
-      if (mouseSpeed > 1.5) {
-        stopTimer_check = 0;
-      }
+      if (mouseSpeed > 1.5) { stopTimer_check = 0; }
 
-      // ---- LOGICA MAGNETIC ----
       let targetMagX = 0, targetMagY = 0;
 
       if (!isDocked) {
-        // Cerca l'elemento interattivo più vicino
         for (const el of allInteractives) {
           const rect = el.getBoundingClientRect();
           const cx = rect.left + rect.width / 2;
@@ -1015,9 +710,8 @@
           const magneticRadius = 200;
 
           if (dist < magneticRadius && dist > 1) {
-            // Forza proporzionale: più sei vicino, più tira
             const factor = 1 - dist / magneticRadius;
-            const strength = factor * factor * 0.6; // quadratic per effetto più netto
+            const strength = factor * factor * 0.6;
             targetMagX += dx * strength;
             targetMagY += dy * strength;
             break;
@@ -1025,25 +719,19 @@
         }
       }
 
-      // Lerp separato per il magnetic offset (più veloce del ring base)
       magOffsetX = lerp(magOffsetX, targetMagX, 0.06);
       magOffsetY = lerp(magOffsetY, targetMagY, 0.06);
 
-      // ---- POSIZIONE RING ----
       if (isDocked) {
-        // Smooth verso il centro dell'elemento
         ringX = lerp(ringX, dockTargetX, 0.04);
         ringY = lerp(ringY, dockTargetY, 0.04);
-        // Reset magnetic quando docked
         magOffsetX = lerp(magOffsetX, 0, 0.05);
         magOffsetY = lerp(magOffsetY, 0, 0.05);
       } else {
-        // Segue il mouse con molto ritardo
         ringX = lerp(ringX, dotX, 0.055);
         ringY = lerp(ringY, dotY, 0.055);
       }
 
-      // Posizione finale = ring + magnetic offset
       finalRingX = ringX + magOffsetX;
       finalRingY = ringY + magOffsetY;
 
@@ -1056,16 +744,11 @@
     let stopTimer_check = 0;
     animateCursor();
 
-    // Init nascosto
     cursorDot.style.opacity = '0';
     cursorRing.style.opacity = '0';
     cursorDot.style.transition = 'opacity 0.3s ease';
     cursorRing.style.transition = 'opacity 0.3s ease, width 0.5s cubic-bezier(0.25,1,0.5,1), height 0.5s cubic-bezier(0.25,1,0.5,1), border-color 0.5s ease, background 0.5s ease, animation-duration 0.5s ease';
 
-
-    // =============================================
-    // CURSOR HOVER STATES (CSS class)
-    // =============================================
     document.querySelectorAll('.project-card').forEach(card => {
       card.addEventListener('mouseenter', () => {
         document.body.classList.add('cursor-hover-card');
@@ -1082,25 +765,13 @@
     document.querySelector('h1').addEventListener('mouseenter', () => document.body.classList.add('cursor-hover-title'));
     document.querySelector('h1').addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover-title'));
 
-
-    // =============================================
-    // PRELOAD + OBSERVER
-    // =============================================
     document.querySelectorAll('.project-card[data-preview]').forEach(card => {
       const url = card.getAttribute('data-preview');
-      if (url && url.trim()) {
-        const img = card.querySelector('.preview-image');
-        if (img) img.src = url;
-      }
+      if (url && url.trim()) { const img = card.querySelector('.preview-image'); if (img) img.src = url; }
     });
 
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
-        }
-      });
+      entries.forEach(entry => { if (entry.isIntersecting) { entry.target.style.opacity = '1'; entry.target.style.transform = 'translateY(0)'; } });
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
     document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
