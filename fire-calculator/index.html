@@ -9,7 +9,6 @@
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <style>
 body {
@@ -59,547 +58,305 @@ body {
 
 <div id="root"></div>
 
-<script type="text/babel">
+<script>
 
+const e = React.createElement;
 const {useState,useRef,useEffect} = React;
 
-const format1 = (n)=>
-  Number(n).toLocaleString("it-IT",{
+var format1 = function(n) {
+  return Number(n).toLocaleString("it-IT",{
     minimumFractionDigits:0,
     maximumFractionDigits:1
   });
+};
 
-/* SLIDER */
-function Slider({value,setValue,min,max,step}){
+/* SLIDER — identico all'originale: setValue diretta + onMouseMove */
+function Slider(props) {
+  var value = props.value;
+  var setValue = props.setValue;
+  var min = props.min;
+  var max = props.max;
+  var step = props.step;
 
-  const ref=useRef();
+  var ref = useRef();
 
-  const update=(x)=>{
-
-    const r=ref.current.getBoundingClientRect();
-
-    let p=(x-r.left)/r.width;
-    p=Math.max(0,Math.min(1,p));
-
-    let v=min+p*(max-min);
-
-    v=Math.round(v/step)*step;
-
+  function update(x) {
+    var r = ref.current.getBoundingClientRect();
+    var p = (x - r.left) / r.width;
+    p = Math.max(0, Math.min(1, p));
+    var v = min + p * (max - min);
+    v = Math.round(v / step) * step;
     setValue(v);
-  };
+  }
 
-  return (
-    <div
-      ref={ref}
-      className="slider-container"
-      onMouseDown={e=>update(e.clientX)}
-      onMouseMove={e=>e.buttons===1&&update(e.clientX)}
-    >
+  var pct = ((value - min) / (max - min)) * 100;
 
-      <div
-        className="slider-fill"
-        style={{
-          width:((value-min)/(max-min))*100+"%"
-        }}
-      />
-
-      <div
-        className="slider-thumb"
-        style={{
-          left:((value-min)/(max-min))*100+"%"
-        }}
-      />
-
-    </div>
+  return e("div", {
+    ref: ref,
+    className: "slider-container",
+    onMouseDown: function(ev) { update(ev.clientX); },
+    onMouseMove: function(ev) { if (ev.buttons === 1) update(ev.clientX); }
+  },
+    e("div", {
+      className: "slider-fill",
+      style: { width: pct + "%" }
+    }),
+    e("div", {
+      className: "slider-thumb",
+      style: { left: pct + "%" }
+    })
   );
 }
 
-function App(){
+function App() {
 
-  const [patrimonio,setPatrimonio]=useState(800000);
-  const [spesa,setSpesa]=useState(2000);
+  var s1 = useState(800000);  var patrimonio = s1[0];   var setPatrimonio = s1[1];
+  var s2 = useState(2000);    var spesa = s2[0];         var setSpesa = s2[1];
+  var s3 = useState(2);       var inflazione = s3[0];    var setInflazione = s3[1];
+  var s4 = useState(7);       var rendimento = s4[0];    var setRendimento = s4[1];
+  var s5 = useState(50);      var anni = s5[0];          var setAnni = s5[1];
+  var s6 = useState(400000);  var costBasis = s6[0];     var setCostBasis = s6[1];
+  var s7 = useState(26);      var taxRate = s7[0];       var setTaxRate = s7[1];
+  var s8 = useState(false);   var randomWalk = s8[0];    var setRandomWalk = s8[1];
+  var s9 = useState(10);      var volatility = s9[0];    var setVolatility = s9[1];
+  var s10 = useState(false);  var showSettings = s10[0]; var setShowSettings = s10[1];
+  var s11 = useState(0);      var finalCapital = s11[0]; var setFinal = s11[1];
 
-  const [inflazione,setInflazione]=useState(2);
-  const [rendimento,setRendimento]=useState(7);
-  const [anni,setAnni]=useState(50);
+  var chartRef = useRef(null);
+  var chartInstance = useRef(null);
 
-  const [costBasis,setCostBasis]=useState(400000);
-  const [taxRate,setTaxRate]=useState(26);
+  var annuale = spesa * 12;
 
-  // 🎲 RANDOM WALK
-  const [randomWalk,setRandomWalk]=useState(false);
-  const [volatility,setVolatility]=useState(10);
+  var withdrawalRate = patrimonio > 0
+    ? (annuale / patrimonio) * 100
+    : 0;
 
-  // ⚙️ SETTINGS TOGGLE
-  const [showSettings,setShowSettings]=useState(false);
-
-  const chartRef=useRef(null);
-  const chartInstance=useRef(null);
-
-  const annuale = spesa * 12;
-
-  const withdrawalRate =
-    patrimonio > 0
-      ? (annuale / patrimonio) * 100
-      : 0;
-
-  // 🎲 RANDOM RETURN
-  function getRandomReturn(mean, volatility){
-
-    return mean +
-      ((Math.random()*2)-1) * volatility;
+  function getRandomReturn(mean, vol) {
+    return mean + ((Math.random() * 2) - 1) * vol;
   }
 
-  // 🔥 SIMULAZIONE
-  const simulate=()=>{
+  function simulate() {
+    var capital = patrimonio;
+    var expense = annuale;
+    var currentCostBasis = costBasis;
+    var data = [];
 
-    let capital = patrimonio;
-
-    let expense = annuale;
-
-    let currentCostBasis = costBasis;
-
-    const data = [];
-
-    for(let y=0;y<anni;y++){
-
-      if(capital <= 0){
-
+    for (var y = 0; y < anni; y++) {
+      if (capital <= 0) {
         capital = 0;
         data.push(0);
-
         continue;
       }
 
-      // 💸 PRELIEVO
-      let withdrawal = expense;
+      var withdrawal = expense;
+      var sellAmount = withdrawal;
 
-      // 💰 VENDITA ASSET
-      let sellAmount = withdrawal;
-
-      // 📊 COST BASIS %
-      let avgCost = capital > 0
-        ? Math.min(1,currentCostBasis / capital)
+      var avgCost = capital > 0
+        ? Math.min(1, currentCostBasis / capital)
         : 0;
 
-      // 💰 QUOTA COSTO
-      let costPortion = sellAmount * avgCost;
+      var costPortion = sellAmount * avgCost;
+      var gain = Math.max(0, sellAmount - costPortion);
+      var tax = gain * (taxRate / 100);
+      var totalOut = sellAmount + tax;
 
-      // 📈 GAIN
-      let gain = Math.max(
-        0,
-        sellAmount - costPortion
-      );
-
-      // 🧾 TASSE
-      let tax = gain * (taxRate/100);
-
-      // 💸 USCITA TOTALE
-      let totalOut = sellAmount + tax;
-
-      // 💥 RIDUZIONE CAPITALE
       capital -= totalOut;
 
-      if(capital <= 0){
-
+      if (capital <= 0) {
         capital = 0;
-
         data.push(0);
-
         continue;
       }
 
-      // 🎲 RANDOM WALK
-      let yearlyReturn = rendimento;
-
-      if(randomWalk){
-
-        yearlyReturn = getRandomReturn(
-          rendimento,
-          volatility
-        );
+      var yearlyReturn = rendimento;
+      if (randomWalk) {
+        yearlyReturn = getRandomReturn(rendimento, volatility);
       }
+      yearlyReturn = Math.max(-99, yearlyReturn);
 
-      // ⚠️ NON PUÒ SCENDERE OLTRE -99%
-      yearlyReturn = Math.max(
-        -99,
-        yearlyReturn
-      );
-
-      // 📈 CRESCITA
-      capital =
-        capital *
-        (1 + yearlyReturn/100);
-
-      // 📊 INFLAZIONE SPESE
-      expense =
-        expense *
-        (1 + inflazione/100);
-
-      // 📉 RIDUZIONE COST BASIS
-      currentCostBasis =
-        currentCostBasis *
-        (capital / (capital + totalOut));
+      capital = capital * (1 + yearlyReturn / 100);
+      expense = expense * (1 + inflazione / 100);
+      currentCostBasis = currentCostBasis * (capital / (capital + totalOut));
 
       data.push(capital);
     }
 
     return data;
-  };
+  }
 
-  const [finalCapital,setFinal]=useState(0);
+  useEffect(function() {
+    var data = simulate();
+    var fc = data.at(-1);
 
-  useEffect(()=>{
+    if (chartInstance.current) chartInstance.current.destroy();
 
-    const data = simulate();
-
-    const finalCapital = data.at(-1);
-
-    if(chartInstance.current)
-      chartInstance.current.destroy();
-
-    chartInstance.current =
-      new Chart(chartRef.current,{
-
-      type:"line",
-
-      data:{
-
-        labels:[...Array(anni)]
-          .map((_,i)=>i+1),
-
-        datasets:[{
-
-          label:"Patrimonio",
-
-          data,
-
-          borderColor:"#111827",
-
-          tension:0.3
+    chartInstance.current = new Chart(chartRef.current, {
+      type: "line",
+      data: {
+        labels: Array.from({ length: anni }, function(_, i) { return i + 1; }),
+        datasets: [{
+          label: "Patrimonio",
+          data: data,
+          borderColor: "#111827",
+          tension: 0.3
         }]
       },
-
-      options:{
-
-        plugins:{
-          legend:{display:false}
-        },
-
-        scales:{
-
-          y:{
-            ticks:{
-              callback:v=>"€"+v/1000+"k"
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            ticks: {
+              callback: function(v) { return "€" + v / 1000 + "k"; }
             }
           }
         }
       }
     });
 
-    setFinal(finalCapital);
-
-  },[
-    patrimonio,
-    spesa,
-    inflazione,
-    rendimento,
-    anni,
-    costBasis,
-    taxRate,
-    randomWalk,
-    volatility
-  ]);
-
-  const isFire = finalCapital >= 1;
-
-  return (
-
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-
-      {/* TITOLO */}
-      <h1 className="text-4xl font-bold text-center">
-        🔥 Sei in FIRE?
-      </h1>
-
-      {/* INPUT */}
-      <div className="bg-white p-5 rounded-xl shadow text-center text-xl font-bold">
-
-        Hai un patrimonio di{" "}
-
-        <input
-          className="custom-input w-40"
-          value={patrimonio}
-          onChange={e=>
-            setPatrimonio(+e.target.value)
-          }
-        />
-
-        {" "}€
-
-        {" "}e spendi{" "}
-
-        <input
-          className="custom-input w-28"
-          value={spesa}
-          onChange={e=>
-            setSpesa(+e.target.value)
-          }
-        />
-
-        {" "}€ al mese
-
-      </div>
-
-      {/* SETTINGS BUTTON */}
-      <button
-        onClick={()=>
-          setShowSettings(!showSettings)
-        }
-
-        className="bg-white shadow rounded-xl px-4 py-3 font-semibold w-full text-left hover:bg-gray-50 transition"
-      >
-
-        {showSettings
-          ? "⚙️ Nascondi settaggi"
-          : "⚙️ Con questi settaggi:"
-        }
-
-      </button>
-
-      {/* SETTINGS */}
-      {showSettings && (
-
-      <div className="bg-white p-6 rounded-xl space-y-6 shadow">
-
-        {/* INFLAZIONE */}
-        <div>
-
-          📊 Inflazione
-
-          <div>
-            <b>{format1(inflazione)}%</b>
-          </div>
-
-          <Slider
-            value={inflazione}
-            setValue={setInflazione}
-            min={0}
-            max={10}
-            step={0.1}
-          />
-
-        </div>
-
-        {/* RENDIMENTO */}
-        <div>
-
-          📈 Rendimento composto
-
-          <div>
-            <b>{format1(rendimento)}%</b>
-          </div>
-
-          <Slider
-            value={rendimento}
-            setValue={setRendimento}
-            min={0}
-            max={20}
-            step={0.1}
-          />
-
-        </div>
-
-        {/* ANNI */}
-        <div>
-
-          ⏳ Anni simulazione
-
-          <div>
-            <b>{anni}</b>
-          </div>
-
-          <Slider
-            value={anni}
-            setValue={setAnni}
-            min={1}
-            max={100}
-            step={1}
-          />
-
-        </div>
-
-        {/* COST BASIS */}
-        <div>
-
-          💰 Prezzo medio di carico
-
-          <div>
-            <b>{format1(costBasis)} €</b>
-          </div>
-
-          <Slider
-            value={costBasis}
-            setValue={setCostBasis}
-            min={0}
-            max={patrimonio}
-            step={1000}
-          />
-
-        </div>
-
-        {/* TASSE */}
-        <div>
-
-          🧾 Tassa plusvalenze
-
-          <div>
-            <b>{format1(taxRate)}%</b>
-          </div>
-
-          <Slider
-            value={taxRate}
-            setValue={setTaxRate}
-            min={0}
-            max={50}
-            step={0.1}
-          />
-
-        </div>
-
-        {/* RANDOM WALK */}
-        <div className="space-y-3">
-
-          <div className="flex justify-between items-center">
-
-            <span>
-              🎲 Random Walk
-            </span>
-
-            <input
-              type="checkbox"
-              checked={randomWalk}
-              onChange={()=>
-                setRandomWalk(!randomWalk)
-              }
-            />
-
-          </div>
-
-          {randomWalk && (
-
-            <div>
-
-              <div>
-
-                📉 Volatilità annuale
-
-                <div>
-                  <b>{format1(volatility)}%</b>
-                </div>
-
-              </div>
-
-              <Slider
-                value={volatility}
-                setValue={setVolatility}
-                min={0}
-                max={20}
-                step={0.5}
-              />
-
-            </div>
-
-          )}
-
-        </div>
-
-      </div>
-
-      )}
-
-      {/* RISULTATO */}
-      <div className="bg-white p-6 rounded-xl text-center space-y-3 shadow">
-
-        <div className={
-          "text-3xl font-bold "+
-          (isFire ? "fire" : "notfire")
-        }>
-
-          {isFire
-            ? "🔥 SEI IN FIRE"
-            : "💀 NON SEI IN FIRE"
-          }
-
-        </div>
-
-        <div>
-          Capitale iniziale:
-          <b> {format1(patrimonio)} €</b>
-        </div>
-
-        <div>
-          Capitale finale:
-          <b> {format1(finalCapital)} €</b>
-        </div>
-
-        {/* PRELIEVO */}
-        <div className="text-sm text-gray-700 mt-2">
-
-          Stai prelevando il{" "}
-
-          <b>
-            {format1(withdrawalRate)}%
-          </b>
-
-          {" "}del tuo capitale
-
-          {withdrawalRate > 4 && (
-
-            <span className="ml-2 text-red-500 font-bold">
-              ⚠️
-            </span>
-
-          )}
-
-        </div>
-
-        {/* INFO */}
-        <div className="text-sm text-gray-500">
-
-          Inflazione {format1(inflazione)}%
-          {" · "}
-          Rendimento {format1(rendimento)}%
-          {" · "}
-          Tassa {format1(taxRate)}%
-
-          {randomWalk && (
-            <>
-              {" · "}
-              Random Walk ±{format1(volatility)}%
-            </>
-          )}
-
-        </div>
-
-      </div>
-
-      {/* GRAFICO */}
-      <div className="bg-white p-6 rounded-xl shadow">
-
-        <canvas ref={chartRef}></canvas>
-
-      </div>
-
-    </div>
+    setFinal(fc);
+  }, [patrimonio, spesa, inflazione, rendimento, anni, costBasis, taxRate, randomWalk, volatility]);
+
+  var isFire = finalCapital >= 1;
+
+  return e("div", { className: "max-w-3xl mx-auto p-6 space-y-6" },
+
+    /* TITOLO */
+    e("h1", { className: "text-4xl font-bold text-center" },
+      "🔥 Sei in FIRE?"
+    ),
+
+    /* INPUT PRINCIPALE */
+    e("div", { className: "bg-white p-5 rounded-xl shadow text-center text-xl font-bold" },
+      "Hai un patrimonio di ",
+      e("input", {
+        className: "custom-input w-40",
+        value: patrimonio,
+        onChange: function(ev) { setPatrimonio(+ev.target.value); }
+      }),
+      " € e spendi ",
+      e("input", {
+        className: "custom-input w-28",
+        value: spesa,
+        onChange: function(ev) { setSpesa(+ev.target.value); }
+      }),
+      " € al mese"
+    ),
+
+    /* SETTINGS BUTTON */
+    e("button", {
+      onClick: function() { setShowSettings(!showSettings); },
+      className: "bg-white shadow rounded-xl px-4 py-3 font-semibold w-full text-left hover:bg-gray-50 transition"
+    },
+      showSettings ? "⚙️ Nascondi settaggi" : "⚙️ Con questi settaggi:"
+    ),
+
+    /* SETTINGS PANEL */
+    showSettings && e("div", { className: "bg-white p-6 rounded-xl space-y-6 shadow" },
+
+      /* INFLAZIONE */
+      e("div", null,
+        "📊 Inflazione",
+        e("div", null, e("b", null, format1(inflazione) + "%")),
+        e(Slider, { value: inflazione, setValue: setInflazione, min: 0, max: 10, step: 0.1 })
+      ),
+
+      /* RENDIMENTO */
+      e("div", null,
+        "📈 Rendimento composto",
+        e("div", null, e("b", null, format1(rendimento) + "%")),
+        e(Slider, { value: rendimento, setValue: setRendimento, min: 0, max: 20, step: 0.1 })
+      ),
+
+      /* ANNI */
+      e("div", null,
+        "⏳ Anni simulazione",
+        e("div", null, e("b", null, anni)),
+        e(Slider, { value: anni, setValue: setAnni, min: 1, max: 100, step: 1 })
+      ),
+
+      /* COST BASIS */
+      e("div", null,
+        "💰 Prezzo medio di carico",
+        e("div", null, e("b", null, format1(costBasis) + " €")),
+        e(Slider, { value: costBasis, setValue: setCostBasis, min: 0, max: patrimonio, step: 1000 })
+      ),
+
+      /* TASSE */
+      e("div", null,
+        "🧾 Tassa plusvalenze",
+        e("div", null, e("b", null, format1(taxRate) + "%")),
+        e(Slider, { value: taxRate, setValue: setTaxRate, min: 0, max: 50, step: 0.1 })
+      ),
+
+      /* RANDOM WALK */
+      e("div", { className: "space-y-3" },
+        e("div", { className: "flex justify-between items-center" },
+          e("span", null, "🎲 Random Walk"),
+          e("input", {
+            type: "checkbox",
+            checked: randomWalk,
+            onChange: function() { setRandomWalk(!randomWalk); }
+          })
+        ),
+        randomWalk && e("div", null,
+          e("div", null,
+            "📉 Volatilità annuale",
+            e("div", null, e("b", null, format1(volatility) + "%"))
+          ),
+          e(Slider, { value: volatility, setValue: setVolatility, min: 0, max: 20, step: 0.5 })
+        )
+      )
+    ),
+
+    /* RISULTATO */
+    e("div", { className: "bg-white p-6 rounded-xl text-center space-y-3 shadow" },
+
+      e("div", {
+        className: "text-3xl font-bold " + (isFire ? "fire" : "notfire")
+      },
+        isFire ? "🔥 SEI IN FIRE" : "💀 NON SEI IN FIRE"
+      ),
+
+      e("div", null,
+        "Capitale iniziale:",
+        e("b", null, " " + format1(patrimonio) + " €")
+      ),
+
+      e("div", null,
+        "Capitale finale:",
+        e("b", null, " " + format1(finalCapital) + " €")
+      ),
+
+      /* PRELIEVO */
+      e("div", { className: "text-sm text-gray-700 mt-2" },
+        "Stai prelevando il ",
+        e("b", null, format1(withdrawalRate) + "%"),
+        " del tuo capitale",
+        withdrawalRate > 4 && e("span", { className: "ml-2 text-red-500 font-bold" }, "⚠️")
+      ),
+
+      /* INFO */
+      e("div", { className: "text-sm text-gray-500" },
+        "Inflazione " + format1(inflazione) + "%",
+        " · ",
+        "Rendimento " + format1(rendimento) + "%",
+        " · ",
+        "Tassa " + format1(taxRate) + "%",
+        randomWalk ? [" · ", "Random Walk ±" + format1(volatility) + "%"] : null
+      )
+    ),
+
+    /* GRAFICO */
+    e("div", { className: "bg-white p-6 rounded-xl shadow" },
+      e("canvas", { ref: chartRef })
+    )
   );
 }
 
-ReactDOM
-  .createRoot(document.getElementById("root"))
-  .render(<App/>);
+ReactDOM.createRoot(document.getElementById("root")).render(e(App));
 
 </script>
 
 </body>
+
 </html>
