@@ -9,15 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
       --bg-primary: #0a0a0b;
-      --bg-secondary: #141416;
       --text-primary: #ffffff;
       --text-secondary: #a1a1aa;
       --accent-pink: #ff006e;
@@ -29,8 +24,6 @@
       --card-bg: rgba(255, 255, 255, 0.03);
       --card-border: rgba(255, 255, 255, 0.08);
       --card-hover-bg: rgba(255, 255, 255, 0.06);
-      --mouse-x: 50%;
-      --mouse-y: 50%;
     }
 
     body {
@@ -39,109 +32,109 @@
       color: var(--text-primary);
       min-height: 100vh;
       overflow-x: hidden;
-      position: relative;
-      cursor: default;
+      cursor: none !important;
     }
 
-    /* ===== MOUSE FOLLOWING GRADIENT BACKGROUND ===== */
-    .bg-animation {
+    #bgCanvas {
       position: fixed;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
       z-index: 0;
       pointer-events: none;
-      overflow: hidden;
-      background: var(--bg-primary);
     }
 
-    /* Gradient Radiale che segue il mouse */
-    .mouse-gradient {
-      position: absolute;
-      width: 150vw;
-      height: 150vh;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      background: 
-        radial-gradient(
-          circle 600px at var(--mouse-x) var(--mouse-y),
-          rgba(255, 0, 110, 0.15) 0%,
-          transparent 60%
-        ),
-        radial-gradient(
-          circle 500px at calc(var(--mouse-x) + 200px) calc(var(--mouse-y) - 150px),
-          rgba(0, 212, 255, 0.12) 0%,
-          transparent 55%
-        ),
-        radial-gradient(
-          circle 450px at calc(var(--mouse-x) - 180px) calc(var(--mouse-y) + 180px),
-          rgba(191, 90, 242, 0.1) 0%,
-          transparent 50%
-        );
-      transition: background 0.1s ease-out;
-      will-change: background;
-    }
-
-    /* Blob animati che si muovono lentamente */
-    .blob {
-      position: absolute;
+    /* ===== CURSOR DOT ===== */
+    .cursor-dot {
+      position: fixed;
+      width: 5px;
+      height: 5px;
+      background: #fff;
       border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.25;
-      animation: float 25s infinite ease-in-out;
-      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 10001;
+      transform: translate(-50%, -50%);
+      mix-blend-mode: difference;
+      transition: width 0.25s ease, height 0.25s ease, background 0.25s ease, opacity 0.3s ease;
     }
 
-    .blob-1 {
-      width: 500px;
-      height: 500px;
-      background: var(--accent-pink);
-      top: -150px;
-      left: -150px;
-      animation-delay: 0s;
+    /* ===== CURSOR RING — RESPIRO ===== */
+    .cursor-ring {
+      position: fixed;
+      width: 44px;
+      height: 44px;
+      border: 1.2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      animation: ringBreathe 3.5s ease-in-out infinite;
+      transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+                  height 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+                  border-color 0.5s ease,
+                  background 0.5s ease,
+                  animation-duration 0.5s ease,
+                  opacity 0.3s ease;
+      will-change: left, top, transform, opacity;
     }
 
-    .blob-2 {
-      width: 400px;
-      height: 400px;
-      background: var(--accent-blue);
-      bottom: -120px;
-      right: -120px;
-      animation-delay: -8s;
+    @keyframes ringBreathe {
+      0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.12);
+        opacity: 0.5;
+      }
     }
 
-    .blob-3 {
-      width: 350px;
-      height: 350px;
-      background: var(--accent-purple);
-      top: 40%;
-      left: 45%;
-      animation-delay: -16s;
+    /* Hover card */
+    body.cursor-hover-card .cursor-dot {
+      background: var(--hover-accent, #ff006e);
+      mix-blend-mode: normal;
+    }
+    body.cursor-hover-card .cursor-ring {
+      width: 72px;
+      height: 72px;
+      border-color: var(--hover-accent, #ff006e);
+      background: rgba(255, 0, 110, 0.04);
+      animation-duration: 2s;
     }
 
-    @keyframes float {
-      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-      25% { transform: translate(40px, -40px) scale(1.08) rotate(5deg); }
-      50% { transform: translate(-30px, 30px) scale(0.95) rotate(-3deg); }
-      75% { transform: translate(30px, 20px) scale(1.03) rotate(2deg); }
+    /* Hover link/social */
+    body.cursor-hover-link .cursor-dot { width: 3px; height: 3px; }
+    body.cursor-hover-link .cursor-ring {
+      width: 26px;
+      height: 26px;
+      border-color: var(--accent-blue);
+      background: rgba(0, 212, 255, 0.06);
+      animation-duration: 2.5s;
     }
 
-    /* Noise texture overlay */
+    /* Hover titolo */
+    body.cursor-hover-title .cursor-ring {
+      width: 96px;
+      height: 96px;
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.015);
+      animation-duration: 4s;
+    }
+
+    /* Docked state — quando il ring si centra su un elemento */
+    body.cursor-docked .cursor-ring {
+      animation-duration: 2.5s;
+    }
+
     .noise {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       z-index: 1;
       pointer-events: none;
-      opacity: 0.03;
+      opacity: 0.035;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     }
 
-    /* ===== MAIN CONTAINER ===== */
     .container {
       position: relative;
       z-index: 2;
@@ -150,12 +143,7 @@
       padding: 40px 24px;
     }
 
-    /* ===== HEADER / HERO ===== */
-    header {
-      text-align: center;
-      margin-bottom: 80px;
-      padding-top: 60px;
-    }
+    header { text-align: center; margin-bottom: 80px; padding-top: 60px; }
 
     .emoji-rain {
       font-size: 48px;
@@ -163,7 +151,6 @@
       animation: bounce 2s infinite;
       display: inline-block;
     }
-
     @keyframes bounce {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-15px); }
@@ -180,7 +167,6 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       letter-spacing: -0.03em;
-      cursor: default;
     }
 
     .subtitle {
@@ -205,22 +191,17 @@
     }
 
     .tagline-dot {
-      width: 8px;
-      height: 8px;
+      width: 8px; height: 8px;
       background: var(--accent-green);
       border-radius: 50%;
       animation: pulse 2s infinite;
     }
-
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.5; transform: scale(1.2); }
     }
 
-    /* ===== PROJECTS SECTION ===== */
-    .projects-section {
-      margin-bottom: 80px;
-    }
+    .projects-section { margin-bottom: 80px; }
 
     .section-header {
       display: flex;
@@ -255,14 +236,12 @@
       gap: 24px;
     }
 
-    /* ===== PROJECT CARD CON PREVIEW GIF ===== */
     .project-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
       padding: 32px;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
       text-decoration: none;
       color: inherit;
       position: relative;
@@ -273,18 +252,13 @@
     .project-card::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       height: 3px;
       background: linear-gradient(90deg, var(--card-accent), transparent);
       opacity: 0;
       transition: opacity 0.4s ease;
     }
-
-    .project-card:hover::before {
-      opacity: 1;
-    }
+    .project-card:hover::before { opacity: 1; }
 
     .project-card:hover {
       transform: translateY(-8px);
@@ -293,13 +267,9 @@
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     }
 
-    /* Preview Container per GIF/Screenshot */
     .preview-container {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       border-radius: 20px;
       overflow: hidden;
       opacity: 0;
@@ -309,41 +279,22 @@
     }
 
     .preview-image {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       object-fit: cover;
       transform: scale(1.05);
       transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .project-card:hover .preview-container { opacity: 1; }
+    .project-card:hover .preview-image { transform: scale(1); }
 
-    .project-card:hover .preview-container {
-      opacity: 1;
-    }
-
-    .project-card:hover .preview-image {
-      transform: scale(1);
-    }
-
-    /* Overlay scuro sopra la preview per leggibilità */
     .preview-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(to bottom, 
-        rgba(0,0,0,0.7) 0%, 
-        rgba(0,0,0,0.4) 50%,
-        rgba(10, 10, 11, 0.95) 100%
-      );
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, rgba(10,10,11,0.95) 100%);
       z-index: 11;
     }
 
-    /* Content della card (sopra la preview) */
-    .card-content {
-      position: relative;
-      z-index: 12;
-    }
+    .card-content { position: relative; z-index: 12; }
 
     .card-icon {
       font-size: 3rem;
@@ -351,17 +302,13 @@
       display: block;
       transition: transform 0.3s ease;
     }
-
-    .project-card:hover .card-icon {
-      transform: scale(1.15) rotate(5deg);
-    }
+    .project-card:hover .card-icon { transform: scale(1.15) rotate(5deg); }
 
     .card-title {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 1.5rem;
       font-weight: 600;
       margin-bottom: 12px;
-      color: var(--text-primary);
     }
 
     .card-description {
@@ -397,20 +344,10 @@
       font-size: 0.9rem;
       transition: gap 0.3s ease;
     }
+    .project-card:hover .card-link { gap: 10px; }
+    .arrow { transition: transform 0.3s ease; }
+    .project-card:hover .arrow { transform: translateX(4px); }
 
-    .project-card:hover .card-link {
-      gap: 10px;
-    }
-
-    .arrow {
-      transition: transform 0.3s ease;
-    }
-
-    .project-card:hover .arrow {
-      transform: translateX(4px);
-    }
-
-    /* Individual Card Accents */
     .card-crossy { --card-accent: var(--accent-pink); }
     .card-interesse { --card-accent: var(--accent-blue); }
     .card-inflazione { --card-accent: var(--accent-green); }
@@ -418,15 +355,10 @@
     .card-halving { --card-accent: #f7931a; }
     .card-4factor { --card-accent: var(--accent-emerald); }
     .card-realtime { --card-accent: #ff3b30; }
-    
-    /* Placeholder per preview non ancora disponibile */
+
     .preview-placeholder {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, 
-        rgba(255, 0, 110, 0.1) 0%, 
-        rgba(0, 212, 255, 0.1) 100%
-      );
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(255,0,110,0.1) 0%, rgba(0,212,255,0.1) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -434,7 +366,6 @@
       opacity: 0.3;
     }
 
-    /* ===== FOOTER ===== */
     footer {
       text-align: center;
       padding: 60px 0 40px;
@@ -449,17 +380,13 @@
       gap: 20px;
     }
 
-    .social-links {
-      display: flex;
-      gap: 16px;
-    }
+    .social-links { display: flex; gap: 16px; }
 
     .social-link {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 44px;
-      height: 44px;
+      width: 44px; height: 44px;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 12px;
@@ -468,7 +395,6 @@
       font-size: 1.2rem;
       transition: all 0.3s ease;
     }
-
     .social-link:hover {
       background: var(--card-hover-bg);
       border-color: var(--accent-blue);
@@ -476,59 +402,25 @@
       transform: translateY(-3px);
     }
 
-    .copyright {
-      color: var(--text-secondary);
-      font-size: 0.85rem;
-    }
+    .copyright { color: var(--text-secondary); font-size: 0.85rem; }
+    .meme-text { font-size: 0.9rem; color: var(--text-secondary); opacity: 0.7; font-style: italic; }
 
-    .meme-text {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      opacity: 0.7;
-      font-style: italic;
-    }
-
-    /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
-      header {
-        padding-top: 40px;
-        margin-bottom: 60px;
-      }
-
-      h1 {
-        font-size: 2.5rem;
-      }
-
-      .subtitle {
-        font-size: 1.1rem;
-      }
-
-      .projects-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-      }
-
-      .project-card {
-        padding: 24px;
-      }
-
-      .container {
-        padding: 24px 16px;
-      }
-
-      /* Disabilita effetti pesanti su mobile */
-      .mouse-gradient {
-        display: none;
-      }
+      header { padding-top: 40px; margin-bottom: 60px; }
+      h1 { font-size: 2.5rem; }
+      .subtitle { font-size: 1.1rem; }
+      .projects-grid { grid-template-columns: 1fr; gap: 20px; }
+      .project-card { padding: 24px; }
+      .container { padding: 24px 16px; }
+      body { cursor: auto !important; }
+      .cursor-dot, .cursor-ring { display: none !important; }
     }
 
-    /* ===== SCROLL ANIMATION ===== */
     .fade-in {
       opacity: 0;
       transform: translateY(30px);
       animation: fadeInUp 0.8s ease forwards;
     }
-
     .fade-in:nth-child(1) { animation-delay: 0.1s; }
     .fade-in:nth-child(2) { animation-delay: 0.2s; }
     .fade-in:nth-child(3) { animation-delay: 0.3s; }
@@ -537,17 +429,10 @@
     .fade-in:nth-child(6) { animation-delay: 0.6s; }
 
     @keyframes fadeInUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Glitch effect on title hover */
-    h1:hover {
-      animation: glitch 0.3s ease;
-    }
-
+    h1:hover { animation: glitch 0.3s ease; }
     @keyframes glitch {
       0%, 100% { transform: translate(0); }
       20% { transform: translate(-2px, 2px); }
@@ -555,326 +440,190 @@
       60% { transform: translate(2px, 2px); }
       80% { transform: translate(2px, -2px); }
     }
-
-    /* Cursor personalizzato opzionale */
-    body::after {
-      content: '';
-      position: fixed;
-      width: 300px;
-      height: 300px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 9999;
-      transform: translate(-50%, -50%);
-      transition: transform 0.15s ease-out;
-      will-change: transform;
-    }
   </style>
 </head>
 <body>
 
-  <!-- Animated Background con Mouse Tracking -->
-  <div class="bg-animation">
-    <div class="mouse-gradient" id="mouseGradient"></div>
-    <div class="blob blob-1" id="blob1"></div>
-    <div class="blob blob-2" id="blob2"></div>
-    <div class="blob blob-3" id="blob3"></div>
-  </div>
-
-  <!-- Noise Texture Overlay -->
+  <canvas id="bgCanvas"></canvas>
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
   <div class="noise"></div>
 
-  <!-- Main Container -->
   <div class="container">
     
-    <!-- Header -->
     <header>
       <div class="emoji-rain">🧪</div>
       <h1>Bolzi Lab</h1>
-      <p class="subtitle">
-        Benvenuto nel mio laboratorio digitale dove i progetti nascono dal caos creativo e dalla voglia di sperimentare ✨
-      </p>
+      <p class="subtitle">Benvenuto nel mio laboratorio digitale dove i progetti nascono dal caos creativo e dalla voglia di sperimentare ✨</p>
       <div class="tagline">
         <span class="tagline-dot"></span>
         <span>@alebolzi</span>
       </div>
     </header>
 
-    <!-- Projects Section -->
     <section class="projects-section">
       <div class="section-header">
-        <h2 class="section-title">
-          🗃️ Progetti
-        </h2>
+        <h2 class="section-title">🗂️ Progetti</h2>
         <span class="project-count">beta</span>
       </div>
-
       <div class="projects-grid">
         
-        <!-- Project 1: Crossy Road -->
         <a href="crossy-road/" class="project-card card-crossy fade-in" data-preview="previews/crossy-road.gif">
-          
-          <!-- Preview Container (mostra GIF/screenshot al hover) -->
           <div class="preview-container">
-            <!-- QUI METTI LA TUA GIF PREVIEW: sostituisci src con il path corretto -->
-            <img src="" alt="Crossy Road Preview" class="preview-image" 
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="preview-placeholder" style="display: none;">🐔</div>
+            <img src="" alt="" class="preview-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display:none;">🐔</div>
             <div class="preview-overlay"></div>
           </div>
-
-          <!-- Card Content -->
           <div class="card-content">
             <span class="card-icon">🐔</span>
             <h3 class="card-title">Crossy Road</h3>
-            <p class="card-description">
-              Il classico gioco dell'attraversamento stradale ricreato da zero! Sposta il pollo attraverso il traffico senza farti schiacciare. Quanto lontano riesci ad arrivare? 🛣️
-            </p>
+            <p class="card-description">Il classico gioco dell'attraversamento stradale ricreato da zero! Sposta il pollo attraverso il traffico senza farti schiacciare 🛣️</p>
             <div class="card-meta">
               <span class="card-tag">🎮 Gioco</span>
-              <span class="card-link">
-                Gioca ora 
-                <span class="arrow">→</span>
-              </span>
+              <span class="card-link">Gioca ora <span class="arrow">→</span></span>
             </div>
           </div>
         </a>
 
-        <!-- Project 2: Interesse Composto -->
         <a href="interesse-composto/" class="project-card card-interesse fade-in" data-preview="previews/interesse-composto.gif">
-          
-          <!-- Preview Container -->
           <div class="preview-container">
-            <img src="" alt="Interesse Composto Preview" class="preview-image"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="preview-placeholder" style="display: none;">💰</div>
+            <img src="" alt="" class="preview-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display:none;">💰</div>
             <div class="preview-overlay"></div>
           </div>
-
-          <!-- Card Content -->
           <div class="card-content">
             <span class="card-icon">💰</span>
             <h3 class="card-title">Interesse Composto</h3>
-            <p class="card-description">
-              Calcolatore di interesse composto super potente! Scopri come i tuoi soldi possono crescere nel tempo. Il tempo è il tuo migliore alleato finanziario 📈
-            </p>
+            <p class="card-description">Calcolatore di interesse composto super potente! Scopri come i tuoi soldi possono crescere nel tempo 📈</p>
             <div class="card-meta">
               <span class="card-tag">🧮 Finanza</span>
-              <span class="card-link">
-                Calcola 
-                <span class="arrow">→</span>
-              </span>
+              <span class="card-link">Calcola <span class="arrow">→</span></span>
             </div>
           </div>
         </a>
 
-        <!-- Project 3: Calcolo Inflazione -->
         <a href="calcolo-inflazione/" class="project-card card-inflazione fade-in" data-preview="previews/calcolo-inflazione.gif">
-          
-          <!-- Preview Container -->
           <div class="preview-container">
-            <img src="" alt="Calcolo Inflazione Preview" class="preview-image"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="preview-placeholder" style="display: none;">📊</div>
+            <img src="" alt="" class="preview-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display:none;">📊</div>
             <div class="preview-overlay"></div>
           </div>
-
-          <!-- Card Content -->
           <div class="card-content">
             <span class="card-icon">📊</span>
             <h3 class="card-title">Calcolo Inflazione</h3>
-            <p class="card-description">
-              Strumento per calcolare l'impatto dell'inflazione sul potere d'acquisto. Capisci quanto valgono davvero i tuoi soldi nel tempo 💸
-            </p>
+            <p class="card-description">Strumento per calcolare l'impatto dell'inflazione sul potere d'acquisto 💸</p>
             <div class="card-meta">
               <span class="card-tag">📉 Economia</span>
-              <span class="card-link">
-                Analizza 
-                <span class="arrow">→</span>
-              </span>
+              <span class="card-link">Analizza <span class="arrow">→</span></span>
             </div>
           </div>
         </a>
 
-        <!-- Project 4: Trading vs Holding -->
         <a href="trading-holding/" class="project-card card-trading fade-in" data-preview="previews/trading-holding.gif">
-  
-          <!-- Preview Container -->
           <div class="preview-container">
-            <img src="" alt="Trading vs Holding Preview" class="preview-image"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="preview-placeholder" style="display: none;">⚖️</div>
+            <img src="" alt="" class="preview-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display:none;">⚖️</div>
             <div class="preview-overlay"></div>
           </div>
-
-          <!-- Card Content -->
           <div class="card-content">
             <span class="card-icon">⚖️</span>
             <h3 class="card-title">Trading vs Holding</h3>
-            <p class="card-description">
-              Il dilemma eterno! Confronta se conviene tradare attivamente o holdare e vendere alla fine. Analisi caso per caso con 1 vs 2 trade per trovare la strategia vincente 🎯
-            </p>
+            <p class="card-description">Il dilemma eterno! Confronta se conviene tradare attivamente o holdare 🎯</p>
             <div class="card-meta">
               <span class="card-tag">💹 Strategia</span>
-              <span class="card-link">
-                Confronta 
-                <span class="arrow">→</span>
-              </span>
+              <span class="card-link">Confronta <span class="arrow">→</span></span>
             </div>
           </div>
         </a>
 
-        <!-- Project 5: BTC Halving Cycle Indicator -->
         <a href="btc-halving-cycle-indicator/" class="project-card card-halving fade-in" data-preview="previews/btc-halving.gif">
-  
-          <!-- Preview Container -->
           <div class="preview-container">
-            <img src="" alt="BTC Halving Indicator Preview" class="preview-image"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="preview-placeholder" style="display: none;">🟠</div>
+            <img src="" alt="" class="preview-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display:none;">🟠</div>
             <div class="preview-overlay"></div>
           </div>
-
-          <!-- Card Content -->
           <div class="card-content">
             <span class="card-icon">🟠</span>
             <h3 class="card-title">BTC Halving Cycle</h3>
-            <p class="card-description">
-              Indicatore ciclico da 0 a 1 che mostra dove siamo nel ciclo di Bitcoin rispetto all'halving. Identifica zone di bottom, accumulo e top per decisioni più intelligenti 🚀
-            </p>
+            <p class="card-description">Indicatore ciclico da 0 a 1 che mostra dove siamo nel ciclo di Bitcoin rispetto all'halving 🚀</p>
             <div class="card-meta">
               <span class="card-tag">₿ Crypto</span>
-              <span class="card-link">
-                Analizza 
-                <span class="arrow">→</span>
-              </span>
+              <span class="card-link">Analizza <span class="arrow">→</span></span>
             </div>
           </div>
         </a>
 
-        <!-- Project 6: BTC 4 Factor Model [NUOVO] -->
         <a href="btc-4-factor-model/" class="project-card card-4factor fade-in" data-preview="previews/btc-4factor.gif">
-  
-          <!-- Preview Container -->
           <div class="preview-container">
-            <img src="" alt="BTC 4 Factor Model Preview" class="preview-image"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="preview-placeholder" style="display: none;">🧠</div>
+            <img src="" alt="" class="preview-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display:none;">🧠</div>
             <div class="preview-overlay"></div>
           </div>
-
-          <!-- Card Content -->
           <div class="card-content">
             <span class="card-icon">🧠</span>
             <h3 class="card-title">BTC 4 Factor Model</h3>
-            <p class="card-description">
-              Modello quantitativo avanzato che analizza 4 indicatori chiave: <strong>Halving Cycle</strong>, <strong>Fear & Greed Index</strong>, <strong>MA200</strong> e <strong>RSI</strong>. Combina dati on-chain, sentiment e technical analysis per generare un segnale operativo completo su dove siamo e cosa fare 🎯
-            </p>
+            <p class="card-description">Modello quantitativo avanzato: <strong>Halving Cycle</strong>, <strong>Fear & Greed</strong>, <strong>MA200</strong>, <strong>RSI</strong> 🎯</p>
             <div class="card-meta">
               <span class="card-tag">🔬 Analysis</span>
-              <span class="card-link">
-                Analizza 
-                <span class="arrow">→</span>
-              </span>
+              <span class="card-link">Analizza <span class="arrow">→</span></span>
             </div>
           </div>
         </a>
 
-        <!-- Project 7: Guadagno in Tempo Reale -->
         <a href="guadagno-in-tempo-reale/" class="project-card card-realtime fade-in" data-preview="previews/guadagno-realtime.gif">
-          
-          <!-- Preview Container -->
           <div class="preview-container">
-            <img src="" alt="Guadagno Realtime Preview" class="preview-image"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="preview-placeholder" style="display: none;">⏱️</div>
+            <img src="" alt="" class="preview-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display:none;">⏱️</div>
             <div class="preview-overlay"></div>
           </div>
-        
-          <!-- Card Content -->
           <div class="card-content">
             <span class="card-icon">⏱️</span>
             <h3 class="card-title">Guadagno in Tempo Reale</h3>
-            <p class="card-description">
-              Sei al lavoro... ma stai scrollando? 👀  
-              Scopri quanto stai guadagnando in tempo reale secondo per secondo.  
-              Poi confrontalo con i big e fatti un reality check brutale 💸
-            </p>
+            <p class="card-description">Scopri quanto stai guadagnando secondo per secondo. Reality check brutale 💸</p>
             <div class="card-meta">
               <span class="card-tag">💼 Productivity</span>
-              <span class="card-link">
-                Calcola 
-                <span class="arrow">→</span>
-              </span>
+              <span class="card-link">Calcola <span class="arrow">→</span></span>
             </div>
           </div>
         </a>
 
-<!-- Project 8: FIRE Calculator -->
-<a href="fire-calculator/" class="project-card card-fire fade-in" data-preview="previews/fire-calculator.gif">
-  
-  <!-- Preview Container -->
-  <div class="preview-container">
-    <img src="" alt="FIRE Calculator Preview" class="preview-image"
-         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-    <div class="preview-placeholder" style="display: none;">🔥</div>
-    <div class="preview-overlay"></div>
-  </div>
+        <a href="fire-calculator/" class="project-card fade-in" data-preview="previews/fire-calculator.gif" style="--card-accent:#ff6b35;">
+          <div class="preview-container">
+            <img src="" alt="" class="preview-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display:none;">🔥</div>
+            <div class="preview-overlay"></div>
+          </div>
+          <div class="card-content">
+            <span class="card-icon">🔥</span>
+            <h3 class="card-title">FIRE Calculator</h3>
+            <p class="card-description">Calcola se puoi andare in pensione anticipata grazie ai tuoi investimenti 💸</p>
+            <div class="card-meta">
+              <span class="card-tag">🏖️ Freedom</span>
+              <span class="card-link">Scopri <span class="arrow">→</span></span>
+            </div>
+          </div>
+        </a>
 
-  <!-- Card Content -->
-  <div class="card-content">
-    <span class="card-icon">🔥</span>
-    <h3 class="card-title">FIRE Calculator</h3>
-    <p class="card-description">
-      Sei davvero libero finanziariamente o stai ancora grindando?  
-      Calcola se puoi andare in pensione anticipata grazie ai tuoi investimenti, rendimento annuo e spese mensili. Simula il tuo futuro e scopri quando raggiungerai il FIRE 💸
-    </p>
-    <div class="card-meta">
-      <span class="card-tag">🏖️ Freedom</span>
-      <span class="card-link">
-        Scopri 
-        <span class="arrow">→</span>
-      </span>
-    </div>
-  </div>
-</a>
+        <a href="quanto-manca-alla-pausa/" class="project-card fade-in" data-preview="previews/pausa-tracker.gif" style="--card-accent:#00d4ff;">
+          <div class="preview-container">
+            <img src="" alt="" class="preview-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="preview-placeholder" style="display:none;">☕</div>
+            <div class="preview-overlay"></div>
+          </div>
+          <div class="card-content">
+            <span class="card-icon">☕</span>
+            <h3 class="card-title">Pausa Tracker</h3>
+            <p class="card-description">Quanto manca alla prossima pausa? Countdown al secondo, notifiche e sopravvivenza lavorativa ⚡</p>
+            <div class="card-meta">
+              <span class="card-tag">⏰ Productivity</span>
+              <span class="card-link">Controlla <span class="arrow">→</span></span>
+            </div>
+          </div>
+        </a>
 
-
-
-        <!-- Project 9: Pausa Tracker -->
-<a href="quanto-manca-alla-pausa/" class="project-card fade-in" data-preview="previews/pausa-tracker.gif" style="--card-accent:#00d4ff;">
-  
-  <!-- Preview Container -->
-  <div class="preview-container">
-    <img src="" alt="Pausa Tracker Preview" class="preview-image"
-         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-    <div class="preview-placeholder" style="display: none;">☕</div>
-    <div class="preview-overlay"></div>
-  </div>
-
-  <!-- Card Content -->
-  <div class="card-content">
-    <span class="card-icon">☕</span>
-    <h3 class="card-title">Pausa Tracker</h3>
-    <p class="card-description">
-      Conti i minuti come un detenuto il venerdì pomeriggio? 😭  
-      Scopri esattamente quanto manca alla prossima pausa, alla pausa pranzo e alla libertà di fine giornata. Countdown in tempo reale al secondo, notifiche e sopravvivenza lavorativa garantita ⚡
-    </p>
-    <div class="card-meta">
-      <span class="card-tag">⏰ Productivity</span>
-      <span class="card-link">
-        Controlla
-        <span class="arrow">→</span>
-      </span>
-    </div>
-  </div>
-</a>
-        <!-- inserire qui -->
       </div>
     </section>
 
-    <!-- Footer -->
     <footer>
       <div class="footer-content">
         <div class="social-links">
@@ -889,94 +638,461 @@
 
   </div>
 
-  <!-- ===== JAVASCRIPT PER MOUSE TRACKING E EFFETTI ===== -->
   <script>
-    // ===== MOUSE FOLLOWING GRADIENT EFFECT =====
-    const mouseGradient = document.getElementById('mouseGradient');
-    const blobs = [
-      document.getElementById('blob1'),
-      document.getElementById('blob2'),
-      document.getElementById('blob3')
+    // =============================================
+    // CANVAS — Orbs + Spotlight + Sparkling + Punti fermi
+    // =============================================
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    let W, H;
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function noiseField(x, y, t) {
+      return (
+        Math.sin(x * 0.003 + t * 0.25) * 0.4 +
+        Math.sin(y * 0.004 + t * 0.18) * 0.3 +
+        Math.cos((x + y) * 0.002 + t * 0.12) * 0.2 +
+        Math.sin(x * 0.007 - y * 0.005 + t * 0.3) * 0.15 +
+        Math.cos(y * 0.006 + t * 0.22) * 0.1
+      );
+    }
+
+    const orbColors = [
+      { r: 255, g: 0,   b: 110 },
+      { r: 0,   g: 212, b: 255 },
+      { r: 191, g: 90,  b: 242 },
+      { r: 57,  g: 255, b: 20  },
+      { r: 255, g: 214, b: 10  },
+      { r: 16,  g: 185, b: 129 },
+      { r: 247, g: 147, b: 26  },
+      { r: 255, g: 59,  b: 48  },
     ];
-    
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
-    let currentX = mouseX;
-    let currentY = mouseY;
 
-    // Smooth interpolation per movimento fluido
-    function lerp(start, end, factor) {
-      return start + (end - start) * factor;
-    }
-
-    // Aggiorna posizione del gradient principale
-    function updateGradient() {
-      currentX = lerp(currentX, mouseX, 0.05);
-      currentY = lerp(currentY, mouseY, 0.05);
-
-      if (mouseGradient && window.innerWidth > 768) {
-        mouseGradient.style.setProperty('--mouse-x', `${currentX}px`);
-        mouseGradient.style.setProperty('--mouse-y', `${currentY}px`);
+    class LightOrb {
+      constructor(i) {
+        const c = orbColors[i % orbColors.length];
+        this.color = c;
+        this.baseRadius = 180 + Math.random() * 320;
+        this.radius = this.baseRadius;
+        this.x = Math.random() * (W || 1920);
+        this.y = Math.random() * (H || 1080);
+        this.baseOpacity = 0.06 + Math.random() * 0.1;
+        this.opacity = this.baseOpacity;
+        this.speedMult = 0.3 + Math.random() * 0.7;
+        this.ampX = 0.4 + Math.random() * 0.8;
+        this.ampY = 0.3 + Math.random() * 0.7;
+        this.pulseSpeed = 0.2 + Math.random() * 0.4;
+        this.pulsePhase = Math.random() * Math.PI * 2;
+        this.pulseAmp = 0.15 + Math.random() * 0.25;
       }
-
-      requestAnimationFrame(updateGradient);
+      update(t) {
+        this.x += noiseField(this.x, this.y, t * this.speedMult) * this.ampX;
+        this.y += noiseField(this.x + 500, this.y + 500, t * this.speedMult * 0.8) * this.ampY;
+        const m = this.radius * 0.5;
+        if (this.x < -m) this.x = W + m;
+        if (this.x > W + m) this.x = -m;
+        if (this.y < -m) this.y = H + m;
+        if (this.y > H + m) this.y = -m;
+        this.radius = this.baseRadius * (1 + Math.sin(t * this.pulseSpeed + this.pulsePhase) * this.pulseAmp);
+      }
+      draw(ctx) {
+        const { r, g, b } = this.color;
+        const rad = Math.max(1, this.radius);
+        const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, rad);
+        grad.addColorStop(0, `rgba(${r},${g},${b},${this.opacity})`);
+        grad.addColorStop(0.4, `rgba(${r},${g},${b},${this.opacity * 0.5})`);
+        grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, rad, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    // Mouse move listener
-    document.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-
-      // Muovi i blob leggermente in base al mouse (parallax)
-      if (window.innerWidth > 768) {
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
-        
-        blobs.forEach((blob, index) => {
-          if (blob) {
-            const speed = (index + 1) * 0.02;
-            const offsetX = (mouseX - centerX) * speed;
-            const offsetY = (mouseY - centerY) * speed;
-            blob.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+    // --- Sparkle ---
+    class Sparkle {
+      constructor() { this.reset(true); }
+      reset(initial) {
+        this.x = Math.random() * (W || 1920);
+        this.y = Math.random() * (H || 1080);
+        this.size = 0.8 + Math.random() * 2.5;
+        this.alpha = initial ? Math.random() * 0.15 : 0;
+        this.targetAlpha = 0;
+        this.speedX = (Math.random() - 0.5) * 0.2;
+        this.speedY = (Math.random() - 0.5) * 0.2;
+        this.flickerSpeed = 3 + Math.random() * 6;
+        this.flickerPhase = Math.random() * Math.PI * 2;
+        this.life = 0;
+        this.maxLife = 2 + Math.random() * 4;
+        this.twinkle = false;
+        const c = orbColors[Math.floor(Math.random() * orbColors.length)];
+        this.color = c;
+        this.isWhite = Math.random() < 0.35;
+      }
+      update(t, mx, my) {
+        this.life += 0.016;
+        this.x += this.speedX + noiseField(this.x, this.y, t * 0.4) * 0.08;
+        this.y += this.speedY + noiseField(this.x + 300, this.y + 300, t * 0.35) * 0.08;
+        const dx = this.x - mx, dy = this.y - my;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 320) {
+          this.targetAlpha = 0.15 + (1 - dist / 320) * 0.85;
+          this.x += dx * 0.001;
+          this.y += dy * 0.001;
+        } else {
+          if (!this.twinkle && Math.random() < 0.003) {
+            this.twinkle = true;
+            this.life = 0;
+            this.maxLife = 0.3 + Math.random() * 0.8;
           }
-        });
+          this.targetAlpha = this.twinkle ? 0.6 : (0.03 + Math.random() * 0.06);
+        }
+        this.alpha += (this.targetAlpha - this.alpha) * 0.1;
+        this.alpha *= 0.5 + 0.5 * Math.sin(t * this.flickerSpeed + this.flickerPhase);
+        if (this.life > this.maxLife) { this.twinkle = false; this.reset(false); }
+        if (this.x < -30) this.x = W + 30;
+        if (this.x > W + 30) this.x = -30;
+        if (this.y < -30) this.y = H + 30;
+        if (this.y > H + 30) this.y = -30;
       }
-
-      // Aggiorna cursor glow
-      const cursorGlow = document.body.querySelector('body::after') || 
-                         document.createElement('div');
-      document.body.style.setProperty('--cursor-x', `${e.clientX}px`);
-      document.body.style.setProperty('--cursor-y', `${e.clientY}px`);
-      
-      // Movimento del glow effect via CSS variable (usato in body::after)
-      const afterStyle = `
-        transform: translate(${e.clientX}px, ${e.clientY}px);
-      `;
-      // Nota: body::after è gestito tramite JS inline style alternativo
-    });
-
-    // Avvia l'animazione del gradient
-    updateGradient();
-
-    // ===== PRELOAD PREVIEW IMAGES (quando saranno disponibili) =====
-    document.querySelectorAll('.project-card[data-preview]').forEach(card => {
-      const previewUrl = card.getAttribute('data-preview');
-      if (previewUrl) {
-        const img = card.querySelector('.preview-image');
-        if (img && previewUrl.trim() !== '') {
-          img.src = previewUrl;
-          img.onload = () => {
-            console.log(`✅ Preview loaded: ${previewUrl}`);
-          };
+      draw(ctx) {
+        if (this.alpha < 0.01) return;
+        let r, g, b;
+        if (this.isWhite) { r = g = b = 255; } else { ({ r, g, b } = this.color); }
+        const gs = Math.max(1, this.size * 6);
+        const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, gs);
+        grad.addColorStop(0, `rgba(${r},${g},${b},${this.alpha * 0.6})`);
+        grad.addColorStop(0.3, `rgba(${r},${g},${b},${this.alpha * 0.2})`);
+        grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, gs, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `rgba(255,255,255,${Math.min(1, this.alpha * 1.5)})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, Math.max(0.3, this.size * 0.4), 0, Math.PI * 2);
+        ctx.fill();
+        if (this.alpha > 0.3 && this.size > 1.5) {
+          ctx.strokeStyle = `rgba(255,255,255,${this.alpha * 0.4})`;
+          ctx.lineWidth = 0.5;
+          const rl = this.size * 4;
+          ctx.beginPath();
+          ctx.moveTo(this.x - rl, this.y); ctx.lineTo(this.x + rl, this.y);
+          ctx.moveTo(this.x, this.y - rl); ctx.lineTo(this.x, this.y + rl);
+          ctx.stroke();
         }
       }
+    }
+
+    // --- Punti grossi quando il mouse è fermo ---
+    const stopDots = [];
+    const MAX_STOP_DOTS = 5;
+
+    const mouseSpot = { x: 0, y: 0, targetX: 0, targetY: 0, radius: 500, secondaryRadius: 350, thirdRadius: 280 };
+
+    const orbs = [];
+    const sparkles = [];
+    for (let i = 0; i < 8; i++) orbs.push(new LightOrb(i));
+    for (let i = 0; i < 150; i++) sparkles.push(new Sparkle());
+
+    let mouseX = W / 2, mouseY = H / 2, mouseActive = false;
+    let mouseSpeed = 0, lastMX = 0, lastMY = 0;
+    let stopTimer = 0, lastDotTime = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      const dx = e.clientX - lastMX, dy = e.clientY - lastMY;
+      mouseSpeed = Math.sqrt(dx * dx + dy * dy);
+      lastMX = e.clientX; lastMY = e.clientY;
+      mouseX = e.clientX; mouseY = e.clientY;
+      mouseSpot.targetX = e.clientX;
+      mouseSpot.targetY = e.clientY;
+      mouseActive = true;
+      stopTimer = 0;
+    });
+    document.addEventListener('mouseleave', () => { mouseActive = false; });
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    function animate() {
+      const time = performance.now() / 1000;
+
+      ctx.fillStyle = '#0a0a0b';
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'screen';
+
+      for (const o of orbs) { o.update(time); o.draw(ctx); }
+
+      mouseSpot.x = lerp(mouseSpot.x, mouseSpot.targetX, 0.04);
+      mouseSpot.y = lerp(mouseSpot.y, mouseSpot.targetY, 0.04);
+
+      if (mouseActive) {
+        // Spotlight bianco
+        const mg = ctx.createRadialGradient(mouseSpot.x, mouseSpot.y, 0, mouseSpot.x, mouseSpot.y, Math.max(1, mouseSpot.radius));
+        mg.addColorStop(0, 'rgba(255,255,255,0.04)');
+        mg.addColorStop(0.3, 'rgba(255,255,255,0.02)');
+        mg.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = mg;
+        ctx.beginPath();
+        ctx.arc(mouseSpot.x, mouseSpot.y, Math.max(1, mouseSpot.radius), 0, Math.PI * 2);
+        ctx.fill();
+
+        // Secondario colorato
+        const hs = time * 15;
+        const r2 = Math.floor(128 + 127 * Math.sin(hs * 0.0174));
+        const g2 = Math.floor(128 + 127 * Math.sin(hs * 0.0174 + 2.094));
+        const b2 = Math.floor(128 + 127 * Math.sin(hs * 0.0174 + 4.189));
+        const sg = ctx.createRadialGradient(mouseSpot.x + 120, mouseSpot.y - 80, 0, mouseSpot.x + 120, mouseSpot.y - 80, Math.max(1, mouseSpot.secondaryRadius));
+        sg.addColorStop(0, `rgba(${r2},${g2},${b2},0.06)`);
+        sg.addColorStop(0.5, `rgba(${r2},${g2},${b2},0.02)`);
+        sg.addColorStop(1, `rgba(${r2},${g2},${b2},0)`);
+        ctx.fillStyle = sg;
+        ctx.beginPath();
+        ctx.arc(mouseSpot.x + 120, mouseSpot.y - 80, Math.max(1, mouseSpot.secondaryRadius), 0, Math.PI * 2);
+        ctx.fill();
+
+        // Terziario
+        const r3 = Math.floor(128 + 127 * Math.sin(hs * 0.0174 + 3.14));
+        const g3 = Math.floor(128 + 127 * Math.sin(hs * 0.0174 + 5.23));
+        const b3 = Math.floor(128 + 127 * Math.sin(hs * 0.0174 + 1.05));
+        const tg = ctx.createRadialGradient(mouseSpot.x - 100, mouseSpot.y + 100, 0, mouseSpot.x - 100, mouseSpot.y + 100, Math.max(1, mouseSpot.thirdRadius));
+        tg.addColorStop(0, `rgba(${r3},${g3},${b3},0.05)`);
+        tg.addColorStop(0.5, `rgba(${r3},${g3},${b3},0.015)`);
+        tg.addColorStop(1, `rgba(${r3},${g3},${b3},0)`);
+        ctx.fillStyle = tg;
+        ctx.beginPath();
+        ctx.arc(mouseSpot.x - 100, mouseSpot.y + 100, Math.max(1, mouseSpot.thirdRadius), 0, Math.PI * 2);
+        ctx.fill();
+
+        // Punti grossi quando fermo
+        if (mouseSpeed < 1.5) {
+          stopTimer += 0.016;
+          if (stopTimer > 0.5 && time - lastDotTime > 0.4) {
+            stopDots.push({
+              x: mouseX, y: mouseY,
+              alpha: 0.7,
+              size: 3 + Math.min(stopTimer * 2, 5),
+              time: time
+            });
+            lastDotTime = time;
+            if (stopDots.length > MAX_STOP_DOTS) stopDots.shift();
+          }
+        }
+      }
+
+      // Sparkles
+      for (const sp of sparkles) { sp.update(time, mouseSpot.x, mouseSpot.y); sp.draw(ctx); }
+
+      // Punti fermi: disegna e fade
+      for (let i = stopDots.length - 1; i >= 0; i--) {
+        const d = stopDots[i];
+        const age = time - d.time;
+        d.alpha = Math.max(0, 0.7 - age * 0.4);
+        if (d.alpha <= 0.005) { stopDots.splice(i, 1); continue; }
+        const dg = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, Math.max(1, d.size * 3));
+        dg.addColorStop(0, `rgba(255,255,255,${d.alpha})`);
+        dg.addColorStop(0.4, `rgba(255,255,255,${d.alpha * 0.3})`);
+        dg.addColorStop(1, `rgba(255,255,255,0)`);
+        ctx.fillStyle = dg;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, Math.max(1, d.size * 3), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `rgba(255,255,255,${Math.min(1, d.alpha * 1.2)})`;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, Math.max(0.5, d.size * 0.5), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalCompositeOperation = 'source-over';
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+
+    // =============================================
+    // CURSOR — Dot + Ring con ritardo + Magnetic + Dock
+    // =============================================
+    const cursorDot = document.getElementById('cursorDot');
+    const cursorRing = document.getElementById('cursorRing');
+
+    let dotX = W / 2, dotY = H / 2;
+    let ringX = W / 2, ringY = H / 2;
+    let cursorVisible = false;
+
+    // Magnetic: offset accumulato con lerp proprio
+    let magOffsetX = 0, magOffsetY = 0;
+
+    // Dock: il ring si centra sull'elemento dopo 1s di fermata
+    let isDocked = false;
+    let dockTargetX = 0, dockTargetY = 0;
+    let hoveredEl = null;       // elemento sotto il mouse
+    let isOverInteractive = false;
+
+    // Tutti gli elementi che sono "link" o interattivi
+    const allInteractives = document.querySelectorAll('.project-card, .social-link, .tagline, footer a');
+
+    // Traccia cosa è sotto il mouse
+    allInteractives.forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        hoveredEl = el;
+        isOverInteractive = true;
+      });
+      el.addEventListener('mouseleave', () => {
+        hoveredEl = null;
+        isOverInteractive = false;
+        isDocked = false;
+        document.body.classList.remove('cursor-docked');
+      });
     });
 
-    // ===== INTERSECTION OBSERVER PER ANIMAZIONI SCROLL =====
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    };
+    document.addEventListener('mousemove', (e) => {
+      dotX = e.clientX;
+      dotY = e.clientY;
+      if (!cursorVisible) {
+        cursorVisible = true;
+        cursorDot.style.opacity = '1';
+        cursorRing.style.opacity = '1';
+      }
+      // Se si muove, undock
+      if (isDocked) {
+        isDocked = false;
+        document.body.classList.remove('cursor-docked');
+      }
+    });
+
+    document.addEventListener('mouseleave', () => {
+      cursorVisible = false;
+      cursorDot.style.opacity = '0';
+      cursorRing.style.opacity = '0';
+      isDocked = false;
+    });
+
+    // Posizione finale del ring (usata per il magnetic calc)
+    let finalRingX = W / 2, finalRingY = H / 2;
+
+    function animateCursor() {
+      const now = performance.now() / 1000;
+
+      // Dot: 1:1
+      cursorDot.style.left = dotX + 'px';
+      cursorDot.style.top = dotY + 'px';
+
+      // ---- LOGICA DOCK ----
+      // Se fermo su un interattivo da >1s → dock al centro
+      if (isOverInteractive && hoveredEl && !isDocked && mouseSpeed < 1.5) {
+        stopTimer_check += 0.016;
+        if (stopTimer_check > 1.0) {
+          isDocked = true;
+          document.body.classList.add('cursor-docked');
+          const rect = hoveredEl.getBoundingClientRect();
+          dockTargetX = rect.left + rect.width / 2;
+          dockTargetY = rect.top + rect.height / 2;
+        }
+      }
+
+      // Reset dock timer quando si muove
+      if (mouseSpeed > 1.5) {
+        stopTimer_check = 0;
+      }
+
+      // ---- LOGICA MAGNETIC ----
+      let targetMagX = 0, targetMagY = 0;
+
+      if (!isDocked) {
+        // Cerca l'elemento interattivo più vicino
+        for (const el of allInteractives) {
+          const rect = el.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          const dx = cx - finalRingX;
+          const dy = cy - finalRingY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const magneticRadius = 200;
+
+          if (dist < magneticRadius && dist > 1) {
+            // Forza proporzionale: più sei vicino, più tira
+            const factor = 1 - dist / magneticRadius;
+            const strength = factor * factor * 0.6; // quadratic per effetto più netto
+            targetMagX += dx * strength;
+            targetMagY += dy * strength;
+            break;
+          }
+        }
+      }
+
+      // Lerp separato per il magnetic offset (più veloce del ring base)
+      magOffsetX = lerp(magOffsetX, targetMagX, 0.06);
+      magOffsetY = lerp(magOffsetY, targetMagY, 0.06);
+
+      // ---- POSIZIONE RING ----
+      if (isDocked) {
+        // Smooth verso il centro dell'elemento
+        ringX = lerp(ringX, dockTargetX, 0.04);
+        ringY = lerp(ringY, dockTargetY, 0.04);
+        // Reset magnetic quando docked
+        magOffsetX = lerp(magOffsetX, 0, 0.05);
+        magOffsetY = lerp(magOffsetY, 0, 0.05);
+      } else {
+        // Segue il mouse con molto ritardo
+        ringX = lerp(ringX, dotX, 0.055);
+        ringY = lerp(ringY, dotY, 0.055);
+      }
+
+      // Posizione finale = ring + magnetic offset
+      finalRingX = ringX + magOffsetX;
+      finalRingY = ringY + magOffsetY;
+
+      cursorRing.style.left = finalRingX + 'px';
+      cursorRing.style.top = finalRingY + 'px';
+
+      requestAnimationFrame(animateCursor);
+    }
+
+    let stopTimer_check = 0;
+    animateCursor();
+
+    // Init nascosto
+    cursorDot.style.opacity = '0';
+    cursorRing.style.opacity = '0';
+    cursorDot.style.transition = 'opacity 0.3s ease';
+    cursorRing.style.transition = 'opacity 0.3s ease, width 0.5s cubic-bezier(0.25,1,0.5,1), height 0.5s cubic-bezier(0.25,1,0.5,1), border-color 0.5s ease, background 0.5s ease, animation-duration 0.5s ease';
+
+
+    // =============================================
+    // CURSOR HOVER STATES (CSS class)
+    // =============================================
+    document.querySelectorAll('.project-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        document.body.classList.add('cursor-hover-card');
+        document.body.style.setProperty('--hover-accent', getComputedStyle(card).getPropertyValue('--card-accent').trim());
+      });
+      card.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover-card'));
+    });
+
+    document.querySelectorAll('.social-link').forEach(link => {
+      link.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover-link'));
+      link.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover-link'));
+    });
+
+    document.querySelector('h1').addEventListener('mouseenter', () => document.body.classList.add('cursor-hover-title'));
+    document.querySelector('h1').addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover-title'));
+
+
+    // =============================================
+    // PRELOAD + OBSERVER
+    // =============================================
+    document.querySelectorAll('.project-card[data-preview]').forEach(card => {
+      const url = card.getAttribute('data-preview');
+      if (url && url.trim()) {
+        const img = card.querySelector('.preview-image');
+        if (img) img.src = url;
+      }
+    });
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -985,15 +1101,12 @@
           entry.target.style.transform = 'translateY(0)';
         }
       });
-    }, observerOptions);
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
-    document.querySelectorAll('.fade-in').forEach(el => {
-      observer.observe(el);
-    });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-    // ===== CONSOLE Easter Egg =====
     console.log('%c🧪 Bolzi Lab', 'font-size: 24px; font-weight: bold; color: #ff006e;');
-    console.log('%cBenvenuto nel laboratorio! Prova a muovere il mouse 👆', 'color: #00d4ff;');
+    console.log('%cMuovi il mouse e guarda la magia ✨', 'color: #00d4ff;');
   </script>
 
 </body>
