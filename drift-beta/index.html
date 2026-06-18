@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Infinite Drift Overdrive: Enhanced Precision Edition</title>
+    <title>⚡Drift Overdrive</title>
     <style>
         :root {
             --bg-color: #030305;
@@ -179,7 +179,6 @@
                     ' ': 'handbrake'
                 };
                 window.addEventListener('keydown', (e) => {
-                    // Intercettazione barra spaziatrice a schermo spento per riavvio rapido
                     if (isGameOver && e.key === ' ') {
                         e.preventDefault();
                         resetGame();
@@ -239,7 +238,7 @@
                 angle: -Math.PI / 2,
                 radius: 8,
                 grip: 0.94,
-                oilTimer: 0,       
+                oilTimer: 0,      
                 handbrakeTimer: 0  
             };
 
@@ -298,7 +297,8 @@
         }
 
         function spawnEnemy() {
-            const types = ['police', 'ambulance', 'tow_truck', 'black_car'];
+            // Aggiunto il tipo 'drunk' alla lista degli spawn
+            const types = ['police', 'ambulance', 'tow_truck', 'black_car', 'drunk'];
             const chosenType = types[Math.floor(Math.random() * types.length)];
 
             const spawnRadius = Math.max(canvas.width, canvas.height) * 0.6;
@@ -322,7 +322,8 @@
 
             switch(chosenType) {
                 case 'police':
-                    config.speed = 165;   config.grip = 0.91;   config.steerMod = 3.6; config.radius = 8;  config.name = "Polizia";
+                    // Velocità alzata a 255 (superiore a 235 del player) per raggiungerti facilmente
+                    config.speed = 255;   config.grip = 0.91;   config.steerMod = 3.8; config.radius = 8;  config.name = "Polizia";
                     break;
                 case 'ambulance':
                     config.speed = 205;   config.grip = 0.82;   config.steerMod = 2.3; config.radius = 10; config.name = "Ambulanza";
@@ -332,6 +333,11 @@
                     break;
                 case 'black_car':
                     config.speed = 190;   config.grip = 0.76;   config.steerMod = 3.8; config.radius = 8;  config.name = "Auto Nera";
+                    break;
+                case 'drunk':
+                    // Configurazione auto Ubriaca: Molto veloce, grip instabile per sbandare vistoreamente
+                    config.speed = 245;   config.grip = 0.78;   config.steerMod = 3.2; config.radius = 8;  config.name = "Auto Ubriaca";
+                    config.drunkTimer = Math.random() * 50;
                     break;
             }
 
@@ -457,6 +463,13 @@
                 if (e.isDead) continue;
 
                 let angleToPlayer = Math.atan2(player.y - e.y, player.x - e.x);
+                
+                // Logica di inseguimento modificata per l'auto ubriaca (gira in modo randomico/oscillante)
+                if (e.type === 'drunk') {
+                    e.drunkTimer += dt * 5;
+                    angleToPlayer += Math.sin(e.drunkTimer) * 0.65 + (Math.random() - 0.5) * 0.25;
+                }
+
                 let angleDiff = Math.atan2(Math.sin(angleToPlayer - e.angle), Math.cos(angleToPlayer - e.angle));
                 e.angle += angleDiff * e.steerMod * dt;
 
@@ -506,6 +519,7 @@
                 if (Math.hypot(e.vx - eTargetVx, e.vy - eTargetVy) > 40 || e.oilTimer > 0) {
                     let trackColor = 'rgba(255, 0, 85, ';
                     if (e.type === 'ambulance') trackColor = 'rgba(0, 150, 255, ';
+                    else if (e.type === 'drunk') trackColor = 'rgba(245, 158, 11, '; // Scia arancione/ambra per l'ubriaco
                     tireTracks.push({ x: e.x, y: e.y, alpha: 0.4, color: trackColor });
                 }
 
@@ -673,7 +687,6 @@
                 ctx.fillRect(MAP_WIDTH - BORDER_WALL_THICKNESS - 3, y - 3, 6, 6);
             }
 
-            // Render Nemici Avanzati e Relitti Incandescenti
             for (let e of enemies) {
                 ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.angle);
                 if (e.isDead) {
@@ -686,155 +699,93 @@
                     e.strokePhase += dt * 15;
                     const isStrobeOn = Math.floor(e.strokePhase) % 2 === 0;
                     
-                    // Disegna ruote per IA
                     drawCarWheels(ctx, 12, 6);
 
                     switch(e.type) {
                         case 'police':
-                            // Carrozzeria bicolore Polizia Giapponese / Internazionale
                             ctx.fillStyle = '#1e1e24'; ctx.fillRect(-12, -6, 24, 12);
-                            ctx.fillStyle = '#ffffff'; ctx.fillRect(-4, -6, 12, 12); // Fiancate/Portiere bianche
-                            // Vetri e Sirena strobo
+                            ctx.fillStyle = '#ffffff'; ctx.fillRect(-4, -6, 12, 12); 
                             ctx.fillStyle = '#475569'; ctx.fillRect(-2, -4, 5, 8);
+                            // Sirene strobo ad alta intensità bicolore
                             ctx.fillStyle = isStrobeOn ? '#0066ff' : '#ff0000'; ctx.fillRect(-1, -1.5, 3, 3);
-                            // Fari anteriori bianchi
                             ctx.fillStyle = '#fffae6'; ctx.fillRect(11, -5, 1, 2); ctx.fillRect(11, 3, 1, 2);
                             break;
                         case 'ambulance':
-                            // Base Ambulanza più massiccia
                             ctx.fillStyle = '#f8fafc'; ctx.fillRect(-15, -8, 30, 16);
-                            // Bande rosse sanitarie laterali
                             ctx.fillStyle = '#ef4444'; ctx.fillRect(-15, -8, 30, 2); ctx.fillRect(-15, 6, 30, 2);
-                            // Parabrezza scuro e strobo azzurra
                             ctx.fillStyle = '#1e293b'; ctx.fillRect(4, -6, 4, 12);
                             ctx.fillStyle = isStrobeOn ? '#00ffff' : 'rgba(0,0,0,0)'; ctx.fillRect(5, -2, 3, 4);
                             break;
                         case 'tow_truck':
-                            // Carroattrezzi Arancione Meccanico
                             ctx.fillStyle = '#ea580c'; ctx.fillRect(-16, -9, 32, 18);
-                            // Lunotto e cabina di guida
                             ctx.fillStyle = '#334155'; ctx.fillRect(2, -7, 6, 14);
-                            // Braccio gru posteriore vettoriale
                             ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
                             ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-18, 0); ctx.stroke();
-                            // Girofaro lampeggiante giallo
                             ctx.fillStyle = isStrobeOn ? '#eab308' : '#78350f'; ctx.fillRect(4, -1.5, 3, 3);
                             break;
                         case 'black_car':
-                            // Auto Speculatori Nera/Neon Ciano
                             ctx.fillStyle = '#0f0f13'; ctx.fillRect(-12, -6, 24, 12);
                             ctx.fillStyle = '#1e293b'; ctx.fillRect(-3, -4.5, 6, 9);
-                            // Linee neon estetiche laterali
                             ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 1; ctx.strokeRect(-12, -6, 24, 12);
-                            // Fari cattivi allo xeno
                             ctx.fillStyle = '#a5f3fc'; ctx.fillRect(11, -5, 1, 1.5); ctx.fillRect(11, 3.5, 1, 1.5);
+                            break;
+                        case 'drunk':
+                            // Vettura Vinaccia/Magenta scuro instabile
+                            ctx.fillStyle = '#581c24'; ctx.fillRect(-12, -6, 24, 12);
+                            ctx.fillStyle = '#1e293b'; ctx.fillRect(-3, -4.5, 6, 9);
+                            ctx.strokeStyle = '#991b1b'; ctx.lineWidth = 1.5; ctx.strokeRect(-12, -6, 24, 12);
+                            // Quattro frecce d'emergenza che lampeggiano in sincrono strobo
+                            ctx.fillStyle = isStrobeOn ? '#f59e0b' : '#451a03';
+                            ctx.fillRect(11, -5, 1, 1.5);   ctx.fillRect(11, 3.5, 1, 1.5);
+                            ctx.fillRect(-12, -5, 1, 1.5);  ctx.fillRect(-12, 3.5, 1, 1.5);
                             break;
                     }
                 }
                 ctx.restore();
             }
 
-            // Render Toyota AE86 Panda Style ad Alto Dettaglio
             ctx.save();
             ctx.translate(player.x, player.y); 
             ctx.rotate(player.angle);
 
-            // 1. Disegna Ruote Nere Dedicate
             drawCarWheels(ctx, 12, 6);
 
-            // 2. Specchietti retrovisori esterni
             ctx.fillStyle = '#111116';
             ctx.fillRect(1, -7.5, 1.8, 1.5);
             ctx.fillRect(1, 6, 1.8, 1.5);
 
-            // 3. Corpo principale Bianco
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(-12, -6, 24, 12);
 
-            // 4. Modanature laterali e paraurti neri (Panda Look)
             ctx.fillStyle = '#111116';
             ctx.fillRect(-12, -6, 24, 1.8); 
             ctx.fillRect(-12, 4.2, 24, 1.8); 
-            ctx.fillRect(-12, -6, 2, 12); // Paraurti posteriore nero
+            ctx.fillRect(-12, -6, 2, 12); 
 
-            // 5. Cofano Anteriore Nero (Tribute stile Initial D)
             ctx.fillRect(4, -4.2, 8, 8.4);
 
-            // 6. Abitacolo: Cristalli e Lunotto fumé
             ctx.fillStyle = '#1e293b';
             ctx.fillRect(-5, -4.2, 7, 8.4); 
             ctx.fillStyle = '#ffffff'; 
-            ctx.fillRect(-3, -3, 4, 6); // Tettuccio bianco centrale    
+            ctx.fillRect(-3, -3, 4, 6);     
 
-            // 7. Montanti neri parabrezza
             ctx.fillStyle = '#111116';
             ctx.fillRect(-5, -3.5, 1.5, 7);
 
-            // 8. Fari Anteriori (Dettaglio a comparsa chiuso / linee gialle di posizione)
             ctx.fillStyle = '#fef08a';
             ctx.fillRect(11, -3.8, 1, 1.8);
             ctx.fillRect(11, 2, 1, 1.8);
 
-            // 9. Stop Posteriori Rossi
             ctx.fillStyle = '#ef4444';
             ctx.fillRect(-12, -5, 0.8, 1.5);
             ctx.fillRect(-12, 3.5, 0.8, 1.5);
 
-            ctx.restore(); 
+            ctx.restore();
+            ctx.restore();
 
-            ctx.restore(); 
-            
             requestAnimationFrame(renderLoop);
         }
 
-        // --- SISTEMA INPUT TOUCH TRASPARENTE PER DISPOSITIVI MOBILE ---
-        function handleMobileInput(e) {
-            if (!isGameOver) e.preventDefault(); // Impedisce zoom e scroll accidentali
-            
-            // Reset degli stati di sterzata ad ogni frame touch valutato
-            inputs.states.left = false;
-            inputs.states.right = false;
-
-            // Legge tutti i tocchi attualmente attivi sullo schermo
-            for (let i = 0; i < e.touches.length; i++) {
-                let touchX = e.touches[i].clientX;
-                
-                // Schermo diviso simmetricamente a metà
-                if (touchX < window.innerWidth / 2) {
-                    inputs.states.left = true;
-                } else {
-                    inputs.states.right = true;
-                }
-            }
-        }
-
-        // Event Listeners dedicati all'interfaccia Touch mobile
-        window.addEventListener('touchstart', (e) => {
-            if (isGameOver) {
-                resetGame();
-                return;
-            }
-            handleMobileInput(e);
-        }, { passive: false });
-
-        window.addEventListener('touchmove', handleMobileInput, { passive: false });
-        
-        window.addEventListener('touchend', (e) => {
-            // Se non ci sono più tocchi, azzera la sterzata
-            if (e.touches.length === 0) {
-                inputs.states.left = false;
-                inputs.states.right = false;
-            } else {
-                handleMobileInput(e);
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchcancel', (e) => {
-            inputs.states.left = false;
-            inputs.states.right = false;
-        }, { passive: false });
-
-        // Inizializzazione accoppiata del ciclo vitale dell'applicazione
         initGame();
         requestAnimationFrame(renderLoop);
     </script>
