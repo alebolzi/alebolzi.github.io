@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Infinite Drift Overdrive: Stage AE86</title>
+    <title>⚡ Infinite Drift Overdrive: Momentum & Decay Physics</title>
     <style>
         :root {
             --bg-color: #030305;
@@ -191,6 +191,7 @@
         let player, enemies, tireTracks;
         let staticWalls = []; 
         let staticTrees = []; 
+        let staticOilSlicks = []; 
         let score, comboPoints, multiplier, driftTimer, isDrifting, isGameOver;
         let survivalTime, spawnAccumulator, survivalScoreTimer;
         let camera = { x: 0, y: 0 };
@@ -218,37 +219,49 @@
                 speed: 235,
                 angle: -Math.PI / 2,
                 radius: 8,
-                grip: 0.94
+                grip: 0.94,
+                oilTimer: 0,       // Tempo residuo scivolamento olio
+                handbrakeTimer: 0  // Tempo residuo instabilità freno a mano
             };
 
             enemies = [];
             tireTracks = [];
             staticWalls = [];
             staticTrees = [];
+            staticOilSlicks = []; 
             
             survivalTime = 0;
             spawnAccumulator = 0;
             survivalScoreTimer = 0; 
 
-            // Generazione Muri Interni Casuali (18 unita)
+            // Generazione Macchie d'Olio Casuali (24 unità)
+            for(let i = 0; i < 24; i++) {
+                let x = Math.random() * (MAP_WIDTH - 300) + 150;
+                let y = Math.random() * (MAP_HEIGHT - 300) + 150;
+                let r = Math.random() * 35 + 30; 
+                if (Math.hypot(x - player.x, y - player.y) < 250) {
+                    i--; continue;
+                }
+                staticOilSlicks.push({ x, y, r });
+            }
+
+            // Generazione Muri Interni Casuali (18 unità)
             for(let i = 0; i < 18; i++) {
                 let w = Math.random() * 140 + 60;
                 let h = Math.random() * 140 + 60;
                 let x = Math.random() * (MAP_WIDTH - w - 200) + 100;
                 let y = Math.random() * (MAP_HEIGHT - h - 200) + 100;
-                
                 if (Math.hypot(x + w/2 - player.x, y + h/2 - player.y) < 300) {
                     i--; continue;
                 }
                 staticWalls.push({ x, y, w, h });
             }
 
-            // Generazione Alberi Ostacolo (Pochissimi: 6 unità globali)
+            // Generazione Alberi Ostacolo (6 unità)
             for(let i = 0; i < 6; i++) {
                 let r = Math.random() * 10 + 16; 
                 let x = Math.random() * (MAP_WIDTH - 300) + 150;
                 let y = Math.random() * (MAP_HEIGHT - 300) + 150;
-
                 if (Math.hypot(x - player.x, y - player.y) < 300) {
                     i--; continue;
                 }
@@ -287,7 +300,8 @@
                 vx: 0, vy: 0,
                 angle: Math.random() * Math.PI * 2,
                 isDead: false,
-                strokePhase: Math.random() * 100
+                strokePhase: Math.random() * 100,
+                oilTimer: 0 // Anche i nemici hanno memoria dell'olio!
             };
 
             switch(chosenType) {
@@ -311,7 +325,7 @@
         function updatePhysics(dt) {
             if (isGameOver) return;
 
-            // Incremento passivo a tempo (+500pt ogni secondo)
+            // Incremento passivo punteggio sopravvivenza
             survivalScoreTimer += dt;
             if (survivalScoreTimer >= 1.0) {
                 score += 500;
@@ -340,7 +354,49 @@
 
             let pTargetVx = Math.cos(player.angle) * player.speed;
             let pTargetVy = Math.sin(player.angle) * player.speed;
-            let pCurrentGrip = inputs.states.handbrake ? player.grip * 0.12 : player.grip;
+            
+            // --- GESTIONE TIMER E DECAY EFFETTI PLAYER ---
+            let playerInOil = false;
+            for (let oil of staticOilSlicks) {
+                if (Math.hypot(player.x - oil.x, player.y - oil.y) < oil.r) {
+                    playerInOil = true;
+                    break;
+                }
+            }
+
+            // Aggiorna o decresce il timer dell'olio (5 secondi)
+            if (playerInOil) {
+                player.oilTimer = 5.0;
+            } else if (player.oilTimer > 0) {
+                player.oilTimer -= dt;
+                if (player.oilTimer < 0) player.oilTimer = 0;
+            }
+
+            // Aggiorna o decresce il timer del freno a mano (2 secondi)
+            if (inputs.states.handbrake) {
+                player.handbrakeTimer = 2.0;
+            } else if (player.handbrakeTimer > 0) {
+                player.handbrakeTimer -= dt;
+                if (player.handbrakeTimer < 0) player.handbrakeTimer = 0;
+            }
+
+            // Calcolo moltiplicatori grip sfumati linearmente
+            let handbrakeGripMod = 1.0;
+            if (player.handbrakeTimer > 0) {
+                let tHandbrake = player.handbrakeTimer / 2.0; // Da 1 a 0
+                // Se premuto resta a 0.12, se rilasciato risale fluidamente verso 1.0
+                handbrakeGripMod = inputs.states.handbrake ? 0.12 : 0.12 + (1.0 - 0.12) * (1.0 - tHandbrake);
+            }
+
+            let oilGripMod = 1.0;
+            if (player.oilTimer > 0) {
+                let tOil = player.oilTimer / 5.0; // Da 1 a 0
+                // Se sopra l'olio resta a 0.15, se uscito risale fluidamente verso 1.0
+                oilGripMod = playerInOil ? 0.15 : 0.15 + (1.0 - 0.15) * (1.0 - tOil);
+            }
+
+            // Applicazione finale del grip composto
+            let pCurrentGrip = player.grip * handbrakeGripMod * oilGripMod;
 
             player.vx += (pTargetVx - player.vx) * pCurrentGrip * 5 * dt;
             player.vy += (pTargetVy - player.vy) * pCurrentGrip * 5 * dt;
@@ -354,18 +410,18 @@
             const maxPlayY = MAP_HEIGHT - BORDER_WALL_THICKNESS - player.radius;
 
             if (player.x < minPlayX || player.x > maxPlayX || player.y < minPlayY || player.y > maxPlayY) {
-                triggerGameOver("💥 PERIMETRO CRUCIALE", "Hai disintegrato la AE86 contro le barriere esterne dell'arena!");
+                triggerGameOver("💥 PERIMETRO CRUCIALE", "Hai disintegrato la AE86 contro le barriere esterne!");
                 return;
             }
 
-            // Impatto letale con Muri Interni
+            // Impatto letale Muri Interni
             for (let wall of staticWalls) {
                 if (checkCircleRectCollision(player.x, player.y, player.radius, wall.x, wall.y, wall.w, wall.h)) {
                     triggerGameOver("🧱 BLOCCO CANTIERE", "Impatto irreversibile contro le protezioni in cemento armato!");
                     return;
                 }
             }
-            // Impatto letale con Alberi
+            // Impatto letale Alberi
             for (let tree of staticTrees) {
                 if (Math.hypot(player.x - tree.x, player.y - tree.y) < (player.radius + tree.r - 4)) {
                     triggerGameOver("🌲 TRONCO RIGIDO", "La carrozzeria Panda si è avvolta fatalmente intorno a un albero!");
@@ -373,16 +429,22 @@
                 }
             }
 
-            // Calcolo Derapata
+            // Gestione Tracce Pneumatici e Punteggio Combo
             let pSlip = Math.hypot(player.vx - pTargetVx, player.vy - pTargetVy);
-            if (pSlip > 65 || inputs.states.handbrake) {
-                tireTracks.push({ x: player.x, y: player.y, alpha: 1.0, color: 'rgba(255, 255, 255, ' });
+            if (pSlip > 65 || player.handbrakeTimer > 0 || player.oilTimer > 0) {
+                let trackColor = player.oilTimer > 0 ? 'rgba(0, 180, 255, ' : 'rgba(255, 255, 255, ';
+                tireTracks.push({ x: player.x, y: player.y, alpha: 1.0, color: trackColor });
             }
 
-            if (pSlip > 80) {
+            // Mantiene attiva la combo se l'auto sta slittando o risente ancora degli effetti residui
+            if (pSlip > 80 || ((player.oilTimer > 0 || player.handbrakeTimer > 0) && Math.hypot(player.vx, player.vy) > 30)) {
                 if (!isDrifting) isDrifting = true;
                 driftTimer += dt;
-                comboPoints += 250 * dt;
+                
+                // Bonus punti maggiorato se controlli l'auto sotto l'effetto dell'olio
+                let pointsPerSecond = player.oilTimer > 0 ? 450 : 250;
+                comboPoints += pointsPerSecond * dt;
+                
                 multiplier = 1 + Math.floor(driftTimer / 1.0);
                 document.getElementById('combo-mult').innerText = `x${multiplier}`;
                 document.getElementById('combo-pts').innerText = `+${Math.round(comboPoints)} pts`;
@@ -390,7 +452,7 @@
                 cashInCombo();
             }
 
-            // Fisica IA Inseguitori
+            // --- FISICA E TIMING IA INSEGUITORI ---
             for (let i = 0; i < enemies.length; i++) {
                 let e = enemies[i];
                 if (e.isDead) continue;
@@ -402,8 +464,32 @@
                 let eTargetVx = Math.cos(e.angle) * e.speed;
                 let eTargetVy = Math.sin(e.angle) * e.speed;
 
-                e.vx += (eTargetVx - e.vx) * e.grip * 4 * dt;
-                e.vy += (eTargetVy - e.vy) * e.grip * 4 * dt;
+                // Verifica olio per nemici
+                let enemyInOil = false;
+                for (let oil of staticOilSlicks) {
+                    if (Math.hypot(e.x - oil.x, e.y - oil.y) < oil.r) {
+                        enemyInOil = true;
+                        break;
+                    }
+                }
+
+                if (enemyInOil) {
+                    e.oilTimer = 5.0;
+                } else if (e.oilTimer > 0) {
+                    e.oilTimer -= dt;
+                    if (e.oilTimer < 0) e.oilTimer = 0;
+                }
+
+                let eOilGripMod = 1.0;
+                if (e.oilTimer > 0) {
+                    let tEOil = e.oilTimer / 5.0;
+                    eOilGripMod = enemyInOil ? 0.18 : 0.18 + (1.0 - 0.18) * (1.0 - tEOil);
+                }
+
+                let currentEGrip = e.grip * eOilGripMod;
+
+                e.vx += (eTargetVx - e.vx) * currentEGrip * 4 * dt;
+                e.vy += (eTargetVy - e.vy) * currentEGrip * 4 * dt;
                 e.x += e.vx * dt;
                 e.y += e.vy * dt;
 
@@ -419,7 +505,7 @@
                     if (Math.hypot(e.x - tree.x, e.y - tree.y) < (e.radius + tree.r)) e.isDead = true;
                 }
 
-                if (Math.hypot(e.vx - eTargetVx, e.vy - eTargetVy) > 40) {
+                if (Math.hypot(e.vx - eTargetVx, e.vy - eTargetVy) > 40 || e.oilTimer > 0) {
                     let trackColor = 'rgba(255, 0, 85, ';
                     if (e.type === 'ambulance') trackColor = 'rgba(0, 150, 255, ';
                     tireTracks.push({ x: e.x, y: e.y, alpha: 0.4, color: trackColor });
@@ -498,6 +584,27 @@
                 ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(MAP_WIDTH, j); ctx.stroke();
             }
 
+            // Rendering Macchie d'Olio
+            for (let oil of staticOilSlicks) {
+                ctx.fillStyle = 'rgba(15, 5, 23, 0.85)';
+                ctx.strokeStyle = 'rgba(140, 0, 255, 0.35)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(oil.x, oil.y, oil.r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(0, 255, 170, 0.08)';
+                ctx.beginPath();
+                ctx.arc(oil.x - oil.r * 0.25, oil.y - oil.r * 0.25, oil.r * 0.45, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.04)';
+                ctx.beginPath();
+                ctx.arc(oil.x + oil.r * 0.3, oil.y + oil.r * 0.1, oil.r * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
             // Scie Pneumatici
             for (let i = tireTracks.length - 1; i >= 0; i--) {
                 let track = tireTracks[i];
@@ -507,17 +614,15 @@
                 ctx.fillRect(track.x, track.y, 2.5, 2.5);
             }
 
-            // --- RENDER OSTACOLI INTERNI: MURI DA CANTIERE IN ALTA VISIBILITÀ ---
+            // Muri da Cantiere Hazard Pattern Giallo/Nero
             for (let wall of staticWalls) {
-                // Sfondo Giallo Cantiere / Segnaletica
                 ctx.fillStyle = '#fac800';
                 ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
 
-                // Disegno Strisce Diagonali Nere (Hazard Pattern)
                 ctx.save();
                 ctx.beginPath();
                 ctx.rect(wall.x, wall.y, wall.w, wall.h);
-                ctx.clip(); // Limita il disegno dentro i bordi del rettangolo
+                ctx.clip(); 
 
                 ctx.strokeStyle = '#111116';
                 ctx.lineWidth = 8;
@@ -529,7 +634,6 @@
                 }
                 ctx.restore();
 
-                // Profilo esterno di finitura strutturale
                 ctx.strokeStyle = '#d4a000';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(wall.x, wall.y, wall.w, wall.h);
@@ -572,14 +676,13 @@
                 ctx.fillRect(MAP_WIDTH - BORDER_WALL_THICKNESS - 3, y - 3, 6, 6);
             }
 
-            // --- RENDER NEMICI CON COCCA DI MORTE AD ALTA VISIBILITÀ ---
+            // Render Nemici e Relitti Incandescenti
             for (let e of enemies) {
                 ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.angle);
                 if (e.isDead) {
-                    // Relitto Incandescente (Non usa il colore scuro dello sfondo!)
-                    ctx.fillStyle = '#ff3300'; // Rosso-Arancio acceso fuoco
+                    ctx.fillStyle = '#ff3300'; 
                     ctx.fillRect(-e.radius * 1.3, -e.radius * 0.8, e.radius * 2.6, e.radius * 1.6);
-                    ctx.strokeStyle = '#ffcc00'; // Bordo Giallo Neon fuso
+                    ctx.strokeStyle = '#ffcc00'; 
                     ctx.lineWidth = 2;
                     ctx.strokeRect(-e.radius * 1.3, -e.radius * 0.8, e.radius * 2.6, e.radius * 1.6);
                 } else {
@@ -607,39 +710,33 @@
                 ctx.restore();
             }
 
-            // --- RENDER TOYOTA AE86 PANDA STYLE (DIREZIONATA SU ASSE +X) ---
+            // Render Toyota AE86 Panda
             ctx.save();
             ctx.translate(player.x, player.y); 
             ctx.rotate(player.angle);
 
-            // Scocca principale Bianca
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(-12, -6, 24, 12);
 
-            // Strisce Nere Laterali basse (Fiancate Panda Trueno)
             ctx.fillStyle = '#111116';
-            ctx.fillRect(-12, -6, 24, 1.8); // Fascia superiore sinistra
-            ctx.fillRect(-12, 4.2, 24, 1.8); // Fascia inferiore destra
+            ctx.fillRect(-12, -6, 24, 1.8); 
+            ctx.fillRect(-12, 4.2, 24, 1.8); 
 
-            // Cofano anteriore Nero (Il muso punta verso destra, ovvero +X)
             ctx.fillRect(4, -4.2, 8, 8.4);
 
-            // Cabina e Parabrezza Cristalli (Grigio scuro / Vetro)
             ctx.fillStyle = '#2d3748';
-            ctx.fillRect(-5, -4.2, 7, 8.4); // Zona vetrata totale
+            ctx.fillRect(-5, -4.2, 7, 8.4); 
             ctx.fillStyle = '#ffffff'; 
-            ctx.fillRect(-3, -3, 4, 6);     // Tettuccio bianco sopra l'abitacolo
+            ctx.fillRect(-3, -3, 4, 6);     
 
-            // Lunotto Posteriore Nero inclinato
             ctx.fillStyle = '#111116';
             ctx.fillRect(-5, -3.5, 1.5, 7);
 
-            // Accenno Fari a Scomparsa sul muso (+X)
             ctx.fillStyle = '#e2e8f0';
             ctx.fillRect(11, -3.8, 1, 2);
             ctx.fillRect(11, 1.8, 1, 2);
 
-            ctx.restore(); // FINE TRASLAZIONE
+            ctx.restore(); 
 
             ctx.restore(); 
 
