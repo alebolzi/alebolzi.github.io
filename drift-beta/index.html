@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Infinite Drift Overdrive: Momentum & Decay Physics</title>
+    <title>⚡ Infinite Drift Overdrive: Enhanced Precision Edition</title>
     <style>
         :root {
             --bg-color: #030305;
@@ -132,6 +132,17 @@
             color: #000;
             box-shadow: 0 0 25px var(--accent-gold);
         }
+        
+        .tip-key {
+            display: inline-block;
+            background: #334155;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            border-bottom: 3px solid #1e293b;
+            margin: 0 4px;
+        }
     </style>
 </head>
 <body>
@@ -153,7 +164,7 @@
     <div id="game-over-screen">
         <h1 id="death-title">SBRICIOLATO</h1>
         <p id="death-reason">Impatto ad alta velocità.</p>
-        <button class="restart-btn" onclick="resetGame()">RITORNA IN ARENA</button>
+        <button class="restart-btn" onclick="resetGame()">PREMI <span class="tip-key">SPAZIO</span> PER COMINCIARE</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -167,7 +178,15 @@
                     'd': 'right', 'arrowright': 'right',
                     ' ': 'handbrake'
                 };
-                window.addEventListener('keydown', (e) => this.toggle(e, true));
+                window.addEventListener('keydown', (e) => {
+                    // Intercettazione barra spaziatrice a schermo spento per riavvio rapido
+                    if (isGameOver && e.key === ' ') {
+                        e.preventDefault();
+                        resetGame();
+                        return;
+                    }
+                    this.toggle(e, true);
+                });
                 window.addEventListener('keyup', (e) => this.toggle(e, false));
             }
             toggle(e, status) {
@@ -220,8 +239,8 @@
                 angle: -Math.PI / 2,
                 radius: 8,
                 grip: 0.94,
-                oilTimer: 0,       // Tempo residuo scivolamento olio
-                handbrakeTimer: 0  // Tempo residuo instabilità freno a mano
+                oilTimer: 0,       
+                handbrakeTimer: 0  
             };
 
             enemies = [];
@@ -234,7 +253,6 @@
             spawnAccumulator = 0;
             survivalScoreTimer = 0; 
 
-            // Generazione Macchie d'Olio Casuali (24 unità)
             for(let i = 0; i < 24; i++) {
                 let x = Math.random() * (MAP_WIDTH - 300) + 150;
                 let y = Math.random() * (MAP_HEIGHT - 300) + 150;
@@ -245,7 +263,6 @@
                 staticOilSlicks.push({ x, y, r });
             }
 
-            // Generazione Muri Interni Casuali (18 unità)
             for(let i = 0; i < 18; i++) {
                 let w = Math.random() * 140 + 60;
                 let h = Math.random() * 140 + 60;
@@ -257,7 +274,6 @@
                 staticWalls.push({ x, y, w, h });
             }
 
-            // Generazione Alberi Ostacolo (6 unità)
             for(let i = 0; i < 6; i++) {
                 let r = Math.random() * 10 + 16; 
                 let x = Math.random() * (MAP_WIDTH - 300) + 150;
@@ -301,7 +317,7 @@
                 angle: Math.random() * Math.PI * 2,
                 isDead: false,
                 strokePhase: Math.random() * 100,
-                oilTimer: 0 // Anche i nemici hanno memoria dell'olio!
+                oilTimer: 0 
             };
 
             switch(chosenType) {
@@ -325,7 +341,6 @@
         function updatePhysics(dt) {
             if (isGameOver) return;
 
-            // Incremento passivo punteggio sopravvivenza
             survivalScoreTimer += dt;
             if (survivalScoreTimer >= 1.0) {
                 score += 500;
@@ -355,7 +370,6 @@
             let pTargetVx = Math.cos(player.angle) * player.speed;
             let pTargetVy = Math.sin(player.angle) * player.speed;
             
-            // --- GESTIONE TIMER E DECAY EFFETTI PLAYER ---
             let playerInOil = false;
             for (let oil of staticOilSlicks) {
                 if (Math.hypot(player.x - oil.x, player.y - oil.y) < oil.r) {
@@ -364,7 +378,6 @@
                 }
             }
 
-            // Aggiorna o decresce il timer dell'olio (5 secondi)
             if (playerInOil) {
                 player.oilTimer = 5.0;
             } else if (player.oilTimer > 0) {
@@ -372,7 +385,6 @@
                 if (player.oilTimer < 0) player.oilTimer = 0;
             }
 
-            // Aggiorna o decresce il timer del freno a mano (2 secondi)
             if (inputs.states.handbrake) {
                 player.handbrakeTimer = 2.0;
             } else if (player.handbrakeTimer > 0) {
@@ -380,22 +392,18 @@
                 if (player.handbrakeTimer < 0) player.handbrakeTimer = 0;
             }
 
-            // Calcolo moltiplicatori grip sfumati linearmente
             let handbrakeGripMod = 1.0;
             if (player.handbrakeTimer > 0) {
-                let tHandbrake = player.handbrakeTimer / 2.0; // Da 1 a 0
-                // Se premuto resta a 0.12, se rilasciato risale fluidamente verso 1.0
+                let tHandbrake = player.handbrakeTimer / 2.0; 
                 handbrakeGripMod = inputs.states.handbrake ? 0.12 : 0.12 + (1.0 - 0.12) * (1.0 - tHandbrake);
             }
 
             let oilGripMod = 1.0;
             if (player.oilTimer > 0) {
-                let tOil = player.oilTimer / 5.0; // Da 1 a 0
-                // Se sopra l'olio resta a 0.15, se uscito risale fluidamente verso 1.0
+                let tOil = player.oilTimer / 5.0; 
                 oilGripMod = playerInOil ? 0.15 : 0.15 + (1.0 - 0.15) * (1.0 - tOil);
             }
 
-            // Applicazione finale del grip composto
             let pCurrentGrip = player.grip * handbrakeGripMod * oilGripMod;
 
             player.vx += (pTargetVx - player.vx) * pCurrentGrip * 5 * dt;
@@ -403,7 +411,6 @@
             player.x += player.vx * dt;
             player.y += player.vy * dt;
 
-            // Collisione letale perimetrale
             const minPlayX = BORDER_WALL_THICKNESS + player.radius;
             const maxPlayX = MAP_WIDTH - BORDER_WALL_THICKNESS - player.radius;
             const minPlayY = BORDER_WALL_THICKNESS + player.radius;
@@ -414,14 +421,12 @@
                 return;
             }
 
-            // Impatto letale Muri Interni
             for (let wall of staticWalls) {
                 if (checkCircleRectCollision(player.x, player.y, player.radius, wall.x, wall.y, wall.w, wall.h)) {
                     triggerGameOver("🧱 BLOCCO CANTIERE", "Impatto irreversibile contro le protezioni in cemento armato!");
                     return;
                 }
             }
-            // Impatto letale Alberi
             for (let tree of staticTrees) {
                 if (Math.hypot(player.x - tree.x, player.y - tree.y) < (player.radius + tree.r - 4)) {
                     triggerGameOver("🌲 TRONCO RIGIDO", "La carrozzeria Panda si è avvolta fatalmente intorno a un albero!");
@@ -429,22 +434,17 @@
                 }
             }
 
-            // Gestione Tracce Pneumatici e Punteggio Combo
             let pSlip = Math.hypot(player.vx - pTargetVx, player.vy - pTargetVy);
             if (pSlip > 65 || player.handbrakeTimer > 0 || player.oilTimer > 0) {
                 let trackColor = player.oilTimer > 0 ? 'rgba(0, 180, 255, ' : 'rgba(255, 255, 255, ';
                 tireTracks.push({ x: player.x, y: player.y, alpha: 1.0, color: trackColor });
             }
 
-            // Mantiene attiva la combo se l'auto sta slittando o risente ancora degli effetti residui
             if (pSlip > 80 || ((player.oilTimer > 0 || player.handbrakeTimer > 0) && Math.hypot(player.vx, player.vy) > 30)) {
                 if (!isDrifting) isDrifting = true;
                 driftTimer += dt;
-                
-                // Bonus punti maggiorato se controlli l'auto sotto l'effetto dell'olio
                 let pointsPerSecond = player.oilTimer > 0 ? 450 : 250;
                 comboPoints += pointsPerSecond * dt;
-                
                 multiplier = 1 + Math.floor(driftTimer / 1.0);
                 document.getElementById('combo-mult').innerText = `x${multiplier}`;
                 document.getElementById('combo-pts').innerText = `+${Math.round(comboPoints)} pts`;
@@ -452,7 +452,6 @@
                 cashInCombo();
             }
 
-            // --- FISICA E TIMING IA INSEGUITORI ---
             for (let i = 0; i < enemies.length; i++) {
                 let e = enemies[i];
                 if (e.isDead) continue;
@@ -464,7 +463,6 @@
                 let eTargetVx = Math.cos(e.angle) * e.speed;
                 let eTargetVy = Math.sin(e.angle) * e.speed;
 
-                // Verifica olio per nemici
                 let enemyInOil = false;
                 for (let oil of staticOilSlicks) {
                     if (Math.hypot(e.x - oil.x, e.y - oil.y) < oil.r) {
@@ -557,9 +555,17 @@
 
         function resetGame() { initGame(); }
 
-        // ==========================================
-        // PIPELINE GRAFICA (RENDER ENGINE)
-        // ==========================================
+        // Helper riutilizzabile per disegnare le quattro ruote staccate dal corpo dell'auto
+        function drawCarWheels(ctx, w, h) {
+            ctx.fillStyle = '#111116';
+            // Posteriore Sinistra / Destra
+            ctx.fillRect(-w + 2, -h - 1.5, 5, 2.2);
+            ctx.fillRect(-w + 2, h - 0.7, 5, 2.2);
+            // Anteriore Sinistra / Destra
+            ctx.fillRect(w - 7, -h - 1.5, 5, 2.2);
+            ctx.fillRect(w - 7, h - 0.7, 5, 2.2);
+        }
+
         let lastTime = performance.now();
 
         function renderLoop(currentTime) {
@@ -676,7 +682,7 @@
                 ctx.fillRect(MAP_WIDTH - BORDER_WALL_THICKNESS - 3, y - 3, 6, 6);
             }
 
-            // Render Nemici e Relitti Incandescenti
+            // Render Nemici Avanzati e Relitti Incandescenti
             for (let e of enemies) {
                 ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.angle);
                 if (e.isDead) {
@@ -688,53 +694,100 @@
                 } else {
                     e.strokePhase += dt * 15;
                     const isStrobeOn = Math.floor(e.strokePhase) % 2 === 0;
+                    
+                    // Disegna ruote per IA
+                    drawCarWheels(ctx, 12, 6);
+
                     switch(e.type) {
                         case 'police':
-                            ctx.fillStyle = '#ff0055'; ctx.fillRect(-12, -6, 24, 12);
-                            ctx.fillStyle = isStrobeOn ? '#0066ff' : '#ff0000'; ctx.fillRect(-1, -2, 2, 4);
+                            // Carrozzeria bicolore Polizia Giapponese / Internazionale
+                            ctx.fillStyle = '#1e1e24'; ctx.fillRect(-12, -6, 24, 12);
+                            ctx.fillStyle = '#ffffff'; ctx.fillRect(-4, -6, 12, 12); // Fiancate/Portiere bianche
+                            // Vetri e Sirena strobo
+                            ctx.fillStyle = '#475569'; ctx.fillRect(-2, -4, 5, 8);
+                            ctx.fillStyle = isStrobeOn ? '#0066ff' : '#ff0000'; ctx.fillRect(-1, -1.5, 3, 3);
+                            // Fari anteriori bianchi
+                            ctx.fillStyle = '#fffae6'; ctx.fillRect(11, -5, 1, 2); ctx.fillRect(11, 3, 1, 2);
                             break;
                         case 'ambulance':
-                            ctx.fillStyle = '#ffffff'; ctx.fillRect(-15, -8, 30, 16);
-                            ctx.fillStyle = isStrobeOn ? '#00ffff' : 'rgba(0,0,0,0)'; ctx.fillRect(-5, -5, 3, 3);
+                            // Base Ambulanza più massiccia
+                            ctx.fillStyle = '#f8fafc'; ctx.fillRect(-15, -8, 30, 16);
+                            // Bande rosse sanitarie laterali
+                            ctx.fillStyle = '#ef4444'; ctx.fillRect(-15, -8, 30, 2); ctx.fillRect(-15, 6, 30, 2);
+                            // Parabrezza scuro e strobo azzurra
+                            ctx.fillStyle = '#1e293b'; ctx.fillRect(4, -6, 4, 12);
+                            ctx.fillStyle = isStrobeOn ? '#00ffff' : 'rgba(0,0,0,0)'; ctx.fillRect(5, -2, 3, 4);
                             break;
                         case 'tow_truck':
-                            ctx.fillStyle = '#ff9900'; ctx.fillRect(-16, -9, 32, 18);
-                            ctx.fillStyle = isStrobeOn ? '#ffd700' : '#6b4200'; ctx.fillRect(4, -2, 3, 4);
+                            // Carroattrezzi Arancione Meccanico
+                            ctx.fillStyle = '#ea580c'; ctx.fillRect(-16, -9, 32, 18);
+                            // Lunotto e cabina di guida
+                            ctx.fillStyle = '#334155'; ctx.fillRect(2, -7, 6, 14);
+                            // Braccio gru posteriore vettoriale
+                            ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
+                            ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-18, 0); ctx.stroke();
+                            // Girofaro lampeggiante giallo
+                            ctx.fillStyle = isStrobeOn ? '#eab308' : '#78350f'; ctx.fillRect(4, -1.5, 3, 3);
                             break;
                         case 'black_car':
-                            ctx.fillStyle = '#1e1e26'; ctx.fillRect(-12, -6, 24, 12);
-                            ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 1; ctx.strokeRect(-12, -6, 24, 12);
+                            // Auto Speculatori Nera/Neon Ciano
+                            ctx.fillStyle = '#0f0f13'; ctx.fillRect(-12, -6, 24, 12);
+                            ctx.fillStyle = '#1e293b'; ctx.fillRect(-3, -4.5, 6, 9);
+                            // Linee neon estetiche laterali
+                            ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 1; ctx.strokeRect(-12, -6, 24, 12);
+                            // Fari cattivi allo xeno
+                            ctx.fillStyle = '#a5f3fc'; ctx.fillRect(11, -5, 1, 1.5); ctx.fillRect(11, 3.5, 1, 1.5);
                             break;
                     }
                 }
                 ctx.restore();
             }
 
-            // Render Toyota AE86 Panda
+            // Render Toyota AE86 Panda Style ad Alto Dettaglio
             ctx.save();
             ctx.translate(player.x, player.y); 
             ctx.rotate(player.angle);
 
+            // 1. Disegna Ruote Nere Dedicate
+            drawCarWheels(ctx, 12, 6);
+
+            // 2. Specchietti retrovisori esterni
+            ctx.fillStyle = '#111116';
+            ctx.fillRect(1, -7.5, 1.8, 1.5);
+            ctx.fillRect(1, 6, 1.8, 1.5);
+
+            // 3. Corpo principale Bianco
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(-12, -6, 24, 12);
 
+            // 4. Modanature laterali e paraurti neri (Panda Look)
             ctx.fillStyle = '#111116';
             ctx.fillRect(-12, -6, 24, 1.8); 
             ctx.fillRect(-12, 4.2, 24, 1.8); 
+            ctx.fillRect(-12, -6, 2, 12); // Paraurti posteriore nero
 
+            // 5. Cofano Anteriore Nero (Tribute stile Initial D)
             ctx.fillRect(4, -4.2, 8, 8.4);
 
-            ctx.fillStyle = '#2d3748';
+            // 6. Abitacolo: Cristalli e Lunotto fumé
+            ctx.fillStyle = '#1e293b';
             ctx.fillRect(-5, -4.2, 7, 8.4); 
             ctx.fillStyle = '#ffffff'; 
-            ctx.fillRect(-3, -3, 4, 6);     
+            ctx.fillRect(-3, -3, 4, 6); // Tettuccio bianco centrale    
 
+            // 7. Montanti neri parabrezza
             ctx.fillStyle = '#111116';
             ctx.fillRect(-5, -3.5, 1.5, 7);
 
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillRect(11, -3.8, 1, 2);
-            ctx.fillRect(11, 1.8, 1, 2);
+            // 8. Fari Anteriori (Dettaglio a comparsa chiuso / linee gialle di posizione)
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(11, -3.8, 1, 1.8);
+            ctx.fillRect(11, 2, 1, 1.8);
+
+            // 9. Stop Posteriori Rossi
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(-12, -5, 0.8, 1.5);
+            ctx.fillRect(-12, 3.5, 0.8, 1.5);
 
             ctx.restore(); 
 
