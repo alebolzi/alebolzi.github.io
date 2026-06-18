@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Infinite Drift Overdrive: Stage AE86</title>
+    <style>
+        :root {
+            --bg-color: #030305;
+            --panel-bg: rgba(6, 6, 10, 0.9);
+            --accent-player: #ffffff;
+            --accent-gold: #ffd700;
+            --accent-danger: #ff0055;
+            --text-main: #f8fafc;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            background: #060609;
+        }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .hud-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            padding: 14px 28px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        #score-value {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        #combo-mult {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--accent-gold);
+            text-align: right;
+        }
+
+        .bottom-ui {
+            position: absolute;
+            bottom: 20px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        #enemy-counter { left: 20px; color: #94a3b8; }
+        #intensity-gauge { right: 20px; color: var(--accent-danger); font-weight: bold; }
+
+        #game-over-screen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 2, 4, 0.96);
+            backdrop-filter: blur(10px);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        #game-over-screen h1 {
+            color: var(--accent-danger);
+            font-size: 64px;
+            margin: 0 0 15px 0;
+            letter-spacing: 4px;
+            text-shadow: 0 0 25px rgba(255, 0, 85, 0.3);
+        }
+
+        #game-over-screen p {
+            font-size: 18px;
+            margin: 5px 0 30px 0;
+            color: #94a3b8;
+            max-width: 600px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .restart-btn {
+            background: transparent;
+            border: 2px solid var(--accent-gold);
+            color: var(--accent-gold);
+            padding: 14px 45px;
+            font-size: 18px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .restart-btn:hover {
+            background: var(--accent-gold);
+            color: #000;
+            box-shadow: 0 0 25px var(--accent-gold);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="hud">
+        <div class="hud-panel">
+            <div style="font-size: 10px; color: #64748b; letter-spacing: 1px;">TOTAL SCORE</div>
+            <div id="score-value">000,000</div>
+        </div>
+        <div class="hud-panel" style="min-width: 140px;">
+            <div id="combo-mult">x1</div>
+            <div id="combo-pts" style="font-size: 13px; color: #ffd700;">+0 pts</div>
+        </div>
+    </div>
+
+    <div id="enemy-counter" class="bottom-ui">UNITÀ ATTIVE: 0</div>
+    <div id="intensity-gauge" class="bottom-ui">FREQUENZA SPAWN: 10.0s</div>
+
+    <div id="game-over-screen">
+        <h1 id="death-title">SBRICIOLATO</h1>
+        <p id="death-reason">Impatto ad alta velocità.</p>
+        <button class="restart-btn" onclick="resetGame()">RITORNA IN ARENA</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        class InputHandler {
+            constructor() {
+                this.states = { left: false, right: false, handbrake: false };
+                this.map = {
+                    'a': 'left', 'arrowleft': 'left',
+                    'd': 'right', 'arrowright': 'right',
+                    ' ': 'handbrake'
+                };
+                window.addEventListener('keydown', (e) => this.toggle(e, true));
+                window.addEventListener('keyup', (e) => this.toggle(e, false));
+            }
+            toggle(e, status) {
+                const key = e.key.toLowerCase();
+                if (this.map[key]) {
+                    if (key === ' ') e.preventDefault();
+                    this.states[this.map[key]] = status;
+                }
+            }
+            clear() { for (let k in this.states) this.states[k] = false; }
+        }
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const inputs = new InputHandler();
+
+        const MAP_WIDTH = 3000;
+        const MAP_HEIGHT = 3000;
+        const BORDER_WALL_THICKNESS = 20; 
+
+        let player, enemies, tireTracks;
+        let staticWalls = []; 
+        let staticTrees = []; 
+        let score, comboPoints, multiplier, driftTimer, isDrifting, isGameOver;
+        let survivalTime, spawnAccumulator, survivalScoreTimer;
+        let camera = { x: 0, y: 0 };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function checkCircleRectCollision(cx, cy, radius, rx, ry, rw, rh) {
+            let closestX = Math.max(rx, Math.min(cx, rx + rw));
+            let closestY = Math.max(ry, Math.min(cy, ry + rh));
+            let distX = cx - closestX;
+            let distY = cy - closestY;
+            return (distX * distX + distY * distY) < (radius * radius);
+        }
+
+        function initGame() {
+            player = {
+                x: MAP_WIDTH / 2,
+                y: MAP_HEIGHT / 2,
+                vx: 0, vy: 0,
+                speed: 235,
+                angle: -Math.PI / 2,
+                radius: 8,
+                grip: 0.94
+            };
+
+            enemies = [];
+            tireTracks = [];
+            staticWalls = [];
+            staticTrees = [];
+            
+            survivalTime = 0;
+            spawnAccumulator = 0;
+            survivalScoreTimer = 0; 
+
+            // Generazione Muri Interni Casuali (18 unita)
+            for(let i = 0; i < 18; i++) {
+                let w = Math.random() * 140 + 60;
+                let h = Math.random() * 140 + 60;
+                let x = Math.random() * (MAP_WIDTH - w - 200) + 100;
+                let y = Math.random() * (MAP_HEIGHT - h - 200) + 100;
+                
+                if (Math.hypot(x + w/2 - player.x, y + h/2 - player.y) < 300) {
+                    i--; continue;
+                }
+                staticWalls.push({ x, y, w, h });
+            }
+
+            // Generazione Alberi Ostacolo (Pochissimi: 6 unità globali)
+            for(let i = 0; i < 6; i++) {
+                let r = Math.random() * 10 + 16; 
+                let x = Math.random() * (MAP_WIDTH - 300) + 150;
+                let y = Math.random() * (MAP_HEIGHT - 300) + 150;
+
+                if (Math.hypot(x - player.x, y - player.y) < 300) {
+                    i--; continue;
+                }
+                staticTrees.push({ x, y, r });
+            }
+
+            spawnEnemy();
+
+            score = 0;
+            comboPoints = 0;
+            multiplier = 1;
+            driftTimer = 0;
+            isDrifting = false;
+            isGameOver = false;
+
+            document.getElementById('score-value').innerText = "000,000";
+            document.getElementById('game-over-screen').style.display = 'none';
+        }
+
+        function spawnEnemy() {
+            const types = ['police', 'ambulance', 'tow_truck', 'black_car'];
+            const chosenType = types[Math.floor(Math.random() * types.length)];
+
+            const spawnRadius = Math.max(canvas.width, canvas.height) * 0.6;
+            const randomAngle = Math.random() * Math.PI * 2;
+            
+            let sx = player.x + Math.cos(randomAngle) * spawnRadius;
+            let sy = player.y + Math.sin(randomAngle) * spawnRadius;
+            
+            sx = Math.max(BORDER_WALL_THICKNESS + 20, Math.min(MAP_WIDTH - BORDER_WALL_THICKNESS - 20, sx));
+            sy = Math.max(BORDER_WALL_THICKNESS + 20, Math.min(MAP_HEIGHT - BORDER_WALL_THICKNESS - 20, sy));
+
+            let config = {
+                type: chosenType,
+                x: sx, y: sy,
+                vx: 0, vy: 0,
+                angle: Math.random() * Math.PI * 2,
+                isDead: false,
+                strokePhase: Math.random() * 100
+            };
+
+            switch(chosenType) {
+                case 'police':
+                    config.speed = 165;   config.grip = 0.91;   config.steerMod = 3.6; config.radius = 8;  config.name = "Polizia";
+                    break;
+                case 'ambulance':
+                    config.speed = 205;   config.grip = 0.82;   config.steerMod = 2.3; config.radius = 10; config.name = "Ambulanza";
+                    break;
+                case 'tow_truck':
+                    config.speed = 140;   config.grip = 0.98;   config.steerMod = 4.3; config.radius = 11; config.name = "Carro Attrezzi";
+                    break;
+                case 'black_car':
+                    config.speed = 190;   config.grip = 0.76;   config.steerMod = 3.8; config.radius = 8;  config.name = "Auto Nera";
+                    break;
+            }
+
+            enemies.push(config);
+        }
+
+        function updatePhysics(dt) {
+            if (isGameOver) return;
+
+            // Incremento passivo a tempo (+500pt ogni secondo)
+            survivalScoreTimer += dt;
+            if (survivalScoreTimer >= 1.0) {
+                score += 500;
+                survivalScoreTimer -= 1.0;
+                document.getElementById('score-value').innerText = score.toLocaleString('en-US', { minimumIntegerDigits: 6 });
+            }
+
+            survivalTime += dt;
+            let progress = Math.min(1.0, survivalTime / 60.0);
+            let currentSpawnInterval = 10.0 - (progress * 9.0);
+
+            document.getElementById('intensity-gauge').innerText = `FREQUENZA SPAWN: ${currentSpawnInterval.toFixed(1)}s`;
+
+            spawnAccumulator += dt;
+            if (spawnAccumulator >= currentSpawnInterval) {
+                spawnEnemy();
+                spawnAccumulator = 0;
+            }
+
+            const activeCount = enemies.filter(e => !e.isDead).length;
+            document.getElementById('enemy-counter').innerText = `UNITÀ INFESTANTI: ${activeCount}`;
+
+            let steerSpeed = 4.0;
+            if (inputs.states.left) player.angle -= steerSpeed * dt;
+            if (inputs.states.right) player.angle += steerSpeed * dt;
+
+            let pTargetVx = Math.cos(player.angle) * player.speed;
+            let pTargetVy = Math.sin(player.angle) * player.speed;
+            let pCurrentGrip = inputs.states.handbrake ? player.grip * 0.12 : player.grip;
+
+            player.vx += (pTargetVx - player.vx) * pCurrentGrip * 5 * dt;
+            player.vy += (pTargetVy - player.vy) * pCurrentGrip * 5 * dt;
+            player.x += player.vx * dt;
+            player.y += player.vy * dt;
+
+            // Collisione letale perimetrale
+            const minPlayX = BORDER_WALL_THICKNESS + player.radius;
+            const maxPlayX = MAP_WIDTH - BORDER_WALL_THICKNESS - player.radius;
+            const minPlayY = BORDER_WALL_THICKNESS + player.radius;
+            const maxPlayY = MAP_HEIGHT - BORDER_WALL_THICKNESS - player.radius;
+
+            if (player.x < minPlayX || player.x > maxPlayX || player.y < minPlayY || player.y > maxPlayY) {
+                triggerGameOver("💥 PERIMETRO CRUCIALE", "Hai disintegrato la AE86 contro le barriere esterne dell'arena!");
+                return;
+            }
+
+            // Impatto letale con Muri Interni
+            for (let wall of staticWalls) {
+                if (checkCircleRectCollision(player.x, player.y, player.radius, wall.x, wall.y, wall.w, wall.h)) {
+                    triggerGameOver("🧱 BLOCCO CANTIERE", "Impatto irreversibile contro le protezioni in cemento armato!");
+                    return;
+                }
+            }
+            // Impatto letale con Alberi
+            for (let tree of staticTrees) {
+                if (Math.hypot(player.x - tree.x, player.y - tree.y) < (player.radius + tree.r - 4)) {
+                    triggerGameOver("🌲 TRONCO RIGIDO", "La carrozzeria Panda si è avvolta fatalmente intorno a un albero!");
+                    return;
+                }
+            }
+
+            // Calcolo Derapata
+            let pSlip = Math.hypot(player.vx - pTargetVx, player.vy - pTargetVy);
+            if (pSlip > 65 || inputs.states.handbrake) {
+                tireTracks.push({ x: player.x, y: player.y, alpha: 1.0, color: 'rgba(255, 255, 255, ' });
+            }
+
+            if (pSlip > 80) {
+                if (!isDrifting) isDrifting = true;
+                driftTimer += dt;
+                comboPoints += 250 * dt;
+                multiplier = 1 + Math.floor(driftTimer / 1.0);
+                document.getElementById('combo-mult').innerText = `x${multiplier}`;
+                document.getElementById('combo-pts').innerText = `+${Math.round(comboPoints)} pts`;
+            } else {
+                cashInCombo();
+            }
+
+            // Fisica IA Inseguitori
+            for (let i = 0; i < enemies.length; i++) {
+                let e = enemies[i];
+                if (e.isDead) continue;
+
+                let angleToPlayer = Math.atan2(player.y - e.y, player.x - e.x);
+                let angleDiff = Math.atan2(Math.sin(angleToPlayer - e.angle), Math.cos(angleToPlayer - e.angle));
+                e.angle += angleDiff * e.steerMod * dt;
+
+                let eTargetVx = Math.cos(e.angle) * e.speed;
+                let eTargetVy = Math.sin(e.angle) * e.speed;
+
+                e.vx += (eTargetVx - e.vx) * e.grip * 4 * dt;
+                e.vy += (eTargetVy - e.vy) * e.grip * 4 * dt;
+                e.x += e.vx * dt;
+                e.y += e.vy * dt;
+
+                if (e.x < (BORDER_WALL_THICKNESS + e.radius) || e.x > (MAP_WIDTH - BORDER_WALL_THICKNESS - e.radius) ||
+                    e.y < (BORDER_WALL_THICKNESS + e.radius) || e.y > (MAP_HEIGHT - BORDER_WALL_THICKNESS - e.radius)) {
+                    e.isDead = true; 
+                }
+
+                for (let wall of staticWalls) {
+                    if (checkCircleRectCollision(e.x, e.y, e.radius, wall.x, wall.y, wall.w, wall.h)) e.isDead = true;
+                }
+                for (let tree of staticTrees) {
+                    if (Math.hypot(e.x - tree.x, e.y - tree.y) < (e.radius + tree.r)) e.isDead = true;
+                }
+
+                if (Math.hypot(e.vx - eTargetVx, e.vy - eTargetVy) > 40) {
+                    let trackColor = 'rgba(255, 0, 85, ';
+                    if (e.type === 'ambulance') trackColor = 'rgba(0, 150, 255, ';
+                    tireTracks.push({ x: e.x, y: e.y, alpha: 0.4, color: trackColor });
+                }
+
+                for (let j = 0; j < enemies.length; j++) {
+                    if (i === j) continue;
+                    let target = enemies[j];
+                    if (Math.hypot(e.x - target.x, e.y - target.y) < (e.radius + target.radius)) {
+                        e.isDead = true; target.isDead = true; 
+                    }
+                }
+            }
+
+            for (let e of enemies) {
+                if (Math.hypot(player.x - e.x, player.y - e.y) < (player.radius + e.radius)) {
+                    if (e.isDead) {
+                        triggerGameOver("💥 DETRITO METALLICO", "Hai centrato in pieno i resti incandescenti di un blocco nemico!");
+                    } else {
+                        triggerGameOver("🚨 SPERONATO", `La corsa della AE86 è stata bloccata da: ${e.name.toUpperCase()}`);
+                    }
+                }
+            }
+
+            camera.x = player.x - canvas.width / 2;
+            camera.y = player.y - canvas.height / 2;
+            camera.x = Math.max(0, Math.min(MAP_WIDTH - canvas.width, camera.x));
+            camera.y = Math.max(0, Math.min(MAP_HEIGHT - canvas.height, camera.y));
+        }
+
+        function cashInCombo() {
+            if (isDrifting) {
+                isDrifting = false;
+                score += Math.round(comboPoints * multiplier);
+                document.getElementById('score-value').innerText = score.toLocaleString('en-US', { minimumIntegerDigits: 6 });
+                driftTimer = 0; comboPoints = 0; multiplier = 1;
+                document.getElementById('combo-mult').innerText = `x1`;
+                document.getElementById('combo-pts').innerText = `+0 pts`;
+            }
+        }
+
+        function triggerGameOver(title, message) {
+            isGameOver = true;
+            cashInCombo();
+            document.getElementById('death-title').innerText = title;
+            document.getElementById('death-reason').innerText = message;
+            document.getElementById('game-over-screen').style.display = 'flex';
+        }
+
+        function resetGame() { initGame(); }
+
+        // ==========================================
+        // PIPELINE GRAFICA (RENDER ENGINE)
+        // ==========================================
+        let lastTime = performance.now();
+
+        function renderLoop(currentTime) {
+            let dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            if (dt > 0.1) dt = 0.1;
+
+            updatePhysics(dt);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+
+            // Griglia Pavimento scurissima
+            ctx.strokeStyle = '#08080d';
+            ctx.lineWidth = 1;
+            const gridSpacing = 60;
+            for (let i = 0; i <= MAP_WIDTH; i += gridSpacing) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, MAP_HEIGHT); ctx.stroke();
+            }
+            for (let j = 0; j <= MAP_HEIGHT; j += gridSpacing) {
+                ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(MAP_WIDTH, j); ctx.stroke();
+            }
+
+            // Scie Pneumatici
+            for (let i = tireTracks.length - 1; i >= 0; i--) {
+                let track = tireTracks[i];
+                track.alpha -= 0.32 * dt;
+                if (track.alpha <= 0) { tireTracks.splice(i, 1); continue; }
+                ctx.fillStyle = `${track.color}${track.alpha * 0.4})`;
+                ctx.fillRect(track.x, track.y, 2.5, 2.5);
+            }
+
+            // --- RENDER OSTACOLI INTERNI: MURI DA CANTIERE IN ALTA VISIBILITÀ ---
+            for (let wall of staticWalls) {
+                // Sfondo Giallo Cantiere / Segnaletica
+                ctx.fillStyle = '#fac800';
+                ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+
+                // Disegno Strisce Diagonali Nere (Hazard Pattern)
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(wall.x, wall.y, wall.w, wall.h);
+                ctx.clip(); // Limita il disegno dentro i bordi del rettangolo
+
+                ctx.strokeStyle = '#111116';
+                ctx.lineWidth = 8;
+                for (let offset = -wall.h; offset < wall.w; offset += 24) {
+                    ctx.beginPath();
+                    ctx.moveTo(wall.x + offset, wall.y);
+                    ctx.lineTo(wall.x + offset + wall.h, wall.y + wall.h);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                // Profilo esterno di finitura strutturale
+                ctx.strokeStyle = '#d4a000';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(wall.x, wall.y, wall.w, wall.h);
+            }
+
+            // Render Alberi Spogli
+            for (let tree of staticTrees) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                ctx.beginPath(); ctx.arc(tree.x + 4, tree.y + 4, tree.r, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#1c2421';
+                ctx.strokeStyle = '#344740';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(tree.x, tree.y, tree.r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#0b0f0d';
+                ctx.beginPath(); ctx.arc(tree.x, tree.y, 4, 0, Math.PI*2); ctx.fill();
+            }
+
+            // Confini Esterni
+            ctx.fillStyle = '#020204';
+            ctx.fillRect(0, 0, MAP_WIDTH, BORDER_WALL_THICKNESS);
+            ctx.fillRect(0, MAP_HEIGHT - BORDER_WALL_THICKNESS, MAP_WIDTH, BORDER_WALL_THICKNESS);
+            ctx.fillRect(0, 0, BORDER_WALL_THICKNESS, MAP_HEIGHT);
+            ctx.fillRect(MAP_WIDTH - BORDER_WALL_THICKNESS, 0, BORDER_WALL_THICKNESS, MAP_HEIGHT);
+
+            ctx.strokeStyle = '#3e3e52';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(BORDER_WALL_THICKNESS, BORDER_WALL_THICKNESS, MAP_WIDTH - BORDER_WALL_THICKNESS * 2, MAP_HEIGHT - BORDER_WALL_THICKNESS * 2);
+
+            ctx.strokeStyle = 'var(--accent-danger)';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(BORDER_WALL_THICKNESS - 1, BORDER_WALL_THICKNESS - 1, MAP_WIDTH - (BORDER_WALL_THICKNESS - 1) * 2, MAP_HEIGHT - (BORDER_WALL_THICKNESS - 1) * 2);
+
+            ctx.fillStyle = '#565673';
+            for (let x = 0; x <= MAP_WIDTH; x += 80) {
+                ctx.fillRect(x - 3, BORDER_WALL_THICKNESS - 3, 6, 6);
+                ctx.fillRect(x - 3, MAP_HEIGHT - BORDER_WALL_THICKNESS - 3, 6, 6);
+            }
+            for (let y = 0; y <= MAP_HEIGHT; y += 80) {
+                ctx.fillRect(BORDER_WALL_THICKNESS - 3, y - 3, 6, 6);
+                ctx.fillRect(MAP_WIDTH - BORDER_WALL_THICKNESS - 3, y - 3, 6, 6);
+            }
+
+            // --- RENDER NEMICI CON COCCA DI MORTE AD ALTA VISIBILITÀ ---
+            for (let e of enemies) {
+                ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.angle);
+                if (e.isDead) {
+                    // Relitto Incandescente (Non usa il colore scuro dello sfondo!)
+                    ctx.fillStyle = '#ff3300'; // Rosso-Arancio acceso fuoco
+                    ctx.fillRect(-e.radius * 1.3, -e.radius * 0.8, e.radius * 2.6, e.radius * 1.6);
+                    ctx.strokeStyle = '#ffcc00'; // Bordo Giallo Neon fuso
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(-e.radius * 1.3, -e.radius * 0.8, e.radius * 2.6, e.radius * 1.6);
+                } else {
+                    e.strokePhase += dt * 15;
+                    const isStrobeOn = Math.floor(e.strokePhase) % 2 === 0;
+                    switch(e.type) {
+                        case 'police':
+                            ctx.fillStyle = '#ff0055'; ctx.fillRect(-12, -6, 24, 12);
+                            ctx.fillStyle = isStrobeOn ? '#0066ff' : '#ff0000'; ctx.fillRect(-1, -2, 2, 4);
+                            break;
+                        case 'ambulance':
+                            ctx.fillStyle = '#ffffff'; ctx.fillRect(-15, -8, 30, 16);
+                            ctx.fillStyle = isStrobeOn ? '#00ffff' : 'rgba(0,0,0,0)'; ctx.fillRect(-5, -5, 3, 3);
+                            break;
+                        case 'tow_truck':
+                            ctx.fillStyle = '#ff9900'; ctx.fillRect(-16, -9, 32, 18);
+                            ctx.fillStyle = isStrobeOn ? '#ffd700' : '#6b4200'; ctx.fillRect(4, -2, 3, 4);
+                            break;
+                        case 'black_car':
+                            ctx.fillStyle = '#1e1e26'; ctx.fillRect(-12, -6, 24, 12);
+                            ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 1; ctx.strokeRect(-12, -6, 24, 12);
+                            break;
+                    }
+                }
+                ctx.restore();
+            }
+
+            // --- RENDER TOYOTA AE86 PANDA STYLE (DIREZIONATA SU ASSE +X) ---
+            ctx.save();
+            ctx.translate(player.x, player.y); 
+            ctx.rotate(player.angle);
+
+            // Scocca principale Bianca
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(-12, -6, 24, 12);
+
+            // Strisce Nere Laterali basse (Fiancate Panda Trueno)
+            ctx.fillStyle = '#111116';
+            ctx.fillRect(-12, -6, 24, 1.8); // Fascia superiore sinistra
+            ctx.fillRect(-12, 4.2, 24, 1.8); // Fascia inferiore destra
+
+            // Cofano anteriore Nero (Il muso punta verso destra, ovvero +X)
+            ctx.fillRect(4, -4.2, 8, 8.4);
+
+            // Cabina e Parabrezza Cristalli (Grigio scuro / Vetro)
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(-5, -4.2, 7, 8.4); // Zona vetrata totale
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fillRect(-3, -3, 4, 6);     // Tettuccio bianco sopra l'abitacolo
+
+            // Lunotto Posteriore Nero inclinato
+            ctx.fillStyle = '#111116';
+            ctx.fillRect(-5, -3.5, 1.5, 7);
+
+            // Accenno Fari a Scomparsa sul muso (+X)
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(11, -3.8, 1, 2);
+            ctx.fillRect(11, 1.8, 1, 2);
+
+            ctx.restore(); // FINE TRASLAZIONE
+
+            ctx.restore(); 
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        initGame();
+        requestAnimationFrame(renderLoop);
+    </script>
+</body>
+</html>
