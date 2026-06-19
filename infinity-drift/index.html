@@ -416,7 +416,7 @@
             }
 
             for (let i = 0; i < 6; i++) {
-                let r = Math.random() * 40 + 20; // grandezza alberi
+                let r = Math.random() * 100 + 20; // grandezza alberi
                 let x = Math.random() * (MAP_WIDTH - 300) + 150;
                 let y = Math.random() * (MAP_HEIGHT - 300) + 150;
                 if (Math.hypot(x - player.x, y - player.y) < 300) {
@@ -613,12 +613,13 @@
                     return;
                 }
             }
+
             for (let tree of staticTrees) {
-                // 🌲 Usiamo il 15% del raggio dell'albero per calcolare solo la hitbox del tronco
-                let trunkRadius = tree.r * 0.15;
+                // 🌲 Fissato allo 0.25 per combaciare al millimetro con il tronco X-Ray
+                let trunkRadius = tree.r * 0.25;
 
                 if (Math.hypot(player.x - tree.x, player.y - tree.y) < (player.radius + trunkRadius)) {
-                    triggerGameOver("🌲 TRONCO RIGIDO", "La carrozzeria Panda si è avvolta fatalmente intorno a un albero!");
+                    triggerGameOver("🌲 TRONCO RIGIDO", "La carrozzeria si è avvolta fatalmente intorno a un albero!");
                     return;
                 }
             }
@@ -689,14 +690,13 @@
                 // Logica d'attacco del Carro Armato
                 if (e.type === 'tank') {
                     e.shootCooldown -= dt;
-                    // Calcolo frequenza di sparo dinamica: inizia a 3.5s e accelera linearmente col tempo di sopravvivenza totale fino a un minimo di 0.7s
                     let dynamicInterval = Math.max(0.7, 3.5 - (survivalTime - 30) * 0.05);
                     if (e.shootCooldown <= 0) {
                         let fireAngle = Math.atan2(player.y - e.y, player.x - e.x);
                         missiles.push({
                             x: e.x + Math.cos(fireAngle) * 20,
                             y: e.y + Math.sin(fireAngle) * 20,
-                            vx: Math.cos(fireAngle) * 250, // Velocità missile
+                            vx: Math.cos(fireAngle) * 250,
                             vy: Math.sin(fireAngle) * 250,
                             angle: fireAngle,
                             radius: 4
@@ -713,8 +713,13 @@
                 for (let wall of staticWalls) {
                     if (checkCircleRectCollision(e.x, e.y, e.radius, wall.x, wall.y, wall.w, wall.h)) e.isDead = true;
                 }
+
+                // 🚨 BUG FIXATO QUI: I nemici ora calcolano la collisione sul tronco (0.25) e non sulla chioma intera!
                 for (let tree of staticTrees) {
-                    if (Math.hypot(e.x - tree.x, e.y - tree.y) < (e.radius + tree.r)) e.isDead = true;
+                    let enemyTrunkRadius = tree.r * 0.25;
+                    if (Math.hypot(e.x - tree.x, e.y - tree.y) < (e.radius + enemyTrunkRadius)) {
+                        e.isDead = true;
+                    }
                 }
 
                 if (Math.hypot(e.vx - eTargetVx, e.vy - eTargetVy) > 40 || e.oilTimer > 0) {
@@ -734,14 +739,13 @@
                 }
             }
 
-            // Aggiornamento missili (ora fisici)
+            // Aggiornamento missili
             for (let i = missiles.length - 1; i >= 0; i--) {
                 let m = missiles[i];
 
                 m.x += m.vx * dt;
                 m.y += m.vy * dt;
 
-                // fuori mappa → diventa debris
                 if (
                     m.x < BORDER_WALL_THICKNESS || m.x > MAP_WIDTH - BORDER_WALL_THICKNESS ||
                     m.y < BORDER_WALL_THICKNESS || m.y > MAP_HEIGHT - BORDER_WALL_THICKNESS
@@ -751,7 +755,6 @@
                     continue;
                 }
 
-                // collisione muri → debris
                 let hitWall = false;
                 for (let wall of staticWalls) {
                     if (checkCircleRectCollision(m.x, m.y, m.radius, wall.x, wall.y, wall.w, wall.h)) {
@@ -766,32 +769,24 @@
                     continue;
                 }
 
-                // 💥 collisione con player
                 if (Math.hypot(player.x - m.x, player.y - m.y) < (player.radius + m.radius)) {
-                    triggerGameOver("🚀 COLLISIONE BALISTICA", "Un missile del Carro Armato ha polverizzato la tua vettura!");
+                    triggerGameOver("🚀 COLLISIONE BALISTICA", "Un missile ha polverizzato la tua vettura!");
                     return;
                 }
 
-                // 💀 collisione con nemici → kill + debris
                 for (let e of enemies) {
                     if (e.isDead) continue;
 
                     if (Math.hypot(e.x - m.x, e.y - m.y) < (e.radius + m.radius)) {
                         e.isDead = true;
-
-                        missileDebris.push({
-                            x: m.x,
-                            y: m.y,
-                            r: 8,
-                            life: 5.0
-                        });
-
+                        missileDebris.push({ x: m.x, y: m.y, r: 8, life: 5.0 });
                         missiles.splice(i, 1);
                         break;
                     }
                 }
             }
-            // aggiornamento debris missili
+
+            // Aggiornamento debris missili
             for (let i = missileDebris.length - 1; i >= 0; i--) {
                 let d = missileDebris[i];
                 d.life -= dt;
@@ -801,7 +796,6 @@
                     continue;
                 }
 
-                // kill nemici che lo toccano
                 for (let e of enemies) {
                     if (!e.isDead && Math.hypot(e.x - d.x, e.y - d.y) < (e.radius + d.r)) {
                         e.isDead = true;
@@ -1043,9 +1037,7 @@
             ctx.fillStyle = '#1e293b'; ctx.fillRect(-5, -4.2, 7, 8.4);
             ctx.restore();
 
-            
-            // 🌲 ALBERI STYLIZED TOP-DOWN CON TRONCO AD APPARIZIONE DINAMICA
-            // Essendo disegnati DOPO il giocatore, le chiome lo copriranno perfettamente dall'alto!
+            // 🌲 ALBERI STYLIZED TOP-DOWN CON TRONCO E CARCASSE IN X-RAY AD APPARIZIONE DINAMICA
             for (let tree of staticTrees) {
                 // 1. OMBRA PROIETTATA
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
@@ -1080,34 +1072,67 @@
                 ctx.arc(tree.x - 9, tree.y - 9, tree.r * 0.18, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 🎯 6. TRONCO IN "X-RAY" (Appare solo se l'auto è vicina)
+                // 🎯 6. TRONCO IN "X-RAY" (Appare in dissolvenza fissa se l'auto è vicina)
                 let distanceToPlayer = Math.hypot(player.x - tree.x, player.y - tree.y);
-                let activationDistance = tree.r * 2.8; // Raggio di avvistamento (circa 120px dall'albero)
+                let activationDistance = 300; //distanza attivazione graduale del tronco
 
                 if (distanceToPlayer < activationDistance) {
-                    // Calcolo del fade-in: più l'auto si avvicina, più l'opacità aumenta (fino a un max di 0.75)
                     let proximityRatio = 1 - (distanceToPlayer / activationDistance);
                     let trunkAlpha = proximityRatio * 0.75;
 
-                    // Disegniamo il tronco SOPRA le foglie ma in trasparenza ghost
-                    ctx.fillStyle = `rgba(143, 89, 57, ${trunkAlpha})`; // Marrone legno
-                    ctx.strokeStyle = `rgba(255, 215, 0, ${trunkAlpha * 0.4})`; // Bagliore dorato arcade di pericolo
+                    // Disegno del tronco solido
+                    ctx.fillStyle = `rgba(143, 89, 57, ${trunkAlpha})`;
+                    ctx.strokeStyle = `rgba(255, 215, 0, ${trunkAlpha * 0.4})`;
                     ctx.lineWidth = 2;
-
                     ctx.beginPath();
-                    // Utilizza l'esatto raggio della hitbox (tree.r * 0.15) - todo rendere parametrico volendo
-                    ctx.arc(tree.x, tree.y, tree.r * 0.15, 0, Math.PI * 2);
+                    ctx.arc(tree.x, tree.y, tree.r * 0.25, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.stroke();
 
-                    // Anello concentrico interno (effetto venatura del legno vintage)
+                    // Anello interno del tronco
                     ctx.strokeStyle = `rgba(0, 0, 0, ${trunkAlpha * 0.3})`;
                     ctx.beginPath();
                     ctx.arc(tree.x, tree.y, tree.r * 0.12, 0, Math.PI * 2);
                     ctx.stroke();
+
+                    // 🚗 7. CARCASSE IN "X-RAY" (Rende visibili i rottami sotto la chioma)
+                    for (let e of enemies) {
+                        if (e.isDead) {
+                            // Controlliamo se la carcassa si trova effettivamente sotto le foglie di QUESTO albero
+                            let distToTree = Math.hypot(e.x - tree.x, e.y - tree.y);
+
+                            if (distToTree < tree.r) {
+                                ctx.save();
+                                // Ci spostiamo e ruotiamo sulle coordinate esatte del rottame
+                                ctx.translate(e.x, e.y);
+                                ctx.rotate(e.angle);
+
+                                // Stile Scansione Cyber / Pericolo (Rosso Neon trasparente)
+                                ctx.fillStyle = `rgba(40, 40, 40, ${trunkAlpha * 0.8})`; // Corpo metallico scuro
+                                ctx.strokeStyle = `rgba(255, 40, 40, ${trunkAlpha * 0.9})`; // Contorno rosso acceso
+                                ctx.lineWidth = 2;
+
+                                // Disegniamo la sagoma rettangolare dell'auto distrutta
+                                ctx.beginPath();
+                                ctx.rect(-e.radius, -e.radius * 0.6, e.radius * 2, e.radius * 1.2);
+                                ctx.fill();
+                                ctx.stroke();
+
+                                // Disegniamo una "X" sopra il relitto (Feedback grafico molto Arcade per indicare che è distrutto)
+                                ctx.strokeStyle = `rgba(255, 255, 255, ${trunkAlpha * 0.5})`;
+                                ctx.beginPath();
+                                ctx.moveTo(-e.radius * 0.5, -e.radius * 0.3);
+                                ctx.lineTo(e.radius * 0.5, e.radius * 0.3);
+                                ctx.moveTo(e.radius * 0.5, -e.radius * 0.3);
+                                ctx.lineTo(-e.radius * 0.5, e.radius * 0.3);
+                                ctx.stroke();
+
+                                ctx.restore();
+                            }
+                        }
+                    }
                 }
             }
-
             ctx.restore(); // Fine trasformazioni camera e shake globale
 
             // ⚠️ Overlay Interfaccia di Allerta Orda
