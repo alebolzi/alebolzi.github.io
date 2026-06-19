@@ -2,8 +2,8 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡Drift Overdrive</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚡ Infinite Drift Overdrive: Enhanced Precision Edition</title>
     <style>
         :root {
             --bg-color: #030305;
@@ -24,6 +24,7 @@
             font-family: 'Courier New', Courier, monospace;
             overflow: hidden;
             user-select: none;
+            -webkit-user-select: none;
         }
 
         canvas {
@@ -82,6 +83,63 @@
         #enemy-counter { left: 20px; color: #94a3b8; }
         #intensity-gauge { right: 20px; color: var(--accent-danger); font-weight: bold; }
 
+        /* Controlli Mobile */
+        #mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            width: 100%;
+            padding: 0 25px;
+            box-sizing: border-box;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .ctrl-btn {
+            pointer-events: auto;
+            width: 85px;
+            height: 85px;
+            background: rgba(15, 15, 25, 0.65);
+            backdrop-filter: blur(6px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            touch-action: none;
+        }
+
+        .ctrl-btn:active {
+            background: rgba(255, 255, 255, 0.25);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        #btn-handbrake {
+            width: 75px;
+            height: 75px;
+            border-color: rgba(255, 215, 0, 0.3);
+            color: var(--accent-gold);
+            font-size: 22px;
+        }
+
+        #btn-handbrake:active {
+            background: rgba(255, 215, 0, 0.25);
+            border-color: var(--accent-gold);
+        }
+
+        @media (pointer: coarse), (max-width: 1024px) {
+            #mobile-controls { display: flex; }
+            #enemy-counter { bottom: 140px; }
+            #intensity-gauge { bottom: 140px; }
+        }
+
         #game-over-screen {
             display: none;
             position: absolute;
@@ -94,40 +152,43 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 10;
+            z-index: 15;
         }
 
         #game-over-screen h1 {
             color: var(--accent-danger);
-            font-size: 64px;
+            font-size: 54px;
             margin: 0 0 15px 0;
             letter-spacing: 4px;
             text-shadow: 0 0 25px rgba(255, 0, 85, 0.3);
+            text-align: center;
         }
 
         #game-over-screen p {
-            font-size: 18px;
+            font-size: 16px;
             margin: 5px 0 30px 0;
             color: #94a3b8;
-            max-width: 600px;
+            max-width: 500px;
             text-align: center;
             line-height: 1.6;
+            padding: 0 20px;
         }
 
         .restart-btn {
             background: transparent;
             border: 2px solid var(--accent-gold);
             color: var(--accent-gold);
-            padding: 14px 45px;
-            font-size: 18px;
+            padding: 16px 40px;
+            font-size: 16px;
             font-family: inherit;
             font-weight: bold;
             cursor: pointer;
             border-radius: 8px;
             transition: all 0.2s ease;
+            pointer-events: auto;
         }
 
-        .restart-btn:hover {
+        .restart-btn:hover, .restart-btn:active {
             background: var(--accent-gold);
             color: #000;
             box-shadow: 0 0 25px var(--accent-gold);
@@ -152,7 +213,7 @@
             <div style="font-size: 10px; color: #64748b; letter-spacing: 1px;">TOTAL SCORE</div>
             <div id="score-value">000,000</div>
         </div>
-        <div class="hud-panel" style="min-width: 140px;">
+        <div class="hud-panel" style="min-width: 120px;">
             <div id="combo-mult">x1</div>
             <div id="combo-pts" style="font-size: 13px; color: #ffd700;">+0 pts</div>
         </div>
@@ -161,10 +222,17 @@
     <div id="enemy-counter" class="bottom-ui">UNITÀ ATTIVE: 0</div>
     <div id="intensity-gauge" class="bottom-ui">FREQUENZA SPAWN: 10.0s</div>
 
+    <!-- Interfaccia Pulsanti Mobile -->
+    <div id="mobile-controls">
+        <div id="btn-left" class="ctrl-btn">◀</div>
+        <div id="btn-handbrake" class="ctrl-btn">DRIFT</div>
+        <div id="btn-right" class="ctrl-btn">▶</div>
+    </div>
+
     <div id="game-over-screen">
         <h1 id="death-title">SBRICIOLATO</h1>
         <p id="death-reason">Impatto ad alta velocità.</p>
-        <button class="restart-btn" onclick="resetGame()">PREMI <span class="tip-key">SPAZIO</span> PER COMINCIARE</button>
+        <button class="restart-btn" onclick="resetGame()">TOCCA QUI O PREMI <span class="tip-key">SPAZIO</span> PER RICOMINCIARE</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -178,6 +246,8 @@
                     'd': 'right', 'arrowright': 'right',
                     ' ': 'handbrake'
                 };
+                
+                // Keyboard events
                 window.addEventListener('keydown', (e) => {
                     if (isGameOver && e.key === ' ') {
                         e.preventDefault();
@@ -187,7 +257,11 @@
                     this.toggle(e, true);
                 });
                 window.addEventListener('keyup', (e) => this.toggle(e, false));
+
+                // Touch events per Mobile UI
+                this.initTouchControls();
             }
+
             toggle(e, status) {
                 const key = e.key.toLowerCase();
                 if (this.map[key]) {
@@ -195,6 +269,31 @@
                     this.states[this.map[key]] = status;
                 }
             }
+
+            initTouchControls() {
+                const btnLeft = document.getElementById('btn-left');
+                const btnRight = document.getElementById('btn-right');
+                const btnBrake = document.getElementById('btn-handbrake');
+
+                if (!btnLeft || !btnRight || !btnBrake) return;
+
+                const bindTouch = (element, stateProperty) => {
+                    element.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.states[stateProperty] = true;
+                    }, { passive: false });
+
+                    element.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        this.states[stateProperty] = false;
+                    }, { passive: false });
+                };
+
+                bindTouch(btnLeft, 'left');
+                bindTouch(btnRight, 'right');
+                bindTouch(btnBrake, 'handbrake');
+            }
+
             clear() { for (let k in this.states) this.states[k] = false; }
         }
 
@@ -291,13 +390,13 @@
             driftTimer = 0;
             isDrifting = false;
             isGameOver = false;
+            inputs.clear();
 
             document.getElementById('score-value').innerText = "000,000";
             document.getElementById('game-over-screen').style.display = 'none';
         }
 
         function spawnEnemy() {
-            // Aggiunto il tipo 'drunk' alla lista degli spawn
             const types = ['police', 'ambulance', 'tow_truck', 'black_car', 'drunk'];
             const chosenType = types[Math.floor(Math.random() * types.length)];
 
@@ -322,7 +421,6 @@
 
             switch(chosenType) {
                 case 'police':
-                    // Velocità alzata a 255 (superiore a 235 del player) per raggiungerti facilmente
                     config.speed = 255;   config.grip = 0.91;   config.steerMod = 3.8; config.radius = 8;  config.name = "Polizia";
                     break;
                 case 'ambulance':
@@ -335,7 +433,6 @@
                     config.speed = 190;   config.grip = 0.76;   config.steerMod = 3.8; config.radius = 8;  config.name = "Auto Nera";
                     break;
                 case 'drunk':
-                    // Configurazione auto Ubriaca: Molto veloce, grip instabile per sbandare vistoreamente
                     config.speed = 245;   config.grip = 0.78;   config.steerMod = 3.2; config.radius = 8;  config.name = "Auto Ubriaca";
                     config.drunkTimer = Math.random() * 50;
                     break;
@@ -464,7 +561,6 @@
 
                 let angleToPlayer = Math.atan2(player.y - e.y, player.x - e.x);
                 
-                // Logica di inseguimento modificata per l'auto ubriaca (gira in modo randomico/oscillante)
                 if (e.type === 'drunk') {
                     e.drunkTimer += dt * 5;
                     angleToPlayer += Math.sin(e.drunkTimer) * 0.65 + (Math.random() - 0.5) * 0.25;
@@ -519,7 +615,7 @@
                 if (Math.hypot(e.vx - eTargetVx, e.vy - eTargetVy) > 40 || e.oilTimer > 0) {
                     let trackColor = 'rgba(255, 0, 85, ';
                     if (e.type === 'ambulance') trackColor = 'rgba(0, 150, 255, ';
-                    else if (e.type === 'drunk') trackColor = 'rgba(245, 158, 11, '; // Scia arancione/ambra per l'ubriaco
+                    else if (e.type === 'drunk') trackColor = 'rgba(245, 158, 11, '; 
                     tireTracks.push({ x: e.x, y: e.y, alpha: 0.4, color: trackColor });
                 }
 
@@ -706,7 +802,6 @@
                             ctx.fillStyle = '#1e1e24'; ctx.fillRect(-12, -6, 24, 12);
                             ctx.fillStyle = '#ffffff'; ctx.fillRect(-4, -6, 12, 12); 
                             ctx.fillStyle = '#475569'; ctx.fillRect(-2, -4, 5, 8);
-                            // Sirene strobo ad alta intensità bicolore
                             ctx.fillStyle = isStrobeOn ? '#0066ff' : '#ff0000'; ctx.fillRect(-1, -1.5, 3, 3);
                             ctx.fillStyle = '#fffae6'; ctx.fillRect(11, -5, 1, 2); ctx.fillRect(11, 3, 1, 2);
                             break;
@@ -730,11 +825,9 @@
                             ctx.fillStyle = '#a5f3fc'; ctx.fillRect(11, -5, 1, 1.5); ctx.fillRect(11, 3.5, 1, 1.5);
                             break;
                         case 'drunk':
-                            // Vettura Vinaccia/Magenta scuro instabile
                             ctx.fillStyle = '#581c24'; ctx.fillRect(-12, -6, 24, 12);
                             ctx.fillStyle = '#1e293b'; ctx.fillRect(-3, -4.5, 6, 9);
                             ctx.strokeStyle = '#991b1b'; ctx.lineWidth = 1.5; ctx.strokeRect(-12, -6, 24, 12);
-                            // Quattro frecce d'emergenza che lampeggiano in sincrono strobo
                             ctx.fillStyle = isStrobeOn ? '#f59e0b' : '#451a03';
                             ctx.fillRect(11, -5, 1, 1.5);   ctx.fillRect(11, 3.5, 1, 1.5);
                             ctx.fillRect(-12, -5, 1, 1.5);  ctx.fillRect(-12, 3.5, 1, 1.5);
