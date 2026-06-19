@@ -416,7 +416,7 @@
             }
 
             for (let i = 0; i < 6; i++) {
-                let r = Math.random() * 10 + 16;
+                let r = Math.random() * 40 + 20; // grandezza alberi
                 let x = Math.random() * (MAP_WIDTH - 300) + 150;
                 let y = Math.random() * (MAP_HEIGHT - 300) + 150;
                 if (Math.hypot(x - player.x, y - player.y) < 300) {
@@ -447,7 +447,7 @@
             // di ignorare tutto il tempo passato a leggere la schermata di Game Over.
             lastTime = performance.now(); // ✨ AGGIUNTO
         }
-        
+
         function spawnEnemy(forcedType = null) {
             //  const types = ['tank'];
             const types = ['police', 'ambulance', 'tow_truck', 'black_car', 'drunk'];
@@ -614,7 +614,10 @@
                 }
             }
             for (let tree of staticTrees) {
-                if (Math.hypot(player.x - tree.x, player.y - tree.y) < (player.radius + tree.r - 4)) {
+                // 🌲 Usiamo il 15% del raggio dell'albero per calcolare solo la hitbox del tronco
+                let trunkRadius = tree.r * 0.15;
+
+                if (Math.hypot(player.x - tree.x, player.y - tree.y) < (player.radius + trunkRadius)) {
                     triggerGameOver("🌲 TRONCO RIGIDO", "La carrozzeria Panda si è avvolta fatalmente intorno a un albero!");
                     return;
                 }
@@ -871,7 +874,6 @@
         }
 
         let lastTime = performance.now();
-
         function renderLoop(currentTime) {
             let dt = (currentTime - lastTime) / 1000;
             lastTime = currentTime;
@@ -890,6 +892,7 @@
 
             ctx.translate(-camera.x, -camera.y);
 
+            // 🌐 Disegno della griglia di sfondo
             ctx.strokeStyle = '#08080d';
             ctx.lineWidth = 1;
             const gridSpacing = 60;
@@ -900,6 +903,7 @@
                 ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(MAP_WIDTH, j); ctx.stroke();
             }
 
+            // 🛢️ Pozzanghere d'olio
             for (let oil of staticOilSlicks) {
                 ctx.fillStyle = 'rgba(15, 5, 23, 0.85)';
                 ctx.strokeStyle = 'rgba(140, 0, 255, 0.35)';
@@ -920,6 +924,7 @@
                 ctx.fill();
             }
 
+            // 🏎️ Tracce di sgommate
             for (let i = tireTracks.length - 1; i >= 0; i--) {
                 let track = tireTracks[i];
                 track.alpha -= 0.32 * dt;
@@ -928,6 +933,7 @@
                 ctx.fillRect(track.x, track.y, 2.5, 2.5);
             }
 
+            // 🧱 Blocchi di cemento del cantiere
             for (let wall of staticWalls) {
                 ctx.fillStyle = '#fac800';
                 ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
@@ -941,13 +947,7 @@
                 ctx.strokeStyle = '#d4a000'; ctx.lineWidth = 2; ctx.strokeRect(wall.x, wall.y, wall.w, wall.h);
             }
 
-            for (let tree of staticTrees) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-                ctx.beginPath(); ctx.arc(tree.x + 4, tree.y + 4, tree.r, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = '#1c2421'; ctx.strokeStyle = '#344740'; ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.arc(tree.x, tree.y, tree.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-            }
-
+            // 🛑 Muri di contenimento perimetrali
             ctx.fillStyle = '#020204';
             ctx.fillRect(0, 0, MAP_WIDTH, BORDER_WALL_THICKNESS);
             ctx.fillRect(0, MAP_HEIGHT - BORDER_WALL_THICKNESS, MAP_WIDTH, BORDER_WALL_THICKNESS);
@@ -957,7 +957,7 @@
             ctx.strokeStyle = 'var(--accent-danger)'; ctx.lineWidth = 1.5;
             ctx.strokeRect(BORDER_WALL_THICKNESS - 1, BORDER_WALL_THICKNESS - 1, MAP_WIDTH - (BORDER_WALL_THICKNESS - 1) * 2, MAP_HEIGHT - (BORDER_WALL_THICKNESS - 1) * 2);
 
-            // Rendering Nemici
+            // 🚨 Rendering Nemici
             for (let e of enemies) {
                 ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.angle);
                 if (e.isDead) {
@@ -1004,45 +1004,37 @@
                             ctx.fillRect(-12, -5, 1, 1.5); ctx.fillRect(-12, 3.5, 1, 1.5);
                             break;
                         case 'tank':
-                            // Scafo cingolato corazzato
                             ctx.fillStyle = '#334155'; ctx.fillRect(-18, -14, 36, 28);
                             ctx.fillStyle = '#1e293b'; ctx.fillRect(-20, -15, 40, 4); ctx.fillRect(-20, 11, 40, 4);
-                            // Torretta rotante incorporata nell'angolo di movimento
                             ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
-                            ctx.fillStyle = '#1e293b'; ctx.fillRect(0, -2, 22, 4); // Cannone orientato in avanti
+                            ctx.fillStyle = '#1e293b'; ctx.fillRect(0, -2, 22, 4);
                             break;
                     }
                 }
                 ctx.restore();
             }
 
-            // Rendering Missili
+            // 🚀 Rendering Missili
             for (let m of missiles) {
                 ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.angle);
                 ctx.fillStyle = '#ff0055';
                 ctx.beginPath();
                 ctx.moveTo(6, 0); ctx.lineTo(-6, -4); ctx.lineTo(-6, 4);
                 ctx.fill();
-                // Scia di fuoco particellare del missile
                 ctx.fillStyle = Math.random() > 0.5 ? '#ffd700' : '#ff5500';
                 ctx.fillRect(-10, -2, 4, 4);
                 ctx.restore();
             }
 
-            // Rendering debris missili
+            //💥 Rendering detriti esplosioni
             for (let d of missileDebris) {
                 ctx.fillStyle = 'rgba(255, 0, 85, 0.6)';
-                ctx.beginPath();
-                ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-                ctx.fill();
-
+                ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.beginPath();
-                ctx.arc(d.x, d.y, d.r * 0.5, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(d.x, d.y, d.r * 0.5, 0, Math.PI * 2); ctx.fill();
             }
 
-            // Rendering Giocatore (AE86)
+            // 🏁 Rendering Giocatore (AE86)
             ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle);
             drawCarWheels(ctx, 12, 6);
             ctx.fillStyle = '#ffffff'; ctx.fillRect(-12, -6, 24, 12);
@@ -1051,17 +1043,80 @@
             ctx.fillStyle = '#1e293b'; ctx.fillRect(-5, -4.2, 7, 8.4);
             ctx.restore();
 
-            ctx.restore(); // Fine trasformazioni camera e shake
+            
+            // 🌲 ALBERI STYLIZED TOP-DOWN CON TRONCO AD APPARIZIONE DINAMICA
+            // Essendo disegnati DOPO il giocatore, le chiome lo copriranno perfettamente dall'alto!
+            for (let tree of staticTrees) {
+                // 1. OMBRA PROIETTATA
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+                ctx.beginPath();
+                ctx.arc(tree.x + 12, tree.y + 12, tree.r, 0, Math.PI * 2);
+                ctx.fill();
 
-            // Overlay di Ansia: Flash Rosso ai bordi e scritte se l'orda è imminente
+                // 2. STRATO ESTERNO CHIOMA (Base scura)
+                ctx.fillStyle = '#111f1a';
+                ctx.strokeStyle = '#22382e';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.arc(tree.x, tree.y, tree.r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // 3. STRATO INTERMEDIO
+                ctx.fillStyle = '#193328';
+                ctx.beginPath();
+                ctx.arc(tree.x - 4, tree.y - 4, tree.r * 0.75, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 4. DETTAGLIO INTERNO
+                ctx.fillStyle = '#234a3a';
+                ctx.beginPath();
+                ctx.arc(tree.x - 7, tree.y - 7, tree.r * 0.45, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 5. CIMA DELL'ALBERO
+                ctx.fillStyle = '#316952';
+                ctx.beginPath();
+                ctx.arc(tree.x - 9, tree.y - 9, tree.r * 0.18, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 🎯 6. TRONCO IN "X-RAY" (Appare solo se l'auto è vicina)
+                let distanceToPlayer = Math.hypot(player.x - tree.x, player.y - tree.y);
+                let activationDistance = tree.r * 2.8; // Raggio di avvistamento (circa 120px dall'albero)
+
+                if (distanceToPlayer < activationDistance) {
+                    // Calcolo del fade-in: più l'auto si avvicina, più l'opacità aumenta (fino a un max di 0.75)
+                    let proximityRatio = 1 - (distanceToPlayer / activationDistance);
+                    let trunkAlpha = proximityRatio * 0.75;
+
+                    // Disegniamo il tronco SOPRA le foglie ma in trasparenza ghost
+                    ctx.fillStyle = `rgba(143, 89, 57, ${trunkAlpha})`; // Marrone legno
+                    ctx.strokeStyle = `rgba(255, 215, 0, ${trunkAlpha * 0.4})`; // Bagliore dorato arcade di pericolo
+                    ctx.lineWidth = 2;
+
+                    ctx.beginPath();
+                    // Utilizza l'esatto raggio della hitbox (tree.r * 0.15) - todo rendere parametrico volendo
+                    ctx.arc(tree.x, tree.y, tree.r * 0.15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Anello concentrico interno (effetto venatura del legno vintage)
+                    ctx.strokeStyle = `rgba(0, 0, 0, ${trunkAlpha * 0.3})`;
+                    ctx.beginPath();
+                    ctx.arc(tree.x, tree.y, tree.r * 0.12, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+
+            ctx.restore(); // Fine trasformazioni camera e shake globale
+
+            // ⚠️ Overlay Interfaccia di Allerta Orda
             if (hordeTextTimer > 0) {
-                // Vignetta rossa pulsante sui bordi dello schermo
                 let pulse = Math.abs(Math.sin(currentTime * 0.01));
                 ctx.strokeStyle = `rgba(255, 0, 85, ${hordeTextTimer * 0.4 * pulse})`;
                 ctx.lineWidth = 30;
                 ctx.strokeRect(0, 0, canvas.width, canvas.height);
 
-                // Scritta centrale spaventosa
                 ctx.fillStyle = '#ff0055';
                 ctx.font = 'black 38px "Courier New"';
                 ctx.textAlign = 'center';
@@ -1074,7 +1129,6 @@
 
             requestAnimationFrame(renderLoop);
         }
-
         initGame();
         requestAnimationFrame(renderLoop);
     </script>
