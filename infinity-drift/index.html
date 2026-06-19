@@ -253,6 +253,13 @@
     <div id="game-over-screen">
         <h1 id="death-title">SBRICIOLATO</h1>
         <p id="death-reason">Impatto ad alta velocità.</p>
+
+        <div class="game-over-stats" style="margin: 20px 0; font-family: 'Courier New', monospace;">
+            <p>PUNTEGGIO FINALE: <span id="final-score" style="font-weight: bold; color: #fff;">000000</span></p>
+            <p>🏆 RECORD ASSOLUTO: <span id="high-score-value" style="font-weight: bold; color: #00ffaa;">000000</span>
+            </p>
+        </div>
+
         <button class="restart-btn" onclick="resetGame()">TOCCA QUI O PREMI <span class="tip-key">SPAZIO</span> PER
             RICOMINCIARE</button>
     </div>
@@ -332,10 +339,18 @@
         let staticWalls = [];
         let staticTrees = [];
         let staticOilSlicks = [];
-        let score, comboPoints, multiplier, driftTimer, isDrifting, isGameOver;
+        let comboPoints, multiplier, driftTimer, isDrifting;
         let survivalTime, spawnAccumulator, survivalScoreTimer;
         let hordeTimer, hordeTextTimer; // Gestione orde e ansia visiva
         let camera = { x: 0, y: 0 };
+
+        // --- VARIABILI DI STATO DEL GIOCO ---
+        let score = 0;
+        let isGameOver = false;
+
+        // Recupera il record: se non esiste, imposta a 0.
+        // Usiamo parseInt perché localStorage salva tutto sotto forma di stringa.
+        let highScore = localStorage.getItem('carGame_highScore') ? parseInt(localStorage.getItem('carGame_highScore')) : 0;
 
         function resizeCanvas() {
             canvas.width = window.innerWidth;
@@ -351,7 +366,6 @@
             let distY = cy - closestY;
             return (distX * distX + distY * distY) < (radius * radius);
         }
-
         function initGame() {
             player = {
                 x: MAP_WIDTH / 2,
@@ -368,6 +382,7 @@
             enemies = [];
             tireTracks = [];
             missiles = [];
+            missileDebris = []; // ✨ AGGIUNTO: Pulisce i vecchi detriti per evitare che uccidano nemici al riavvio!
             staticWalls = [];
             staticTrees = [];
             staticOilSlicks = [];
@@ -378,6 +393,7 @@
             hordeTimer = 0;
             hordeTextTimer = 0;
 
+            // --- GENERAZIONE PROCEDURALE ELEMENTI MAPPA ---
             for (let i = 0; i < 24; i++) {
                 let x = Math.random() * (MAP_WIDTH - 300) + 150;
                 let y = Math.random() * (MAP_HEIGHT - 300) + 150;
@@ -411,6 +427,7 @@
 
             spawnEnemy();
 
+            // --- RESET LOGICA E PUNTEGGI ---
             score = 0;
             comboPoints = 0;
             multiplier = 1;
@@ -419,10 +436,18 @@
             isGameOver = false;
             inputs.clear();
 
+            // --- 🖼️ RESET COMPLETO DELLA INTERFACCIA GRAFICA (DOM) ---
             document.getElementById('score-value').innerText = "000,000";
+            document.getElementById('combo-mult').innerText = "x1";    // ✨ AGGIUNTO: Ripuliamo i testi di drift
+            document.getElementById('combo-pts').innerText = "+0 pts"; // ✨ AGGIUNTO
             document.getElementById('game-over-screen').style.display = 'none';
-        }
 
+            // --- ⏳ FIX DELTA TIME (PREVIENE IL BUG DEL LAG) ---
+            // Resettando lastTime all'esatto momento del riavvio, diciamo al loop principale 
+            // di ignorare tutto il tempo passato a leggere la schermata di Game Over.
+            lastTime = performance.now(); // ✨ AGGIUNTO
+        }
+        
         function spawnEnemy(forcedType = null) {
             //  const types = ['tank'];
             const types = ['police', 'ambulance', 'tow_truck', 'black_car', 'drunk'];
@@ -809,10 +834,29 @@
         }
 
         function triggerGameOver(title, message) {
+            if (isGameOver) return; // Evita che collisioni multiple nello stesso frame sovrascrivano i dati
             isGameOver = true;
-            cashInCombo();
+
+            cashInCombo(); // Mantiene il tuo calcolo della combo a fine partita
+
+            // 🏆 Recupera il record attuale dal browser (se non esiste parte da 0)
+            let highScore = localStorage.getItem('carGame_highScore') ? parseInt(localStorage.getItem('carGame_highScore')) : 0;
+
+            // Se hai superato il record, aggiornalo nel localStorage
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('carGame_highScore', highScore);
+            }
+
+            // Elementi che avevi già
             document.getElementById('death-title').innerText = title;
             document.getElementById('death-reason').innerText = message;
+
+            // 📊 NUOVO: Inietta il Punteggio Finale e il Record negli elementi HTML
+            document.getElementById('final-score').innerText = score.toLocaleString('en-US', { minimumIntegerDigits: 6 });
+            document.getElementById('high-score-value').innerText = highScore.toLocaleString('en-US', { minimumIntegerDigits: 6 });
+
+            // Mostra la schermata di Game Over
             document.getElementById('game-over-screen').style.display = 'flex';
         }
 
