@@ -1047,11 +1047,11 @@ function reasoningData(halvingObj, fearGreedNorm, maNorm, rsiNorm) {
         // PREZZO
         // =========================
         if (maNorm < 0.3) {
-            price = "under 0.3 → sale";
+            price = "sale";
         } else if (maNorm > 0.35){
-            price = "upper 0.35 → risk";
+            price = "overpriced";
         }else{
-			price = "Normal → reasonable and fair price";
+			price = "reasonable and fair";
 		}
 
 
