@@ -35,6 +35,11 @@
       cursor: none !important;
     }
 
+    /* Forza cursor:none su tutti gli elementi interattivi */
+    a, button, input, textarea, select, [role="button"] {
+      cursor: none !important;
+    }
+
     #bgCanvas {
       position: fixed;
       inset: 0;
@@ -180,7 +185,7 @@
       .projects-grid { grid-template-columns: 1fr; gap: 20px; }
       .project-card { padding: 24px; }
       .container { padding: 24px 16px; }
-      body { cursor: auto !important; }
+      body, a, button, input, textarea, select { cursor: auto !important; }
       .cursor-dot, .cursor-ring { display: none !important; }
     }
 
