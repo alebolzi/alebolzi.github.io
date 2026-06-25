@@ -420,7 +420,7 @@
         
 <!-- inserire qui -->
 
-        
+
       </div>
     </section>
 
@@ -430,7 +430,7 @@
           <a href="https://github.com/alebolzi" target="_blank" class="social-link" title="GitHub">
             <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           </a>
-          <a href="https://instagram.com/alebolzi" target="_blank" class="social-link" title="Instagram">
+          <a href="https://instagram.com/alebolzi" target="_blank" class="social-link instagram-link" title="Instagram">
             <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.17.054 1.97.24 2.43.403a4.088 4.088 0 0 1 1.523.99 4.088 4.088 0 0 1 .99 1.524c.163.46.35 1.26.403 2.428.058 1.267.07 1.647.07 4.852s-.012 3.584-.07 4.85c-.054 1.17-.24 1.97-.403 2.43a4.088 4.088 0 0 1-.99 1.523 4.088 4.088 0 0 1-1.524.99c-.46.163-1.26.35-2.428.403-1.267.058-1.647.07-4.852.07s-3.584-.012-4.85-.07c-1.17-.054-1.97-.24-2.43-.403a4.088 4.088 0 0 1-1.523-.99 4.088 4.088 0 0 1-.99-1.524c-.163-.46-.35-1.26-.403-2.428C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.054-1.17.24-1.97.403-2.43a4.088 4.088 0 0 1 .99-1.523A4.088 4.088 0 0 1 5.15 2.203c.46-.163 1.26-.35 2.428-.403C8.845 1.742 9.225 1.73 12.43 1.73L12 2.163zm0 2.204c-3.15 0-3.508.012-4.755.068-1.14.052-1.76.242-2.17.402-.546.213-.935.466-1.34.87-.404.404-.657.794-.87 1.34-.16.41-.35 1.03-.402 2.17-.056 1.247-.068 1.604-.068 4.755s.012 3.508.068 4.755c.052 1.14.242 1.76.402 2.17.213.546.466.935.87 1.34.404.404.794.657 1.34.87.41.16 1.03.35 2.17.402 1.247.056 1.604.068 4.755.068s3.508-.012 4.755-.068c1.14-.052 1.76-.242 2.17-.402.546-.213.935-.466 1.34-.87.404-.404.657-.794.87-1.34.16-.41.35-1.03.402-2.17.056-1.247.068-1.604.068-4.755s-.012-3.508-.068-4.755c-.052-1.14-.242-1.76-.402-2.17a3.708 3.708 0 0 0-.87-1.34 3.708 3.708 0 0 0-1.34-.87c-.41-.16-1.03-.35-2.17-.402-1.247-.056-1.604-.068-4.755-.068zm0 3.854a3.779 3.779 0 1 0 0 7.558 3.779 3.779 0 0 0 0-7.558zm0 6.234a2.455 2.455 0 1 1 0-4.91 2.455 2.455 0 0 1 0 4.91zm5.334-6.386a.883.883 0 1 0-1.766 0 .883.883 0 0 0 1.766 0z"/></svg>
           </a>
         </div>
@@ -697,6 +697,9 @@
     }
     animate();
 
+    /* ========================================
+       CURSORE PERSONALIZZATO — MAGNETISMO FIX
+       ======================================== */
     const cursorDot = document.getElementById('cursorDot');
     const cursorRing = document.getElementById('cursorRing');
 
@@ -724,11 +727,13 @@
     document.addEventListener('mouseleave', () => { cursorVisible = false; cursorDot.style.opacity = '0'; cursorRing.style.opacity = '0'; isDocked = false; });
 
     let finalRingX = W / 2, finalRingY = H / 2;
+    let stopTimer_check = 0;
 
     function animateCursor() {
       cursorDot.style.left = dotX + 'px';
       cursorDot.style.top = dotY + 'px';
 
+      // Docking dopo 1s di fermata su un elemento
       if (isOverInteractive && hoveredEl && !isDocked && mouseSpeed < 1.5) {
         stopTimer_check += 0.016;
         if (stopTimer_check > 1.0) {
@@ -745,6 +750,14 @@
       let targetMagX = 0, targetMagY = 0;
 
       if (!isDocked) {
+        /* FIX: invece di "break" al primo elemento in range,
+           troviamo il PIÙ VICINO e applichiamo il magnetismo solo a quello.
+           Inoltre il raggio magnetico si adatta alla dimensione dell'elemento
+           così le card grandi ricevono un raggio proporzionato. */
+        let closestDist = Infinity;
+        let closestDx = 0, closestDy = 0;
+        let closestRadius = 200;
+
         for (const el of allInteractives) {
           const rect = el.getBoundingClientRect();
           const cx = rect.left + rect.width / 2;
@@ -752,15 +765,24 @@
           const dx = cx - finalRingX;
           const dy = cy - finalRingY;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const magneticRadius = 200;
 
-          if (dist < magneticRadius && dist > 1) {
-            const factor = 1 - dist / magneticRadius;
-            const strength = factor * factor * 0.6;
-            targetMagX += dx * strength;
-            targetMagY += dy * strength;
-            break;
+          // Raggio magnetico adattivo: base 200px, aumentato per elementi grandi
+          const halfDiag = Math.sqrt(rect.width * rect.width + rect.height * rect.height) / 2;
+          const magneticRadius = Math.max(200, halfDiag + 80);
+
+          if (dist < magneticRadius && dist > 1 && dist < closestDist) {
+            closestDist = dist;
+            closestDx = dx;
+            closestDy = dy;
+            closestRadius = magneticRadius;
           }
+        }
+
+        if (closestDist < Infinity) {
+          const factor = 1 - closestDist / closestRadius;
+          const strength = factor * factor * 0.6;
+          targetMagX += closestDx * strength;
+          targetMagY += closestDy * strength;
         }
       }
 
@@ -786,7 +808,6 @@
       requestAnimationFrame(animateCursor);
     }
 
-    let stopTimer_check = 0;
     animateCursor();
 
     cursorDot.style.opacity = '0';
