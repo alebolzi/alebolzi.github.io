@@ -73,8 +73,13 @@ function Slider(props) {
   var value = props.value;
   var onValueChange = props.onValueChange;
   var ref = useRef(null);
+
   var val = Array.isArray(value) ? value[0] : value;
-  var percentage = ((val - min) / (max - min)) * 100;
+
+// 🔥 clamp per UI (NON modifica il valore reale)
+var safeVal = Math.min(Math.max(val, min), max);
+
+var percentage = ((safeVal - min) / (max - min)) * 100;
 
   var updateValue = useCallback(function(clientX) {
     if (!ref.current) return;
