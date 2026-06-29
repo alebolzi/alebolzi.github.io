@@ -46,6 +46,7 @@ body { background:#f3f4f6; }
 .text-verde { color:#16a34a; }
 .text-blu { color:#2563eb; }
 .text-viola { color:#7c3aed; }
+.text-rosa { color:#db2777; }
 </style>
 </head>
 
@@ -66,6 +67,7 @@ function formattaNumero(num, dec) {
   });
 }
 
+/* === SLIDER CON TOUCH SUPPORT === */
 function Slider(props) {
   var min = props.min !== undefined ? props.min : 0;
   var max = props.max !== undefined ? props.max : 100;
@@ -75,7 +77,6 @@ function Slider(props) {
   var ref = useRef(null);
 
   var val = Array.isArray(value) ? value[0] : value;
-  // 🔥 clamp per UI (NON modifica il valore reale)
   var safeVal = Math.min(Math.max(val, min), max);
   var percentage = ((safeVal - min) / (max - min)) * 100;
 
@@ -90,18 +91,33 @@ function Slider(props) {
     onValueChange([v]);
   }, [min, max, step, onValueChange]);
 
-  function mouseDown(ev) {
-    updateValue(ev.clientX);
-    var move = function(ev) { updateValue(ev.clientX); };
+  function pointerDown(ev) {
+    ev.preventDefault();
+    var clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    updateValue(clientX);
+
+    var move = function(ev) {
+      var cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+      updateValue(cx);
+    };
     var up = function() {
       document.removeEventListener("mousemove", move);
       document.removeEventListener("mouseup", up);
+      document.removeEventListener("touchmove", move);
+      document.removeEventListener("touchend", up);
     };
     document.addEventListener("mousemove", move);
     document.addEventListener("mouseup", up);
+    document.addEventListener("touchmove", move, { passive: false });
+    document.addEventListener("touchend", up);
   }
 
-  return e("div", { ref: ref, className: "slider-container", onMouseDown: mouseDown },
+  return e("div", {
+    ref: ref,
+    className: "slider-container",
+    onMouseDown: pointerDown,
+    onTouchStart: pointerDown
+  },
     e("div", { className: "slider-fill", style: { width: percentage + "%" } }),
     e("div", { className: "slider-thumb", style: { left: percentage + "%" } })
   );
@@ -121,8 +137,8 @@ function App() {
   const [risparmio, setRisparmio] = useState(400);
   const [interesse, setInteresse] = useState(7);
   const [anni, setAnni] = useState(40);
-  const [randomWalk, setRandomWalk] = useState(false);
-  const [volatility, setVolatility] = useState(14);
+  const [volatility, setVolatility] = useState(0);
+  const [inflazione, setInflazione] = useState(2);
   const [tasse, setTasse] = useState(26);
   const [editCapitale, setEditCapitale] = useState(false);
 
@@ -139,10 +155,8 @@ function App() {
     data.push(capitale);
 
     for (var y = 0; y < anni; y++) {
-      var rendimentoAnnuale = interesse;
-      if (randomWalk) {
-        rendimentoAnnuale = getRandomReturn(interesse, volatility);
-      }
+      // con volatility = 0 questo equivale esattamente al rendimento fisso
+      var rendimentoAnnuale = getRandomReturn(interesse, volatility);
       rendimentoAnnuale = Math.max(-99, rendimentoAnnuale);
       var rm = Math.pow(1 + rendimentoAnnuale / 100, 1 / 12) - 1;
 
@@ -162,6 +176,10 @@ function App() {
   var plusvalenza = Math.max(0, interessiGuadagnati);
   var tasseDaPagare = plusvalenza * (tasse / 100);
   var totaleNetto = totale - tasseDaPagare;
+
+  /* Potere d'acquisto del totale netto, scontato per l'inflazione cumulata */
+  var fattoreInflazione = Math.pow(1 + inflazione / 100, anni);
+  var percepito = totaleNetto / fattoreInflazione;
 
   /* VERIFICA FORMULA CHIUSA per confronto (non mostrata, solo per debug) */
   /*
@@ -197,7 +215,7 @@ function App() {
         }
       }
     });
-  }, [capitaleIniziale, risparmio, interesse, anni, randomWalk, volatility]);
+  }, [capitaleIniziale, risparmio, interesse, anni, volatility]);
 
   /* --- Helper per la formula: r_m come testo --- */
   function rmTag() {
@@ -270,20 +288,22 @@ function App() {
           e(Slider, { min: 1, max: 100, step: 1, value: [anni], onValueChange: function(v) { setAnni(v[0]); } })
         ),
 
-        e("div", { className: "space-y-3" },
-          e("div", { className: "flex justify-between items-center" },
-            e("span", { className: "font-medium" }, "🎲 Random Walk"),
-            e("input", { type: "checkbox", checked: randomWalk, onChange: function() { setRandomWalk(!randomWalk); } })
+        e("div", { className: "space-y-2" },
+          e("div", { className: "flex justify-between" },
+            e("span", null, "🎲 Volatilità annuale"),
+            e("span", { className: "font-bold" },
+              e("span", { style: { color: "#2dd4bf", fontWeight: "bold" } }, "±" + formattaNumero(volatility, 1) + "%")
+            )
           ),
-          randomWalk && e("div", { className: "space-y-2 mt-3" },
-            e("div", { className: "flex justify-between" },
-              e("span", null, "Volatilità annuale"),
-              e("span", { className: "font-bold text-gray-800" },
-                e("span", { style: { color: "#2dd4bf", fontWeight: "bold" } }, "±" + formattaNumero(volatility, 1) + "%")
-              )
-            ),
-            e(Slider, { min: 0, max: 50, step: 0.5, value: [volatility], onValueChange: function(v) { setVolatility(v[0]); } })
-          )
+          e(Slider, { min: 0, max: 50, step: 0.5, value: [volatility], onValueChange: function(v) { setVolatility(v[0]); } })
+        ),
+
+        e("div", { className: "space-y-2" },
+          e("div", { className: "flex justify-between" },
+            e("span", null, "📉 Inflazione annua"),
+            e("span", { className: "font-bold text-rosa" }, formattaNumero(inflazione, 1) + "%")
+          ),
+          e(Slider, { min: 0, max: 5, step: 0.1, value: [inflazione], onValueChange: function(v) { setInflazione(v[0]); } })
         )
       )
     ),
@@ -303,6 +323,9 @@ function App() {
           ),
           e("div", null, "Totale netto finale:",
             e("b", { className: "text-cyan-600" }, " €" + formattaNumero(totaleNetto, 2))
+          ),
+          e("div", null, "Percepito:",
+            e("b", { className: "text-rosa" }, " €" + formattaNumero(percepito, 2))
           )
         )
       )
@@ -313,12 +336,12 @@ function App() {
       e(CardContent, null, e("canvas", { ref: chartRef }))
     ),
 
-    /* FORMULA — CORRETTA: annualità anticipata con (1+r_m) */
+    /* FORMULA — annualità anticipata con (1+r_m); ramo deterministico o random in base alla volatilità */
     e(Card, null,
       e(CardContent, { className: "space-y-4 text-sm" },
         e("div", { className: "font-semibold" }, "Formula utilizzata"),
 
-        !randomWalk && e("code", { className: "block bg-gray-50 p-4 rounded-md leading-relaxed" },
+        volatility === 0 && e("code", { className: "block bg-gray-50 p-4 rounded-md leading-relaxed" },
           "Totale = ",
           e("span", { className: "font-bold text-viola" }, formattaNumero(capitaleIniziale)),
           " × (1+r", rmTag(), ")", esponenteAnni(),
@@ -334,13 +357,20 @@ function App() {
           e("br"), e("br"),
           "Plusvalenza = Totale - Capitale versato",
           e("br"), e("br"),
-          "Tasse = Plusvalenza × ",
-          e("span", { className: "font-bold text-orange-500" }, " " + formattaNumero(tasse, 1) + "%"),
+          "Tasse = Plusvalenza \u00D7 ",
+          e("span", { className: "font-bold text-orange-500" }, formattaNumero(tasse, 1) + "%"),
           e("br"), e("br"),
-          "Totale netto = Totale - Tasse"
-        ),
-
-        randomWalk && e("code", { className: "block bg-gray-50 p-4 rounded-md leading-relaxed" },
+          "Totale netto = Totale - Tasse",
+          e("br"), e("br"),
+            e("span", { className: " " }, "Percepito"),
+            " = Totale netto \u00F7 (1+",
+            e("span", { className: "font-bold text-rosa" }, "i"),
+            ")", e("sup", null, e("span", { className: "font-bold text-blu" }, anni)),
+            e("br"), e("br"),
+            e("span", { className: "font-bold text-rosa" }, "i"), " = ",
+            e("span", { className: "font-bold text-rosa" }, formattaNumero(inflazione, 1) + "%")
+          ),
+        volatility > 0 && e("code", { className: "block bg-gray-50 p-4 rounded-md leading-relaxed" },
           "Totale = ",
           e("span", { className: "font-bold text-viola" }, formattaNumero(capitaleIniziale)),
           " × (1+R", rmTag(), ")", esponenteAnni(),
@@ -361,10 +391,18 @@ function App() {
           e("br"), e("br"),
           "Plusvalenza = Totale - Capitale versato",
           e("br"), e("br"),
-          "Tasse = Plusvalenza × ",
-          e("span", { className: "font-bold text-orange-500" }, " " + formattaNumero(tasse, 1) + "%"),
+          "Tasse = Plusvalenza \u00D7 ",
+          e("span", { className: "font-bold text-orange-500" }, formattaNumero(tasse, 1) + "%"),
           e("br"), e("br"),
-          "Totale netto = Totale - Tasse"
+          "Totale netto = Totale - Tasse",
+          e("br"), e("br"),
+          e("span", { className: "font-bold text-rosa" }, "Percepito"),
+          " = Totale netto \u00F7 (1+",
+          e("span", { className: "font-bold text-rosa" }, "i"),
+          ")", e("sup", null, e("span", { className: "font-bold text-rosa" }, anni)),
+          e("br"), e("br"),
+          e("span", { className: "font-bold text-rosa" }, "i"), " = ",
+          e("span", { className: "font-bold text-rosa" }, formattaNumero(inflazione, 1) + "%")
         )
       )
     ),
