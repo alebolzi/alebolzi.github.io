@@ -155,14 +155,13 @@ function App() {
     data.push(capitale);
 
     for (var y = 0; y < anni; y++) {
-      // con volatility = 0 questo equivale esattamente al rendimento fisso
       var rendimentoAnnuale = getRandomReturn(interesse, volatility);
       rendimentoAnnuale = Math.max(-99, rendimentoAnnuale);
       var rm = Math.pow(1 + rendimentoAnnuale / 100, 1 / 12) - 1;
 
       for (var m = 0; m < 12; m++) {
-        capitale += risparmio;       // versamento a INIZIO mese
-        capitale *= (1 + rm);        // interesse a FINE mese
+        capitale += risparmio;
+        capitale *= (1 + rm);
       }
       data.push(capitale);
     }
@@ -177,20 +176,26 @@ function App() {
   var tasseDaPagare = plusvalenza * (tasse / 100);
   var totaleNetto = totale - tasseDaPagare;
 
-  /* Potere d'acquisto del totale netto, scontato per l'inflazione cumulata */
   var fattoreInflazione = Math.pow(1 + inflazione / 100, anni);
   var percepito = totaleNetto / fattoreInflazione;
 
-  /* VERIFICA FORMULA CHIUSA per confronto (non mostrata, solo per debug) */
-  /*
-  var r = interesse / 100;
-  var rm = Math.pow(1 + r, 1/12) - 1;
-  var n = 12 * anni;
-  var fattore = Math.pow(1 + rm, n);
-  // Annualità ANTICIPATA: versamento prima dell'interesse
-  var formulaTotale = capitaleIniziale * fattore + risparmio * (1 + rm) * (fattore - 1) / rm;
-  console.log("Simulazione:", totale, "Formula chiusa:", formulaTotale);
-  */
+  /* === Dati per le linee secondarie del grafico === */
+  var datiCapitaleVersato = [];
+  var datiNetto = [];
+  var datiPercepito = [];
+
+  for (var i = 0; i <= anni; i++) {
+    var versatoQui = capitaleIniziale + risparmio * 12 * i;
+    datiCapitaleVersato.push(versatoQui);
+
+    var plusvQui = Math.max(0, dati[i] - versatoQui);
+    var tasseQui = plusvQui * (tasse / 100);
+    var nettoQui = dati[i] - tasseQui;
+    datiNetto.push(nettoQui);
+
+    var fattoreQui = Math.pow(1 + inflazione / 100, i);
+    datiPercepito.push(nettoQui / fattoreQui);
+  }
 
   useEffect(function() {
     if (chartInstance.current) chartInstance.current.destroy();
@@ -198,26 +203,98 @@ function App() {
       type: "line",
       data: {
         labels: Array.from({ length: anni + 1 }, function(_, i) { return i; }),
-        datasets: [{
-          label: "Capitale",
-          data: dati,
-          borderColor: "#7c3aed",
-          tension: 0.25
-        }]
+        datasets: [
+          {
+            label: "Percepito",
+            data: datiPercepito,
+            borderColor: "#db2777",
+            backgroundColor: "rgba(219, 39, 119, 0.05)",
+            tension: 0.25,
+            borderWidth: 1.5,
+            borderDash: [5, 5],
+            pointRadius: 0
+          },
+          {
+            label: "Totale netto",
+            data: datiNetto,
+            borderColor: "#2563eb",
+            backgroundColor: "rgba(37, 99, 235, 0.05)",
+            tension: 0.25,
+            borderWidth: 1.5,
+            borderDash: [5, 5],
+            pointRadius: 0
+          },
+          {
+            label: "Capitale versato",
+            data: datiCapitaleVersato,
+            borderColor: "#9ca3af",
+            backgroundColor: "rgba(156, 163, 175, 0.05)",
+            tension: 0,
+            borderWidth: 1.5,
+            borderDash: [5, 5],
+            pointRadius: 0
+          },
+          {
+            label: "Capitale lordo",
+            data: dati,
+            borderColor: "#7c3aed",
+            backgroundColor: "rgba(124, 58, 237, 0.08)",
+            fill: true,
+            tension: 0.25,
+            borderWidth: 2.5,
+            pointRadius: 0
+          }
+        ]
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        interaction: {
+          mode: "index",
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: "top",
+            labels: {
+              usePointStyle: true,
+              pointStyle: "line",
+              padding: 16,
+              font: { size: 12 }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                return ctx.dataset.label + ": €" + formattaNumero(ctx.parsed.y);
+              }
+            }
+          }
+        },
         scales: {
+          x: {
+            title: { display: true, text: "Anni", font: { size: 12 } },
+            ticks: {
+              maxTicksLimit: 20,
+              font: { size: 11 }
+            }
+          },
           y: {
-            ticks: { callback: function(v) { return "€" + formattaNumero(v); } }
+            ticks: {
+              callback: function(v) {
+                if (v >= 1000000) return "€" + (v / 1000000).toFixed(1) + "M";
+                if (v >= 1000) return "€" + (v / 1000).toFixed(0) + "k";
+                return "€" + formattaNumero(v);
+              },
+              font: { size: 11 }
+            }
           }
         }
       }
     });
-  }, [capitaleIniziale, risparmio, interesse, anni, volatility]);
+  }, [capitaleIniziale, risparmio, interesse, anni, volatility, tasse, inflazione]);
 
-  /* --- Helper per la formula: r_m come testo --- */
+  /* --- Helper per la formula --- */
   function rmTag() {
     return [e("sub", { key: "s" }, "m")];
   }
@@ -336,7 +413,7 @@ function App() {
       e(CardContent, null, e("canvas", { ref: chartRef }))
     ),
 
-    /* FORMULA — annualità anticipata con (1+r_m); ramo deterministico o random in base alla volatilità */
+    /* FORMULA */
     e(Card, null,
       e(CardContent, { className: "space-y-4 text-sm" },
         e("div", { className: "font-semibold" }, "Formula utilizzata"),
@@ -362,14 +439,14 @@ function App() {
           e("br"), e("br"),
           "Totale netto = Totale - Tasse",
           e("br"), e("br"),
-            e("span", { className: " " }, "Percepito"),
-            " = Totale netto \u00F7 (1+",
-            e("span", { className: "font-bold text-rosa" }, "i"),
-            ")", e("sup", null, e("span", { className: "font-bold text-blu" }, anni)),
-            e("br"), e("br"),
-            e("span", { className: "font-bold text-rosa" }, "i"), " = ",
-            e("span", { className: "font-bold text-rosa" }, formattaNumero(inflazione, 1) + "%")
-          ),
+          e("span", { className: " " }, "Percepito"),
+          " = Totale netto \u00F7 (1+",
+          e("span", { className: "font-bold text-rosa" }, "i"),
+          ")", e("sup", null, e("span", { className: "font-bold text-blu" }, anni)),
+          e("br"), e("br"),
+          e("span", { className: "font-bold text-rosa" }, "i"), " = ",
+          e("span", { className: "font-bold text-rosa" }, formattaNumero(inflazione, 1) + "%")
+        ),
         volatility > 0 && e("code", { className: "block bg-gray-50 p-4 rounded-md leading-relaxed" },
           "Totale = ",
           e("span", { className: "font-bold text-viola" }, formattaNumero(capitaleIniziale)),
@@ -396,10 +473,10 @@ function App() {
           e("br"), e("br"),
           "Totale netto = Totale - Tasse",
           e("br"), e("br"),
-          e("span", { className: "font-bold text-rosa" }, "Percepito"),
+          e("span", { className: " " }, "Percepito"),
           " = Totale netto \u00F7 (1+",
           e("span", { className: "font-bold text-rosa" }, "i"),
-          ")", e("sup", null, e("span", { className: "font-bold text-rosa" }, anni)),
+          ")", e("sup", null, e("span", { className: "font-bold text-blu" }, anni)),
           e("br"), e("br"),
           e("span", { className: "font-bold text-rosa" }, "i"), " = ",
           e("span", { className: "font-bold text-rosa" }, formattaNumero(inflazione, 1) + "%")
