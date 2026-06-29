@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>💸 Calcolatore Interesse Composto</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { background:#f3f4f6; }
+
+.slider-container {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.slider-fill {
+  position: absolute;
+  height: 100%;
+  background: #111827;
+  border-radius: 9999px;
+}
+
+.slider-thumb {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border: 2px solid #111827;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.text-rosso { color:#dc2626; }
+.text-verde { color:#16a34a; }
+.text-blu { color:#2563eb; }
+.text-viola { color:#7c3aed; }
+</style>
+</head>
+
+<body>
+
+<div id="root"></div>
+
+<script>
+
+const e = React.createElement;
+const { useState, useRef, useEffect, useCallback } = React;
+
+function formattaNumero(num, dec) {
+  if (dec === undefined) dec = 0;
+  return Number(num).toLocaleString("it-IT", {
+    minimumFractionDigits: dec,
+    maximumFractionDigits: dec
+  });
+}
+
+function Slider(props) {
+  var min = props.min !== undefined ? props.min : 0;
+  var max = props.max !== undefined ? props.max : 100;
+  var step = props.step !== undefined ? props.step : 1;
+  var value = props.value;
+  var onValueChange = props.onValueChange;
+  var ref = useRef(null);
+
+  var val = Array.isArray(value) ? value[0] : value;
+  // 🔥 clamp per UI (NON modifica il valore reale)
+  var safeVal = Math.min(Math.max(val, min), max);
+  var percentage = ((safeVal - min) / (max - min)) * 100;
+
+  var updateValue = useCallback(function(clientX) {
+    if (!ref.current) return;
+    var rect = ref.current.getBoundingClientRect();
+    var p = (clientX - rect.left) / rect.width;
+    p = Math.max(0, Math.min(1, p));
+    var v = min + p * (max - min);
+    v = Math.round(v / step) * step;
+    v = Math.max(min, Math.min(max, v));
+    onValueChange([v]);
+  }, [min, max, step, onValueChange]);
+
+  function mouseDown(ev) {
+    updateValue(ev.clientX);
+    var move = function(ev) { updateValue(ev.clientX); };
+    var up = function() {
+      document.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseup", up);
+    };
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", up);
+  }
+
+  return e("div", { ref: ref, className: "slider-container", onMouseDown: mouseDown },
+    e("div", { className: "slider-fill", style: { width: percentage + "%" } }),
+    e("div", { className: "slider-thumb", style: { left: percentage + "%" } })
+  );
+}
+
+function Card(props) {
+  return e("div", { className: "rounded-xl bg-white shadow border " + (props.className || "") }, props.children);
+}
+
+function CardContent(props) {
+  return e("div", { className: "p-6 " + (props.className || "") }, props.children);
+}
+
+function App() {
+
+  const [capitaleIniziale, setCapitaleIniziale] = useState(10000);
+  const [risparmio, setRisparmio] = useState(400);
+  const [interesse, setInteresse] = useState(7);
+  const [anni, setAnni] = useState(40);
+  const [randomWalk, setRandomWalk] = useState(false);
+  const [volatility, setVolatility] = useState(14);
+  const [tasse, setTasse] = useState(26);
+  const [editCapitale, setEditCapitale] = useState(false);
+
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
+
+  function getRandomReturn(mean, vol) {
+    return mean + ((Math.random() * 2) - 1) * vol;
+  }
+
+  function simulate() {
+    var capitale = capitaleIniziale;
+    var data = [];
+    data.push(capitale);
+
+    for (var y = 0; y < anni; y++) {
+      var rendimentoAnnuale = interesse;
+      if (randomWalk) {
+        rendimentoAnnuale = getRandomReturn(interesse, volatility);
+      }
+      rendimentoAnnuale = Math.max(-99, rendimentoAnnuale);
+      var rm = Math.pow(1 + rendimentoAnnuale / 100, 1 / 12) - 1;
+
+      for (var m = 0; m < 12; m++) {
+        capitale += risparmio;       // versamento a INIZIO mese
+        capitale *= (1 + rm);        // interesse a FINE mese
+      }
+      data.push(capitale);
+    }
+    return data;
+  }
+
+  var dati = simulate();
+  var totale = dati.at(-1);
+  var capitaleVersato = capitaleIniziale + (risparmio * 12 * anni);
+  var interessiGuadagnati = totale - capitaleVersato;
+  var plusvalenza = Math.max(0, interessiGuadagnati);
+  var tasseDaPagare = plusvalenza * (tasse / 100);
+  var totaleNetto = totale - tasseDaPagare;
+
+  /* VERIFICA FORMULA CHIUSA per confronto (non mostrata, solo per debug) */
+  /*
+  var r = interesse / 100;
+  var rm = Math.pow(1 + r, 1/12) - 1;
+  var n = 12 * anni;
+  var fattore = Math.pow(1 + rm, n);
+  // Annualità ANTICIPATA: versamento prima dell'interesse
+  var formulaTotale = capitaleIniziale * fattore + risparmio * (1 + rm) * (fattore - 1) / rm;
+  console.log("Simulazione:", totale, "Formula chiusa:", formulaTotale);
+  */
+
+  useEffect(function() {
+    if (chartInstance.current) chartInstance.current.destroy();
+    chartInstance.current = new Chart(chartRef.current, {
+      type: "line",
+      data: {
+        labels: Array.from({ length: anni + 1 }, function(_, i) { return i; }),
+        datasets: [{
+          label: "Capitale",
+          data: dati,
+          borderColor: "#7c3aed",
+          tension: 0.25
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            ticks: { callback: function(v) { return "€" + formattaNumero(v); } }
+          }
+        }
+      }
+    });
+  }, [capitaleIniziale, risparmio, interesse, anni, randomWalk, volatility]);
+
+  /* --- Helper per la formula: r_m come testo --- */
+  function rmTag() {
+    return [e("sub", { key: "s" }, "m")];
+  }
+
+  function esponenteAnni() {
+    return e("sup", null, e("span", { className: "font-bold text-blu" }, "12×" + anni));
+  }
+
+  return e("div", { className: "max-w-3xl mx-auto p-8 space-y-8 font-sans" },
+
+    e("h1", { className: "text-4xl font-extrabold text-center" },
+      "💸 Calcolatore Interesse Composto"
+    ),
+
+    /* SETTINGS */
+    e(Card, null,
+      e(CardContent, { className: "space-y-6" },
+
+        e("div", { className: "space-y-2" },
+          e("div", { className: "flex justify-between items-center" },
+            e("span", null, "Capitale iniziale"),
+            !editCapitale
+              ? e("div", { className: "flex items-center gap-2 cursor-pointer", onClick: function() { setEditCapitale(true); } },
+                  e("b", { className: "text-viola text-lg" }, "€" + formattaNumero(capitaleIniziale)),
+                  e("span", { className: "text-gray-400 text-sm" }, "✏️")
+                )
+              : e("input", {
+                  autoFocus: true,
+                  className: "text-right font-bold text-viola bg-transparent border-b outline-none w-40",
+                  value: capitaleIniziale,
+                  onChange: function(ev) { setCapitaleIniziale(+ev.target.value); },
+                  onBlur: function() { setEditCapitale(false); },
+                  onKeyDown: function(ev) { if (ev.key === "Enter") setEditCapitale(false); }
+                })
+          ),
+          e(Slider, { min: 0, max: 100000, step: 1000, value: [capitaleIniziale], onValueChange: function(v) { setCapitaleIniziale(v[0]); } })
+        ),
+
+        e("div", { className: "space-y-2" },
+          e("div", { className: "flex justify-between" },
+            e("span", null, "Risparmio mensile"),
+            e("span", { className: "font-bold text-rosso" }, "€" + formattaNumero(risparmio))
+          ),
+          e(Slider, { min: 0, max: 2000, step: 10, value: [risparmio], onValueChange: function(v) { setRisparmio(v[0]); } })
+        ),
+
+        e("div", { className: "space-y-2" },
+          e("div", { className: "flex justify-between" },
+            e("span", null, "Interesse annuale"),
+            e("span", { className: "font-bold text-verde" }, formattaNumero(interesse, 1) + "%")
+          ),
+          e(Slider, { min: 0, max: 30, step: 0.1, value: [interesse], onValueChange: function(v) { setInteresse(v[0]); } })
+        ),
+
+        e("div", { className: "space-y-2" },
+          e("div", { className: "flex justify-between" },
+            e("span", null, "Tassazione plusvalenza"),
+            e("span", { className: "font-bold text-orange-500" }, formattaNumero(tasse, 1) + "%")
+          ),
+          e(Slider, { min: 0, max: 60, step: 0.5, value: [tasse], onValueChange: function(v) { setTasse(v[0]); } })
+        ),
+
+        e("div", { className: "space-y-2" },
+          e("div", { className: "flex justify-between" },
+            e("span", null, "Numero di anni"),
+            e("span", { className: "font-bold text-blu" }, anni)
+          ),
+          e(Slider, { min: 1, max: 100, step: 1, value: [anni], onValueChange: function(v) { setAnni(v[0]); } })
+        ),
+
+        e("div", { className: "space-y-3" },
+          e("div", { className: "flex justify-between items-center" },
+            e("span", { className: "font-medium" }, "🎲 Random Walk"),
+            e("input", { type: "checkbox", checked: randomWalk, onChange: function() { setRandomWalk(!randomWalk); } })
+          ),
+          randomWalk && e("div", { className: "space-y-2 mt-3" },
+            e("div", { className: "flex justify-between" },
+              e("span", null, "Volatilità annuale"),
+              e("span", { className: "font-bold text-gray-800" },
+                e("span", { style: { color: "#2dd4bf", fontWeight: "bold" } }, "±" + formattaNumero(volatility, 1) + "%")
+              )
+            ),
+            e(Slider, { min: 0, max: 50, step: 0.5, value: [volatility], onValueChange: function(v) { setVolatility(v[0]); } })
+          )
+        )
+      )
+    ),
+
+    /* RISULTATO */
+    e(Card, null,
+      e(CardContent, { className: "space-y-4 text-center" },
+        e("div", { className: "text-xl text-gray-500" }, "Totale maturato"),
+        e("div", { className: "text-5xl font-bold text-viola" }, "€" + formattaNumero(totale, 2)),
+        e("div", { className: "space-y-2 text-sm text-gray-600" },
+          e("div", null, "Capitale versato:", e("b", null, " €" + formattaNumero(capitaleVersato, 2))),
+          e("div", null, "Interessi guadagnati:",
+            e("b", { className: interessiGuadagnati >= 0 ? "text-green-600" : "text-red-500" }, " €" + formattaNumero(interessiGuadagnati, 2))
+          ),
+          e("div", null, "Tasse sulla plusvalenza:",
+            e("b", { className: "text-orange-500" }, " €" + formattaNumero(tasseDaPagare, 2))
+          ),
+          e("div", null, "Totale netto finale:",
+            e("b", { className: "text-cyan-600" }, " €" + formattaNumero(totaleNetto, 2))
+          )
+        )
+      )
+    ),
+
+    /* GRAFICO */
+    e(Card, null,
+      e(CardContent, null, e("canvas", { ref: chartRef }))
+    ),
+
+    /* FORMULA — CORRETTA: annualità anticipata con (1+r_m) */
+    e(Card, null,
+      e(CardContent, { className: "space-y-4 text-sm" },
+        e("div", { className: "font-semibold" }, "Formula utilizzata"),
+
+        !randomWalk && e("code", { className: "block bg-gray-50 p-4 rounded-md leading-relaxed" },
+          "Totale = ",
+          e("span", { className: "font-bold text-viola" }, formattaNumero(capitaleIniziale)),
+          " × (1+r", rmTag(), ")", esponenteAnni(),
+          " + ",
+          e("span", { className: "font-bold text-rosso" }, formattaNumero(risparmio)),
+          " × (1+r", rmTag(), ") × ( ( (1+r", rmTag(), ")", esponenteAnni(),
+          " - 1 ) ÷ r", rmTag(), " )",
+          e("br"), e("br"),
+          "r", rmTag(), " = (1+r)", e("sup", null, "1/12"), " - 1",
+          e("br"), e("br"),
+          e("span", { className: "font-bold text-verde" }, "r"), " = ",
+          e("span", { className: "font-bold text-green-600" }, formattaNumero(interesse, 1) + "%"),
+          e("br"), e("br"),
+          "Plusvalenza = Totale - Capitale versato",
+          e("br"), e("br"),
+          "Tasse = Plusvalenza × ",
+          e("span", { className: "font-bold text-orange-500" }, " " + formattaNumero(tasse, 1) + "%"),
+          e("br"), e("br"),
+          "Totale netto = Totale - Tasse"
+        ),
+
+        randomWalk && e("code", { className: "block bg-gray-50 p-4 rounded-md leading-relaxed" },
+          "Totale = ",
+          e("span", { className: "font-bold text-viola" }, formattaNumero(capitaleIniziale)),
+          " × (1+R", rmTag(), ")", esponenteAnni(),
+          " + ",
+          e("span", { className: "font-bold text-rosso" }, formattaNumero(risparmio)),
+          " × (1+R", rmTag(), ") × ( ( (1+R", rmTag(), ")", esponenteAnni(),
+          " - 1 ) ÷ R", rmTag(), " )",
+          e("br"), e("br"),
+          "R", rmTag(), " = (1+R)", e("sup", null, "1/12"), " - 1",
+          e("br"), e("br"),
+          e("span", { className: "font-bold", style: { color: "#2dd4bf" } }, "R"), " = random(",
+          e("span", { style: { color: "#2dd4bf", fontWeight: "bold" } }, formattaNumero(interesse - volatility, 1) + "%"),
+          " ; ",
+          e("span", { style: { color: "#2dd4bf", fontWeight: "bold" } }, formattaNumero(interesse + volatility, 1) + "%"),
+          ")",
+          e("br"), e("br"),
+          e("span", { className: "text-gray-500 text-xs" }, "R cambia casualmente ogni anno."),
+          e("br"), e("br"),
+          "Plusvalenza = Totale - Capitale versato",
+          e("br"), e("br"),
+          "Tasse = Plusvalenza × ",
+          e("span", { className: "font-bold text-orange-500" }, " " + formattaNumero(tasse, 1) + "%"),
+          e("br"), e("br"),
+          "Totale netto = Totale - Tasse"
+        )
+      )
+    ),
+
+    e("div", { className: "text-center text-xs text-gray-400" },
+      e("a", { href: "/interesse-composto/v.1.0.html" }, " Vai a versione iniziale semplificata "),
+      e("br"), "ciauuuu✨"
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(e(App));
+
+</script>
+
+</body>
+
+</html>
