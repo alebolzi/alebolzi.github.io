@@ -293,8 +293,8 @@ function App() {
   }
 
   function esponenteAnni() {
-    return e("sup", null, e("span", { className: "font-bold text-blu" }, "12×" + anni));
-  }
+  return e("sup", null, "12×", e("span", { className: "font-bold text-blu" }, anni));
+}
 
   return e("div", { className: "max-w-3xl mx-auto p-8 space-y-8 font-sans" },
 
