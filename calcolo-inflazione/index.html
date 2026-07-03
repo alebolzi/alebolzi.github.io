@@ -89,32 +89,24 @@
     <div id="root"></div>
 
     <script>
-    const e = React.createElement;
-    const { useState, useRef, useCallback } = React;
+    var e = React.createElement;
+    var useState = React.useState;
+    var useRef = React.useRef;
+    var useCallback = React.useCallback;
+    var useEffect = React.useEffect;
 
     /* FORMAT PERSONALIZZATO (spazi come separatore migliaia, virgola decimale) */
     function formattaNumero(num, decimali) {
         if (decimali === undefined) decimali = 2;
-        var arrotondato = parseFloat(Number(num).toFixed(decimali));
-        var parti = arrotondato.toString().split('.');
+        var arrotondato = Number(num).toFixed(decimali);
+        var parti = arrotondato.split('.');
         var parteIntera = parti[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         if (decimali > 0 && parti[1] !== undefined) {
             return parteIntera + ',' + parti[1];
         }
         return parteIntera;
     }
-        
-    function useAutoWidth(value, min = 2) {
-        var ref = React.useRef(null);
-    
-        React.useEffect(() => {
-            if (!ref.current) return;
-    
-            ref.current.textContent = value || "";
-        }, [value]);
-    
-        return ref;
-    }
+
     /* SLIDER */
     function Slider(props) {
         var min = props.min !== undefined ? props.min : 0;
@@ -201,7 +193,6 @@
         var prezzoAttuale = prezzoState[0];
         var setPrezzoAttuale = prezzoState[1];
 
-        /* FIX: prima era `annoCorrente + 30` ma annoCorrente non era ancora definito */
         var annoFuturoState = useState(function() {
             var base = new Date().getFullYear() + 30;
             return Math.ceil(base / 10) * 10;
@@ -226,7 +217,6 @@
         var percentualeAumento = ((prezzoFuturo / prezzoAttuale) - 1) * 100;
         var tassoDecimale = parseFloat((tassoInflazione / 100).toFixed(4));
 
-        /* Per il rigo "Calcolo:" nella sezione svolgimento */
         var fattoreTesto = "1" + tassoDecimale.toString().substring(1);
         var anniMostrati = anniDiDifferenza > 0 ? anniDiDifferenza : 0;
 
@@ -243,50 +233,41 @@
                     e("div", { className: "text-center space-y-8" },
 
                         /* Frase principale */
-                     
-
-e("div", { className: "text-2xl md:text-4xl font-bold leading-relaxed text-gray-800" },
-
-    e("span", null,
-
-        e("input", {
-            type: "text",
-            value: oggetto,
-            onChange: function(ev) { setOggetto(ev.target.value); },
-            className: "custom-input font-bold text-gray-900",
-            style: { width: (oggetto.length + 1) + "ch" },
-            placeholder: "Una pizza"
-        }),
-
-        " che costa ",
-
-        e("input", {
-            type: "number",
-            value: prezzoAttuale,
-            onChange: function(ev) { setPrezzoAttuale(parseFloat(ev.target.value) || 0); },
-            className: "custom-input custom-input-rosso font-bold text-rosso",
-            style: { width: (String(prezzoAttuale).length + 2) + "ch" },
-            step: "0.5",
-            min: "0"
-        }),
-
-        "€ nel ",
-
-        e("input", {
-            type: "number",
-            value: annoFuturo,
-            onChange: function(ev) { setAnnoFuturo(parseInt(ev.target.value) || annoCorrente); },
-            className: "custom-input custom-input-blu font-bold text-blu",
-            style: { width: (String(annoFuturo).length + 2) + "ch" },
-            min: annoCorrente
-        }),
-
-        " costerà ",
-        e("span", { className: "text-viola" },
-            formattaNumero(prezzoFuturo) + "€"
-        )
-    )
-),
+                        e("div", { className: "text-2xl md:text-4xl font-bold leading-relaxed text-gray-800" },
+                            e("span", null,
+                                e("input", {
+                                    type: "text",
+                                    value: oggetto,
+                                    onChange: function(ev) { setOggetto(ev.target.value); },
+                                    className: "custom-input font-bold text-gray-900",
+                                    style: { width: (oggetto.length + 1) + "ch" },
+                                    placeholder: "Una pizza"
+                                }),
+                                " che costa ",
+                                e("input", {
+                                    type: "number",
+                                    value: prezzoAttuale,
+                                    onChange: function(ev) { setPrezzoAttuale(parseFloat(ev.target.value) || 0); },
+                                    className: "custom-input custom-input-rosso font-bold text-rosso",
+                                    style: { width: (String(prezzoAttuale).length + 2) + "ch" },
+                                    step: "0.5",
+                                    min: "0"
+                                }),
+                                "€ nel ",
+                                e("input", {
+                                    type: "number",
+                                    value: annoFuturo,
+                                    onChange: function(ev) { setAnnoFuturo(parseInt(ev.target.value) || annoCorrente); },
+                                    className: "custom-input custom-input-blu font-bold text-blu",
+                                    style: { width: (String(annoFuturo).length + 2) + "ch" },
+                                    min: annoCorrente
+                                }),
+                                " costerà ",
+                                e("span", { className: "text-viola" },
+                                    formattaNumero(prezzoFuturo) + "€"
+                                )
+                            )
+                        ),
 
                         /* Anni differenza */
                         e("div", { className: "text-sm text-gray-500" },
@@ -451,7 +432,7 @@ e("div", { className: "text-2xl md:text-4xl font-bold leading-relaxed text-gray-
         );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(e(InflazioneApp));
+    ReactDOM.createRoot(document.getElementById("root")).render(e(InflazioneApp));
     </script>
 </body>
 </html>
