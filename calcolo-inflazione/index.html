@@ -93,7 +93,6 @@
     var useState = React.useState;
     var useRef = React.useRef;
     var useCallback = React.useCallback;
-    var useEffect = React.useEffect;
 
     /* FORMAT PERSONALIZZATO (spazi come separatore migliaia, virgola decimale) */
     function formattaNumero(num, decimali) {
@@ -193,32 +192,76 @@
         var prezzoAttuale = prezzoState[0];
         var setPrezzoAttuale = prezzoState[1];
 
-        var annoFuturoState = useState(function() {
+        var annoRifState = useState(function() {
             var base = new Date().getFullYear() + 30;
             return Math.ceil(base / 10) * 10;
         });
-        var annoFuturo = annoFuturoState[0];
-        var setAnnoFuturo = annoFuturoState[1];
+        var annoRif = annoRifState[0];
+        var setAnnoRif = annoRifState[1];
 
         var tassoState = useState(2);
         var tassoInflazione = tassoState[0];
         var setTassoInflazione = tassoState[1];
 
-        var anniDiDifferenza = annoFuturo - annoCorrente;
+        /* Differenza anni: positiva = futuro, negativa = passato */
+        var anniDiDifferenza = annoRif - annoCorrente;
+        var èPassato = anniDiDifferenza < 0;
+        var anniAssoluti = Math.abs(anniDiDifferenza);
 
-        var prezzoFuturo;
-        if (anniDiDifferenza <= 0) {
-            prezzoFuturo = prezzoAttuale;
+        /* Calcolo: con esponente negativo la formula naturally inverte l'inflazione */
+        var prezzoCalcolato;
+        if (anniDiDifferenza === 0) {
+            prezzoCalcolato = prezzoAttuale;
         } else {
-            prezzoFuturo = prezzoAttuale * Math.pow(1 + tassoInflazione / 100, anniDiDifferenza);
+            prezzoCalcolato = prezzoAttuale * Math.pow(1 + tassoInflazione / 100, anniDiDifferenza);
         }
 
-        var aumentoAssoluto = prezzoFuturo - prezzoAttuale;
-        var percentualeAumento = ((prezzoFuturo / prezzoAttuale) - 1) * 100;
+        var differenza = prezzoCalcolato - prezzoAttuale;
+        var percentualeDifferenza = ((prezzoCalcolato / prezzoAttuale) - 1) * 100;
         var tassoDecimale = parseFloat((tassoInflazione / 100).toFixed(4));
-
         var fattoreTesto = "1" + tassoDecimale.toString().substring(1);
-        var anniMostrati = anniDiDifferenza > 0 ? anniDiDifferenza : 0;
+
+        /* Testo descrittivo anni */
+        var testoAnni;
+        if (anniDiDifferenza === 0) {
+            testoAnni = "(stesso anno)";
+        } else if (èPassato) {
+            testoAnni = "(" + anniAssoluti + " anni fa)";
+        } else {
+            testoAnni = "(tra " + anniAssoluti + " anni)";
+        }
+
+        /* Verbo nella frase principale */
+        var verbo = èPassato ? "costava" : "costerà";
+
+        /* Segno per la differenza */
+        var segnoDifferenza = differenza >= 0 ? "+" : "";
+        var segnoPercentuale = percentualeDifferenza >= 0 ? "+" : "";
+
+        /* Titolo risultato */
+        var titoloRisultato = èPassato ? "Prezzo passato stimato" : "Prezzo futuro stimato";
+
+        /* Testo anni nello svolgimento */
+        var testoAnniSvolgimento;
+        if (èPassato) {
+            testoAnniSvolgimento = "Anni da oggi (" + annoCorrente + ") al " + annoRif + ":";
+        } else if (anniDiDifferenza === 0) {
+            testoAnniSvolgimento = "Anno selezionato:";
+        } else {
+            testoAnniSvolgimento = "Anni da oggi (" + annoCorrente + ") al " + annoRif + ":";
+        }
+
+        var testoAnniValore;
+        if (anniDiDifferenza === 0) {
+            testoAnniValore = "0 (stesso anno)";
+        } else if (èPassato) {
+            testoAnniValore = anniAssoluti + " anni fa";
+        } else {
+            testoAnniValore = anniAssoluti + " anni";
+        }
+
+        /* Etichetta aumento assoluto */
+        var etichettaDifferenza = èPassato ? "Differenza (costava meno):" : "Aumento assoluto:";
 
         return e("div", { className: "p-8 max-w-4xl mx-auto space-y-10 font-sans" },
 
@@ -256,23 +299,20 @@
                                 "€ nel ",
                                 e("input", {
                                     type: "number",
-                                    value: annoFuturo,
-                                    onChange: function(ev) { setAnnoFuturo(parseInt(ev.target.value) || annoCorrente); },
+                                    value: annoRif,
+                                    onChange: function(ev) { setAnnoRif(parseInt(ev.target.value) || annoCorrente); },
                                     className: "custom-input custom-input-blu font-bold text-blu",
-                                    style: { width: (String(annoFuturo).length + 2) + "ch" },
-                                    min: annoCorrente
+                                    style: { width: (String(annoRif).length + 2) + "ch" }
                                 }),
-                                " costerà ",
+                                " " + verbo + " ",
                                 e("span", { className: "text-viola" },
-                                    formattaNumero(prezzoFuturo) + "€"
+                                    formattaNumero(prezzoCalcolato) + "€"
                                 )
                             )
                         ),
 
                         /* Anni differenza */
-                        e("div", { className: "text-sm text-gray-500" },
-                            "(tra " + (anniDiDifferenza > 0 ? anniDiDifferenza : 0) + " anni)"
-                        )
+                        e("div", { className: "text-sm text-gray-500" }, testoAnni)
                     )
                 )
             ),
@@ -311,30 +351,30 @@
                         })
                     ),
 
-                    /* Anno futuro */
+                    /* Anno di riferimento */
                     e("div", { className: "space-y-2" },
                         e("div", { className: "flex justify-between text-sm text-gray-600" },
-                            e("span", null, "🗓️ Anno futuro"),
-                            e("span", { className: "font-bold text-blu text-lg" }, annoFuturo)
+                            e("span", null, "🗓️ Anno di riferimento"),
+                            e("span", { className: "font-bold text-blu text-lg" }, annoRif)
                         ),
                         e(Slider, {
-                            min: annoCorrente, max: annoCorrente + 100, step: 1,
-                            value: [annoFuturo],
-                            onValueChange: function(v) { setAnnoFuturo(v[0]); }
+                            min: annoCorrente - 100, max: annoCorrente + 100, step: 1,
+                            value: [annoRif],
+                            onValueChange: function(v) { setAnnoRif(v[0]); }
                         })
                     )
                 )
             ),
 
-            /* RISULTATO FINALE */
+            /* RISULTATO */
             e(Card, { className: "shadow-md border-gray-200" },
                 e(CardContent, { className: "p-6 space-y-4 text-center" },
-                    e("div", { className: "text-xl text-gray-600" }, "Prezzo futuro stimato"),
+                    e("div", { className: "text-xl text-gray-600" }, titoloRisultato),
                     e("div", { className: "text-5xl font-bold text-viola" },
-                        "€" + formattaNumero(prezzoFuturo, 2)
+                        "€" + formattaNumero(prezzoCalcolato, 2)
                     ),
                     e("div", { className: "text-sm text-gray-500 mt-2" },
-                        "+" + formattaNumero(aumentoAssoluto, 2) + "€ (+" + percentualeAumento.toFixed(1) + "% rispetto ad oggi)"
+                        segnoDifferenza + formattaNumero(Math.abs(differenza), 2) + "€ (" + segnoPercentuale + percentualeDifferenza.toFixed(1) + "% rispetto ad oggi)"
                     )
                 )
             ),
@@ -346,12 +386,12 @@
                     e("div", { className: "font-semibold text-base" }, "Formula utilizzata:"),
 
                     e("code", { className: "block bg-gray-50 p-4 rounded-md text-base leading-relaxed overflow-x-auto" },
-                        "Prezzo", e("sub", null, "futuro"), " = ",
+                        "Prezzo", e("sub", null, èPassato ? "passato" : "futuro"), " = ",
                         e("span", { className: "font-bold text-rosso" }, formattaNumero(prezzoAttuale, 2)),
                         " × (1 + ",
                         e("span", { className: "font-bold text-verde" }, tassoDecimale),
                         ")",
-                        e("sup", null, e("span", { className: "font-bold text-blu" }, anniMostrati))
+                        e("sup", null, e("span", { className: "font-bold text-blu" }, anniDiDifferenza === 0 ? "0" : anniDiDifferenza))
                     ),
 
                     /* SVOLGIMENTO */
@@ -371,10 +411,8 @@
                             ),
 
                             e("div", { className: "flex justify-between items-center py-1" },
-                                e("span", { className: "text-gray-600" },
-                                    "Anni da oggi (" + annoCorrente + ") al " + annoFuturo + ":"
-                                ),
-                                e("span", { className: "font-semibold text-blu" }, anniMostrati + " anni")
+                                e("span", { className: "text-gray-600" }, testoAnniSvolgimento),
+                                e("span", { className: "font-semibold text-blu" }, testoAnniValore)
                             ),
 
                             e("div", { className: "border-t border-gray-200 pt-2 mt-2" },
@@ -383,18 +421,20 @@
                                     e("span", { className: "text-gray-700 font-medium" }, "Calcolo:"),
                                     e("span", { className: "text-xs text-gray-500" },
                                         formattaNumero(prezzoAttuale, 2) + " × (" + fattoreTesto + ")",
-                                        e("sup", null, anniMostrati)
+                                        e("sup", null, anniDiDifferenza === 0 ? "0" : anniDiDifferenza)
                                     )
                                 ),
 
                                 e("div", { className: "flex justify-between items-center py-1 mt-2" },
-                                    e("span", { className: "text-gray-700 font-medium" }, "Aumento assoluto:"),
-                                    e("span", { className: "font-semibold text-orange-600" }, "+€" + formattaNumero(aumentoAssoluto, 2))
+                                    e("span", { className: "text-gray-700 font-medium" }, etichettaDifferenza),
+                                    e("span", { className: "font-semibold text-orange-600" },
+                                        segnoDifferenza + "€" + formattaNumero(Math.abs(differenza), 2)
+                                    )
                                 ),
 
                                 e("div", { className: "flex justify-between items-center py-1" },
                                     e("span", { className: "text-gray-700 font-medium" }, "Prezzo finale:"),
-                                    e("span", { className: "font-bold text-viola text-lg" }, "€" + formattaNumero(prezzoFuturo, 2))
+                                    e("span", { className: "font-bold text-viola text-lg" }, "€" + formattaNumero(prezzoCalcolato, 2))
                                 )
                             )
                         )
@@ -418,7 +458,7 @@
                             ),
                             e("span", null,
                                 e("span", { className: "inline-block w-3 h-3 rounded-full bg-violet-500 mr-1" }),
-                                "Prezzo futuro"
+                                èPassato ? "Prezzo passato" : "Prezzo futuro"
                             )
                         )
                     )
