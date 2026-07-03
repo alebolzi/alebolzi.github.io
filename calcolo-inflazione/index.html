@@ -103,7 +103,18 @@
         }
         return parteIntera;
     }
-
+        
+    function useAutoWidth(value, min = 2) {
+        var ref = React.useRef(null);
+    
+        React.useEffect(() => {
+            if (!ref.current) return;
+    
+            ref.current.textContent = value || "";
+        }, [value]);
+    
+        return ref;
+    }
     /* SLIDER */
     function Slider(props) {
         var min = props.min !== undefined ? props.min : 0;
@@ -232,14 +243,32 @@
                     e("div", { className: "text-center space-y-8" },
 
                         /* Frase principale */
-                        e("input", {
-                            type: "text",
-                            value: oggetto,
-                            onChange: function(ev) { setOggetto(ev.target.value); },
-                            className: "custom-input font-bold text-gray-900",
-                            style: { width: (oggetto.length + 1) + "ch" },
-                            placeholder: "Una pizza"
-                        }),
+                      var oggettoRef = useAutoWidth(oggetto);
+
+e("div", { style: { display: "inline-block", position: "relative" } },
+    e("span", {
+        ref: oggettoRef,
+        style: {
+            visibility: "hidden",
+            position: "absolute",
+            whiteSpace: "pre",
+            fontSize: "inherit",
+            fontWeight: "inherit"
+        }
+    }, oggetto || "Una pizza"),
+
+    e("input", {
+        type: "text",
+        value: oggetto,
+        onChange: function(ev) { setOggetto(ev.target.value); },
+        className: "custom-input font-bold text-gray-900",
+        style: {
+            width: "100%",
+            position: "relative"
+        },
+        placeholder: "Una pizza"
+    })
+),
                             " che costa ",
                             e("input", {
                                 type: "number",
