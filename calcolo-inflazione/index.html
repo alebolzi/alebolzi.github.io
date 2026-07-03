@@ -232,34 +232,33 @@
                     e("div", { className: "text-center space-y-8" },
 
                         /* Frase principale */
-                        e("div", { className: "text-2xl md:text-4xl font-bold leading-relaxed text-gray-800" },
-
-                            e("input", {
-                                type: "text",
-                                value: oggetto,
-                                onChange: function(ev) { setOggetto(ev.target.value); },
-                                className: "custom-input font-bold text-gray-900 w-32 md:w-48",
-                                placeholder: "Una pizza"
-                            }),
+                        e("input", {
+    type: "text",
+    value: oggetto,
+    onChange: function(ev) { setOggetto(ev.target.value); },
+    className: "custom-input font-bold text-gray-900",
+    style: { width: (oggetto.length + 1) + "ch" },
+    placeholder: "Una pizza"
+}),
                             " che costa ",
                             e("input", {
-                                type: "number",
-                                value: prezzoAttuale,
-                                onChange: function(ev) { setPrezzoAttuale(parseFloat(ev.target.value) || 0); },
-                                className: "custom-input custom-input-rosso font-bold text-rosso w-24",
-                                step: "0.5",
-                                min: "0"
-                            }),
+    type: "number",
+    value: prezzoAttuale,
+    onChange: function(ev) { setPrezzoAttuale(parseFloat(ev.target.value) || 0); },
+    className: "custom-input custom-input-rosso font-bold text-rosso",
+    style: { width: (String(prezzoAttuale).length + 2) + "ch" },
+    step: "0.5",
+    min: "0"
+}),
                             "€ ",
-                            e("span", { className: "text-gray-600" }, "oggi"),
-                            " nel ",
                             e("input", {
-                                type: "number",
-                                value: annoFuturo,
-                                onChange: function(ev) { setAnnoFuturo(parseInt(ev.target.value) || annoCorrente); },
-                                className: "custom-input custom-input-blu font-bold text-blu w-28",
-                                min: annoCorrente
-                            }),
+    type: "number",
+    value: annoFuturo,
+    onChange: function(ev) { setAnnoFuturo(parseInt(ev.target.value) || annoCorrente); },
+    className: "custom-input custom-input-blu font-bold text-blu",
+    style: { width: (String(annoFuturo).length + 2) + "ch" },
+    min: annoCorrente
+}),
                             " costerà ",
                             e("span", { className: "text-viola" },
                                 formattaNumero(prezzoFuturo) + "€"
