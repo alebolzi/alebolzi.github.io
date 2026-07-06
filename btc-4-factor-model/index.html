@@ -58,78 +58,47 @@
             pointer-events: none;
             z-index: 0;
         }
-		
-        /* =========================
-           🔥 BTC PRICE (RESTYLED)
-        ========================= */
-		
-		.btc-price {
+        
+        .btc-price {
             margin: 25px auto 45px auto;
             text-align: center;
-
             font-family: 'Orbitron', sans-serif;
             font-size: 2.2rem;
             font-weight: 900;
             letter-spacing: 3px;
-
-            color: #ff9a3c; /* arancione caldo */
+            color: #ff9a3c;
             width: fit-content;
-
             position: relative;
-
             text-shadow:
                 0 0 10px rgba(255, 154, 60, 0.6),
                 0 0 30px rgba(255, 120, 40, 0.35),
                 0 0 60px rgba(255, 90, 0, 0.15);
-
             animation: btcPulse 3.5s ease-in-out infinite;
         }
 
-        /* glow dietro vero */
         .btc-price::before {
             content: "";
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-
             width: 160%;
             height: 250%;
-
-            background: radial-gradient(
-                circle,
-                rgba(255, 140, 60, 0.25),
-                transparent 70%
-            );
-
+            background: radial-gradient(circle, rgba(255, 140, 60, 0.25), transparent 70%);
             filter: blur(18px);
             z-index: -1;
             opacity: 0.9;
             animation: glowBreath 4s ease-in-out infinite;
         }
 
-        /* leggero lampeggio vivo */
         @keyframes btcPulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.85;
-                transform: scale(1.03);
-            }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.03); }
         }
 
-        /* glow che respira */
         @keyframes glowBreath {
-            0%, 100% {
-                opacity: 0.6;
-                transform: translate(-50%, -50%) scale(1);
-            }
-            50% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1.08);
-            }
+            0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
         }
 
         .container {
@@ -139,7 +108,6 @@
             z-index: 1;
         }
 
-        /* Header */
         .header {
             text-align: center;
             padding: 40px 20px;
@@ -200,7 +168,6 @@
             50% { opacity: 0.5; transform: scale(1.2); }
         }
 
-        /* Main Grid */
         .main-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -208,7 +175,6 @@
             margin-bottom: 30px;
         }
 
-        /* Card Styles */
         .card {
             background: var(--bg-card);
             backdrop-filter: blur(10px);
@@ -298,7 +264,6 @@
             color: var(--text-primary);
         }
 
-        /* Progress Bar */
         .progress-container {
             margin-top: 15px;
         }
@@ -317,34 +282,25 @@
             border-radius: 4px;
             transition: width 1s ease;
             position: relative;
-		    overflow: hidden;
+            overflow: hidden;
         }
-				
-		.progress-fill::after {
-		    content: '';
-		    position: absolute;
-		    top: 0;
-		    left: -60%;
-		    width: 60%;
-		    height: 100%;
-		    background: linear-gradient(
-		        90deg,
-		        transparent,
-		        rgba(255,255,255,0.25),
-		        transparent
-		    );
-		    animation: shimmerMove 1.8s linear infinite;
-		}
-		
-		@keyframes shimmerMove {
-		    0% {
-		        left: -60%;
-		    }
-		    100% {
-		        left: 120%;
-		    }
-		}
-		
+                
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -60%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            animation: shimmerMove 1.8s linear infinite;
+        }
+        
+        @keyframes shimmerMove {
+            0% { left: -60%; }
+            100% { left: 120%; }
+        }
+        
         @keyframes shimmer {
             0% { transform: translateX(-100%); }
             100% { transform: translateX(100%); }
@@ -355,7 +311,6 @@
         .fill-ma { background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); }
         .fill-rsi { background: linear-gradient(90deg, var(--accent-red), #f87171); }
 
-        /* Average Section - COMPATTA */
         .average-section {
             grid-column: 1 / -1;
             background: linear-gradient(135deg, rgba(17, 24, 39, 0.8), rgba(30, 41, 59, 0.6));
@@ -386,11 +341,12 @@
 
         .average-number {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2.2rem;
+            font-size: 3.4rem;
             font-weight: 900;
             color: var(--accent-cyan);
-            min-width: 120px;
+            min-width: 200px;
             text-align: center;
+            line-height: 1;
         }
 
         .average-bar-wrapper {
@@ -413,12 +369,13 @@
         }
 
         .average-signal-small {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.95rem;
-            padding: 8px 18px;
-            border-radius: 8px;
-            font-weight: 600;
-            letter-spacing: 1px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+            padding: 12px 24px;
+            border-radius: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         .signal-hard-buy { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.4); }
@@ -436,7 +393,6 @@
             opacity: 0.8;
         }
 
-        /* SCENARIO DETECTION - HERO SECTION */
         .scenario-hero {
             grid-column: 1 / -1;
             background: linear-gradient(135deg, rgba(167, 139, 250, 0.08), rgba(56, 189, 248, 0.08));
@@ -486,7 +442,7 @@
             font-weight: 900;
             letter-spacing: 6px;
             text-transform: uppercase;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-cyan) 50%, var(--accent-blue) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -499,37 +455,34 @@
             to { filter: drop-shadow(0 0 35px rgba(56, 189, 248, 0.6)); }
         }
 
+        /* action rimpicciolita, zero effetti */
         .action-hero {
             display: inline-block;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            letter-spacing: 3px;
-            padding: 20px 50px;
-            border-radius: 14px;
-            margin-top: 10px;
-            animation: actionPulse 2.5s ease-in-out infinite;
-        }
-
-        @keyframes actionPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 20px currentColor; }
-            50% { transform: scale(1.04); box-shadow: 0 0 35px currentColor; }
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            padding: 8px 20px;
+            border-radius: 8px;
+            margin-top: 5px;
+            text-transform: lowercase;
+            opacity: 0.7;
         }
 
         .action-buy { 
             color: var(--accent-green); 
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
-            border: 2px solid var(--accent-green);
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.25);
         }
         .action-sell { 
             color: var(--accent-red); 
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
-            border: 2px solid var(--accent-red);
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.25);
         }
         .action-hold { 
             color: var(--text-secondary); 
-            background: linear-gradient(135deg, rgba(148, 163, 184, 0.1), rgba(148, 163, 184, 0.02));
-            border: 2px solid var(--text-secondary);
+            background: rgba(148, 163, 184, 0.05);
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
 
         .scenario-notes-hero {
@@ -551,7 +504,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Reasoning Grid */
         .reasoning-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -595,7 +547,6 @@
         .value-greed { color: #fb923c; }
         .value-normal { color: var(--text-primary); }
 
-        /* Notes Container */
         .notes-container {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -623,7 +574,6 @@
             line-height: 1.6;
         }
 
-        /* Scale Reference - Piccolo */
         .scale-mini {
             background: rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(148, 163, 184, 0.08);
@@ -642,9 +592,6 @@
             white-space: nowrap;
         }
 
-        /* ==================== */
-        /* DISCLAIMER SECTION   */
-        /* ==================== */
         .footer-section {
             margin-top: 50px;
             padding-top: 30px;
@@ -701,7 +648,6 @@
             font-weight: 600;
         }
 
-        /* Debug Link Section */
         .debug-section {
             text-align: center;
             padding: 20px;
@@ -745,28 +691,27 @@
             transform: translateX(5px);
         }
 
-		.wp-link {
-    display: inline-block;
-    margin-top: 12px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.9rem;
-    color: var(--accent-cyan);
-    text-decoration: none;
-    letter-spacing: 1.5px;
-    padding: 6px 14px;
-    border: 1px solid rgba(34, 211, 238, 0.3);
-    border-radius: 8px;
-    background: rgba(34, 211, 238, 0.05);
-    transition: all 0.3s ease;
-}
+        .wp-link {
+            display: inline-block;
+            margin-top: 12px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            letter-spacing: 1.5px;
+            padding: 6px 14px;
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            border-radius: 8px;
+            background: rgba(34, 211, 238, 0.05);
+            transition: all 0.3s ease;
+        }
 
-.wp-link:hover {
-    background: rgba(34, 211, 238, 0.12);
-    box-shadow: var(--glow-blue);
-    transform: translateY(-2px);
-}
-		
-        /* Loading State */
+        .wp-link:hover {
+            background: rgba(34, 211, 238, 0.12);
+            box-shadow: var(--glow-blue);
+            transform: translateY(-2px);
+        }
+        
         .loading {
             display: flex;
             flex-direction: column;
@@ -796,7 +741,6 @@
             letter-spacing: 2px;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.8rem;
@@ -808,8 +752,8 @@
             }
 
             .action-hero {
-                font-size: 1.3rem;
-                padding: 15px 30px;
+                font-size: 0.75rem;
+                padding: 6px 14px;
             }
 
             .main-grid {
@@ -823,7 +767,12 @@
             }
 
             .average-number {
-                font-size: 1.8rem;
+                font-size: 2.6rem;
+                min-width: 160px;
+            }
+
+            .average-signal-small {
+                font-size: 1.2rem;
             }
 
             .disclaimer-box {
@@ -844,7 +793,6 @@
             }
         }
 
-        /* Error State */
         .error-state {
             background: rgba(239, 68, 68, 0.1);
             border: 2px solid var(--accent-red);
@@ -859,7 +807,6 @@
 <body>
 
 <div class="container">
-    <!-- Header -->
     <div class="header">
         <h1>📊 BTC 4-Factor Model</h1>
         <p class="subtitle">Advanced Cryptocurrency Analysis Engine</p>
@@ -867,10 +814,10 @@
             <span class="pulse-dot"></span>
             <span>LIVE DATA</span>
         </div>
-		<a href="wp.html" class="wp-link">📄 White Paper</a>
+        <a href="wp.html" class="wp-link">📄 White Paper</a>
     </div>
 
-	<div class="btc-price" id="btcPrice"></div>
+    <div class="btc-price" id="btcPrice"></div>
 
     <div id="output">
         <div class="loading">
@@ -879,32 +826,24 @@
         </div>
     </div>
 
-    <!-- Footer: Disclaimer + Debug Link -->
     <div class="footer-section">
-        
-        <!-- Financial Disclaimer -->
         <div class="disclaimer-box">
-            
             <div class="disclaimer-text">
               <p>
-				  <strong class="disclaimer-highlight">DISCLAIMER</strong> This page is for <em>education only</em> — not financial advice, not a “buy this coin” signal, not your crypto guru.
-				</p>
-				<p>
-				  Crypto is basically a rollercoaster on steroids 🎢💀 — you can gain big, lose everything, or both in the same week.
-				  Everything here is auto-generated from data + vibes (mostly data), but <strong>nothing is guaranteed</strong>.
-				</p>
-				
-				<p>
-				  Do your own research (DYOR 🧠), talk to a real financial advisor if you’re serious, and never bet money you’d cry about losing.
-				</p>
+                  <strong class="disclaimer-highlight">DISCLAIMER</strong> This page is for <em>education only</em> — not financial advice, not a "buy this coin" signal, not your crypto guru.
+                </p>
+                <p>
+                  Crypto is basically a rollercoaster on steroids 🎢💀 — you can gain big, lose everything, or both in the same week.
+                  Everything here is auto-generated from data + vibes (mostly data), but <strong>nothing is guaranteed</strong>.
+                </p>
+                <p>
+                  Do your own research (DYOR 🧠), talk to a real financial advisor if you're serious, and never bet money you'd cry about losing.
+                </p>
             </div>
         </div>
-
-        <!-- Debug Link -->
         <div class="debug-section">
             <a href="/btc-4-factor-model/debug.html" class="debug-link">Debug Panel</a>
         </div>
-
     </div>
 </div>
 
@@ -913,26 +852,18 @@ const HALVING_DATE = new Date("2024-04-20");
 const CYCLE_LENGTH = 1410;
 
 async function getBTCPrice() {
-	const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT");
-	const data = await res.json();
-	return parseFloat(data.price);
+    const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT");
+    const data = await res.json();
+    return parseFloat(data.price);
 }
-// =======================
-// HALVING
-// =======================
 
 function getHalvingPosition() {
     const now = new Date();
-
-    const daysFromHalving = Math.floor(
-        (now - HALVING_DATE) / (1000 * 60 * 60 * 24)
-    );
-
+    const daysFromHalving = Math.floor((now - HALVING_DATE) / (1000 * 60 * 60 * 24));
     const normalizedDays = daysFromHalving % CYCLE_LENGTH;
     const percent = normalizedDays / CYCLE_LENGTH;
 
     let position;
-
     if (percent <= 0.33) {
         position = 0.5 + (percent / 0.33) * 0.5;
     } else if (percent <= 0.67) {
@@ -941,352 +872,189 @@ function getHalvingPosition() {
         position = ((percent - 0.67) / 0.33) * 0.5;
     }
 
-    return {
-        raw: daysFromHalving,
-        norm: Number(position.toFixed(4))
-    };
+    return { raw: daysFromHalving, norm: Number(position.toFixed(4)) };
 }
-// =======================
-// FEAR & GREED
-// =======================
+
 async function getFearGreed() {
     const res = await fetch("https://api.alternative.me/fng/");
     const data = await res.json();
     return Number(data.data[0].value);
 }
 
-// =======================
-// MA200
-// =======================
 async function getMA200() {
     const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=200");
     const data = await res.json();
-
     const closes = data.map(d => parseFloat(d[4]));
-    const ma200 = closes.reduce((a,b)=>a+b,0) / closes.length;
-    const current = closes[closes.length-1];
-
+    const ma200 = closes.reduce((a, b) => a + b, 0) / closes.length;
+    const current = closes[closes.length - 1];
     let diff = ((current - ma200) / ma200) * 100;
-
     let normalized;
     if (diff <= -30) normalized = 0;
     else if (diff >= 30) normalized = 1;
     else normalized = (diff + 30) / 60;
-
     return { diff, norm: normalized };
 }
 
-// =======================
-// RSI
-// =======================
 async function getMonthlyRSI() {
     const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1M&limit=100");
     const data = await res.json();
-
     const closes = data.map(d => parseFloat(d[4]));
-
-    let gains = 0;
-    let losses = 0;
-
+    let gains = 0, losses = 0;
     for (let i = closes.length - 14; i < closes.length; i++) {
-        let diff = closes[i] - closes[i-1];
+        let diff = closes[i] - closes[i - 1];
         if (diff > 0) gains += diff;
         else losses -= diff;
     }
-
-    let rs = (gains/14) / (losses/14);
+    let rs = (gains / 14) / (losses / 14);
     let rsi = 100 - (100 / (1 + rs));
-
     let norm;
     if (rsi <= 35) norm = 0;
     else if (rsi >= 80) norm = 1;
     else norm = (rsi - 35) / 45;
-
     return { raw: rsi, norm };
 }
 
 function reasoningData(halvingObj, fearGreedNorm, maNorm, rsiNorm) {
-
     const days = halvingObj.raw;
-
-    let regime = "";
-    let sentiment = "";
-    let price = "";
-    let momentum = "";
-    let action = "";
-    let notes = [];
-
-    // =========================
-    // REGIME
-    // =========================
+    let regime = "", sentiment = "", price = "", momentum = "", action = "", notes = [];
     const isBearPhase = days >= 500 && days <= 1000;
 
     if (isBearPhase) {
         regime = "BEAR";
         notes.push("pay attention: historically weak cycle phase");
-
-        // =========================
-        // SENTIMENT
-        // =========================
         if (fearGreedNorm < 0.4) {
             sentiment = "Fear";
-			if (fearGreedNorm < 0.25) {
-				notes.push("Fear attention → possible local dip to buy");
-			} 
-		}
-		else if (fearGreedNorm > 0.6) {
+            if (fearGreedNorm < 0.25) notes.push("Fear attention → possible local dip to buy");
+        } else if (fearGreedNorm > 0.6) {
             sentiment = "Greed";
-			if (fearGreedNorm  > 0.75) {
-				notes.push("Greed attention → possible local top to sell");
-			}
-        } else{
-			sentiment = "Normal";
-		}
-
-        // =========================
-        // PREZZO
-        // =========================
-        if (maNorm < 0.2) {//0.3
-            price = "sale";
-        } else if (maNorm > 0.65){//0.35
-            price = "overpriced";
-        }else{
-			price = "reasonable and fair";
-		}
-
-
-        // =========================
-        // MOMENTUM
-        // =========================
-        if (rsiNorm < 0.5) {
-            momentum = "reasonable weak";
+            if (fearGreedNorm > 0.75) notes.push("Greed attention → possible local top to sell");
         } else {
-            momentum = "strong → risk";
+            sentiment = "Normal";
         }
-
-        // =========================
-        // DECISIONE BEAR
-        // =========================
-        if (fearGreedNorm < 0.4 && maNorm < 0.3 && rsiNorm < 0.2) {
-            action = "BEAR MARKET STRONG BUY";
-        } 
-        else if (fearGreedNorm > 0.4 && maNorm > 0.6) {
-            action = "BEAR MARKET SELL OPPORTUNITY";
-        } 
-        else {
-            action = "BEAR MARKET WAIT / DCA";
-        }
-
+        if (maNorm < 0.2) price = "sale";
+        else if (maNorm > 0.65) price = "overpriced";
+        else price = "reasonable and fair";
+        if (rsiNorm < 0.5) momentum = "reasonable weak";
+        else momentum = "strong → risk";
+        if (fearGreedNorm < 0.4 && maNorm < 0.3 && rsiNorm < 0.2) action = "BEAR MARKET STRONG BUY";
+        else if (fearGreedNorm > 0.4 && maNorm > 0.6) action = "BEAR MARKET SELL OPPORTUNITY";
+        else action = "BEAR MARKET WAIT / DCA";
     } else {
-
         regime = "BULL";
         notes.push("historically favorable cycle phase");
-
-        // =========================
-        // SENTIMENT
-        // =========================
         if (fearGreedNorm < 0.4) {
             sentiment = "Fear";
             notes.push("Fear attention → possible local dip to buy");
         } else if (fearGreedNorm > 0.6) {
             sentiment = "Greed";
             notes.push("Greed attention → possible local top");
-        } else{
-			sentiment = "Normal";
-		}
-
-        // =========================
-        // PREZZO
-        // =========================
-        if (maNorm > 0.7) {
-            price = "all time high → correction risk";
         } else {
-            price = "normal and safe";
+            sentiment = "Normal";
         }
-
-        // =========================
-        // MOMENTUM
-        // =========================
-        if (rsiNorm > 0.7) {
-            momentum = "reasonable strong";
-        } else if (rsiNorm < 0.5){
-            momentum = "weak: buy opportunity";
-        } else {
-			momentum = "normal";
-		}
-
-        // =========================
-        // DECISIONE BULL
-        // =========================
-        if (fearGreedNorm < 0.5 && maNorm < 0.6) {
-            action = "BULL MARKET BUY OPPORTUNITY (pullback)";
-        } 
-        else if (fearGreedNorm > 0.7 && rsiNorm > 0.7) {
-            action = "BULL MARKET SELL AND TAKE IT HOME!";
-        } 
-        else {
-            action = "BULL MARKET HOLD & TREND FOLLOW";
-        }
+        if (maNorm > 0.7) price = "all time high → correction risk";
+        else price = "normal and safe";
+        if (rsiNorm > 0.7) momentum = "reasonable strong";
+        else if (rsiNorm < 0.5) momentum = "weak: buy opportunity";
+        else momentum = "normal";
+        if (fearGreedNorm < 0.5 && maNorm < 0.6) action = "BULL MARKET BUY OPPORTUNITY (pullback)";
+        else if (fearGreedNorm > 0.7 && rsiNorm > 0.7) action = "BULL MARKET SELL AND TAKE IT HOME!";
+        else action = "BULL MARKET HOLD & TREND FOLLOW";
     }
 
-    return {
-        regime,
-        sentiment,
-        price,
-        momentum,
-        action,
-        notes
-    };
+    return { regime, sentiment, price, momentum, action, notes };
 }
 
-
 function reasoningDataV2(halvingObj, fearGreedNorm, maNorm, rsiNorm, maDiff) {
-
     const days = halvingObj.raw;
-
     let scenario = "NEUTRAL";
-    let action = "scenario confirmed by reasoning";
     let notes = [];
 
     const isBear = days >= 500 && days <= 1000;
     const isBull = !isBear;
-
     const sentimentHigh = fearGreedNorm > 0.6;
     const sentimentLow = fearGreedNorm < 0.4;
-
     const priceAbove = maNorm > 0.55;
     const priceBelow = maNorm < 0.45;
-
     const rsiHigh = rsiNorm > 0.6;
     const rsiLow = rsiNorm < 0.4;
 
-    // =========================
-    // 🪤 BULL TRAP
-    // =========================
+    // BULL TRAP
     if (isBear && days >= 500 && days <= 900 && priceAbove && sentimentHigh) {
         scenario = "BULL TRAP";
-        action = "DE-ACCUMULATE";
         notes.push("rialzo in fase bear");
         notes.push("sentiment alto → retail euforico");
     }
-
-    // =========================
-    // 🪤 BEAR TRAP
-    // =========================
+    // BEAR TRAP
     else if (isBull && priceBelow && sentimentLow) {
         scenario = "BEAR TRAP";
-        action = "ACCUMULATE";
         notes.push("paura in bull market");
         notes.push("prezzo sotto valore medio");
     }
-
-    // =========================
-    // 🧊 CYCLE BOTTOM
-    // =========================
+    // CYCLE BOTTOM
     else if (days >= 800 && days <= 1000 && maDiff <= -20) {
         scenario = "CYCLE BOTTOM";
-        action = "STRONG BUY (all-in)";
-
         notes.push("final bear phase");
-
-        if (sentimentLow) {
-            notes.push("✔ confirms sentiment (fear)");
-        }
-
-        if (rsiLow) {
-            notes.push("✔ confirms RSI (oversold)");
-        }
+        if (sentimentLow) notes.push("✔ confirms sentiment (fear)");
+        if (rsiLow) notes.push("✔ confirms RSI (oversold)");
     }
-
-    // =========================
-    // 🔥 CYCLE TOP
-    // =========================
+    // CYCLE TOP
     else if (days >= 450 && days <= 550 && maDiff > 0) {
         scenario = "CYCLE TOP";
-        action = "STRONG SELL";
-
         notes.push("fase avanzata bull");
-
-        if (sentimentHigh) {
-            notes.push("✔ conferma sentiment (avidità)");
-        }
-
-        if (rsiHigh) {
-            notes.push("✔ conferma RSI (ipercomprato)");
-        }
+        if (sentimentHigh) notes.push("✔ sentiment confirmed (greed)");
+        if (rsiHigh) notes.push("✔ RSI confirmed (overbought)");
     }
 
-    return {
-        scenario,
-        action,
-        notes
-    };
+    // action non più qui — viene costruita in run() con la label corretta
+    return { scenario, notes };
 }
 
-// =======================
-// MAIN (UNICO, PULITO)
-// =======================
 async function run() {
     try {
-
         const halvingObj = getHalvingPosition();
-
         const fearGreedRaw = await getFearGreed();
         const fearGreedNorm = fearGreedRaw / 100;
-
         const ma = await getMA200();
         const rsiObj = await getMonthlyRSI();
 
-		const sum = halvingObj.norm + fearGreedNorm + ma.norm + rsiObj.norm;
-		const final = sum / 4;
+        const sum = halvingObj.norm + fearGreedNorm + ma.norm + rsiObj.norm;
+        const final = sum / 4;
 
-		const btcPrice = await getBTCPrice();
-		document.getElementById("btcPrice").innerHTML = `$${btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-		
-		const reasoning = reasoningData(
-			halvingObj,
-			fearGreedNorm,
-			ma.norm,
-			rsiObj.norm
-		);
-		
-		const reasoningV2 = reasoningDataV2(
-			halvingObj,
-			fearGreedNorm,
-			ma.norm,
-			rsiObj.norm,
-			ma.diff   // 🔥 QUESTO NUOVO
-		);
+        const btcPrice = await getBTCPrice();
+        document.getElementById("btcPrice").innerHTML = `$${btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+        const reasoning = reasoningData(halvingObj, fearGreedNorm, ma.norm, rsiObj.norm);
+        const reasoningV2 = reasoningDataV2(halvingObj, fearGreedNorm, ma.norm, rsiObj.norm, ma.diff);
 
         let label;
         let signalClass = '';
 
-        if (final <= 0.2) 	   { label = "HARD BUY"; signalClass = 'signal-hard-buy'; } // da 0 a 0.2
-        else if (final <= 0.3) { label = "BUY"; signalClass = 'signal-buy'; }
-        else if (final <= 0.4) { label = "DCA"; signalClass = 'signal-dca'; }
-        else if (final <= 0.6) { label = "HOLD"; signalClass = 'signal-hold'; }
-        else if (final <= 0.7) { label = "SELL OPPORTUNITY"; signalClass = 'signal-sell-opp'; }
-        else if (final <= 0.8) { label = "SELL"; signalClass = 'signal-sell'; }
-        else 				   { label = "HARD SELL"; signalClass = 'signal-hard-sell'; } // da 0.8 a 1
+        if (final <= 0.2)       { label = "HARD BUY"; signalClass = 'signal-hard-buy'; }
+        else if (final <= 0.3)  { label = "BUY"; signalClass = 'signal-buy'; }
+        else if (final <= 0.4)  { label = "DCA"; signalClass = 'signal-dca'; }
+        else if (final <= 0.6)  { label = "HOLD"; signalClass = 'signal-hold'; }
+        else if (final <= 0.7)  { label = "SELL OPPORTUNITY"; signalClass = 'signal-sell-opp'; }
+        else if (final <= 0.8)  { label = "SELL"; signalClass = 'signal-sell'; }
+        else                    { label = "HARD SELL"; signalClass = 'signal-hard-sell'; }
 
-        // Determine value classes for reasoning
+        // ✅ action dinamica: usa la label della fascia (HARD BUY, BUY, ecc.)
+        const reasoningV2Action = `scenario ${label.toLowerCase()} confirmed by reasoning`;
+
         let regimeClass = reasoning.regime === 'BULL' ? 'value-bull' : 'value-bear';
         let sentimentClass = '';
         if (reasoning.sentiment === 'Fear') sentimentClass = 'value-fear';
-        else if (reasoning.sentiment == 'Greed') sentimentClass = 'value-greed';
+        else if (reasoning.sentiment === 'Greed') sentimentClass = 'value-greed';
         else sentimentClass = 'value-normal';
 
         let actionClass = '';
-        if (reasoning.action.includes('BUY') || reasoning.action.includes('ACCUMULO')) actionClass = 'action-buy';
-        else if (reasoning.action.includes('SELL') || reasoning.action.includes('PROFIT')) actionClass = 'action-sell';
+        if (label.includes('BUY') || label.includes('DCA')) actionClass = 'action-buy';
+        else if (label.includes('SELL')) actionClass = 'action-sell';
         else actionClass = 'action-hold';
 
         document.getElementById('output').innerHTML = `
         
-        <!-- Indicators Grid -->
         <div class="main-grid">
             
-            <!-- Halving Card -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
@@ -1309,7 +1077,6 @@ async function run() {
                 </div>
             </div>
 
-            <!-- Fear & Greed Card -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
@@ -1332,7 +1099,6 @@ async function run() {
                 </div>
             </div>
 
-            <!-- MA200 Card -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
@@ -1355,7 +1121,6 @@ async function run() {
                 </div>
             </div>
 
-            <!-- RSI Card -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
@@ -1378,7 +1143,6 @@ async function run() {
                 </div>
             </div>
 
-            <!-- AVERAGE Section - COMPATTA -->
             <div class="average-section">
                 <div style="flex: 1; min-width: 200px;">
                     <div class="average-label">⚡ Average</div>
@@ -1400,75 +1164,67 @@ async function run() {
                 </div>
 
                 <div class="scale-mini">
-					<span>0-.2 HARD BUY </span>
-					<span>.2-.3 BUY</span>
-					<span>.3-.4 DCA</span>
-					<span>.4-.6 NEUTRAL</span>
-					<span>.6-.7 SELL OPPORTUNITY</span>
-					<span>.7-.8 SELL</span>
-					<span>.8-1 HARD SELL </span>
-				</div>
+                    <span>0-.2 HARD BUY </span>
+                    <span>.2-.3 BUY</span>
+                    <span>.3-.4 DCA</span>
+                    <span>.4-.6 NEUTRAL</span>
+                    <span>.6-.7 SELL OPPORTUNITY</span>
+                    <span>.7-.8 SELL</span>
+                    <span>.8-1 HARD SELL </span>
+                </div>
             </div>
 
-            <!-- SCENARIO DETECTION - HERO SECTION -->
             <div class="scenario-hero">
                 <div class="scenario-hero-content">
                     <div class="scenario-hero-title">🎯 Scenario Detection — Reasoning Engine</div>
                     
                     <div class="scenario-name">${reasoningV2.scenario}</div>
                     
-                    <div class="action-hero ${actionClass}">${reasoningV2.action}</div>
+                    <div class="action-hero ${actionClass}">${reasoningV2Action}</div>
 
                     ${reasoningV2.notes.length > 0 ? `
                     <div class="scenario-notes-hero">
                         ${reasoningV2.notes.map(note => `<div class="scenario-note-badge">✦ ${note}</div>`).join('')}
                     </div>
                     ` : ''}
-					 
-					 <div class="scale-mini">
-				        <span>🪤 BULL TRAP → fake breakout / sell</span>
-				        <span>🧊 CYCLE BOTTOM → accumulation / buye</span>
-				        <span>🔥 CYCLE TOP → distribution / sell</span>
-				        <span>🟢 BEAR TRAP → fake breakdown / buy</span>
-				        <span>⚪ NEUTRAL → no edge</span>
-				    </div>
+                     
+                     <div class="scale-mini">
+                        <span>🪤 BULL TRAP → fake breakout / sell</span>
+                        <span>🧊 CYCLE BOTTOM → accumulation / buy</span>
+                        <span>🔥 CYCLE TOP → distribution / sell</span>
+                        <span>🟢 BEAR TRAP → fake breakdown / buy</span>
+                        <span>⚪ NEUTRAL → no edge</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Reasoning Details -->
         <h2 style="font-family: 'Orbitron', sans-serif; color: var(--accent-cyan); margin: 30px 0 20px; text-align: center; letter-spacing: 3px; font-size: 1.1rem;">
             📋 Analysis Breakdown
         </h2>
-		
-		<div class="reasoning-grid">
-            
-            <!-- Regime -->
+        
+        <div class="reasoning-grid">
             <div class="reasoning-card">
                 <div class="reasoning-label">Market Regime</div>
                 <div class="reasoning-value ${regimeClass}">${reasoning.regime}</div>
             </div>
 
-            <!-- Sentiment -->
             <div class="reasoning-card">
                 <div class="reasoning-label">Market Sentiment</div>
                 <div class="reasoning-value ${sentimentClass}">${reasoning.sentiment}</div>
             </div>
 
-            <!-- Price Analysis -->
             <div class="reasoning-card">
                 <div class="reasoning-label">Price Status</div>
                 <div class="reasoning-value value-normal">${reasoning.price}</div>
             </div>
 
-            <!-- Momentum -->
             <div class="reasoning-card">
                 <div class="reasoning-label">Momentum</div>
                 <div class="reasoning-value value-normal">${reasoning.momentum}</div>
             </div>
         </div>
 
-        <!-- General Notes -->
         ${reasoning.notes.length > 0 ? `
         <div class="notes-container">
             <div class="notes-title">⚠️ Additional Analysis Notes</div>
