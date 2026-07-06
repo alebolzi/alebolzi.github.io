@@ -857,7 +857,10 @@ async function getMonthlyRSI() {
     // Escludi l'ultima candela (mese corrente ancora aperta → prezzo instabile)
     // Calcoliamo solo sui mesi CHIUSI
     const closes = data.slice(0, -1).map(d => parseFloat(d[4]));
-
+    
+    // Calcoliamo solo sui mesi (compreso l'attuale non chiuso)
+    //const closes = data.map(d => parseFloat(d[4]));
+    
     const period = 14;
 
     // Calcola le variazioni prezzo tra mesi consecutivi
