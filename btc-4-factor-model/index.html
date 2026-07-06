@@ -264,6 +264,15 @@
             color: var(--text-primary);
         }
 
+        .method-tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            opacity: 0.5;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
         .progress-container {
             margin-top: 15px;
         }
@@ -455,7 +464,6 @@
             to { filter: drop-shadow(0 0 35px rgba(56, 189, 248, 0.6)); }
         }
 
-        /* action rimpicciolita, zero effetti */
         .action-hero {
             display: inline-block;
             font-family: 'Share Tech Mono', monospace;
@@ -635,13 +643,8 @@
             padding-left: 45px;
         }
 
-        .disclaimer-text p {
-            margin-bottom: 10px;
-        }
-
-        .disclaimer-text p:last-child {
-            margin-bottom: 0;
-        }
+        .disclaimer-text p { margin-bottom: 10px; }
+        .disclaimer-text p:last-child { margin-bottom: 0; }
 
         .disclaimer-highlight {
             color: var(--accent-yellow);
@@ -676,10 +679,7 @@
             transform: translateY(-2px);
         }
 
-        .debug-link::before {
-            content: '🔧';
-            font-size: 1.1rem;
-        }
+        .debug-link::before { content: '🔧'; font-size: 1.1rem; }
 
         .debug-link::after {
             content: '→';
@@ -687,9 +687,7 @@
             transition: transform 0.3s ease;
         }
 
-        .debug-link:hover::after {
-            transform: translateX(5px);
-        }
+        .debug-link:hover::after { transform: translateX(5px); }
 
         .wp-link {
             display: inline-block;
@@ -731,9 +729,7 @@
             margin-bottom: 20px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .loading-text {
             color: var(--accent-cyan);
@@ -742,54 +738,18 @@
         }
 
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8rem;
-            }
-            
-            .scenario-name {
-                font-size: 2.2rem;
-                letter-spacing: 3px;
-            }
-
-            .action-hero {
-                font-size: 0.75rem;
-                padding: 6px 14px;
-            }
-
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .average-section {
-                flex-direction: column;
-                text-align: center;
-                padding: 20px;
-            }
-
-            .average-number {
-                font-size: 2.6rem;
-                min-width: 160px;
-            }
-
-            .average-signal-small {
-                font-size: 1.2rem;
-            }
-
-            .disclaimer-box {
-                padding: 20px;
-            }
-
-            .disclaimer-title,
-            .disclaimer-text {
-                padding-left: 0;
-            }
-
+            .header h1 { font-size: 1.8rem; }
+            .scenario-name { font-size: 2.2rem; letter-spacing: 3px; }
+            .action-hero { font-size: 0.75rem; padding: 6px 14px; }
+            .main-grid { grid-template-columns: 1fr; }
+            .average-section { flex-direction: column; text-align: center; padding: 20px; }
+            .average-number { font-size: 2.6rem; min-width: 160px; }
+            .average-signal-small { font-size: 1.2rem; }
+            .disclaimer-box { padding: 20px; }
+            .disclaimer-title, .disclaimer-text { padding-left: 0; }
             .disclaimer-box::before {
-                position: static;
-                display: block;
-                text-align: center;
-                margin-bottom: 10px;
-                opacity: 0.5;
+                position: static; display: block; text-align: center;
+                margin-bottom: 10px; opacity: 0.5;
             }
         }
 
@@ -829,16 +789,9 @@
     <div class="footer-section">
         <div class="disclaimer-box">
             <div class="disclaimer-text">
-              <p>
-                  <strong class="disclaimer-highlight">DISCLAIMER</strong> This page is for <em>education only</em> — not financial advice, not a "buy this coin" signal, not your crypto guru.
-                </p>
-                <p>
-                  Crypto is basically a rollercoaster on steroids 🎢💀 — you can gain big, lose everything, or both in the same week.
-                  Everything here is auto-generated from data + vibes (mostly data), but <strong>nothing is guaranteed</strong>.
-                </p>
-                <p>
-                  Do your own research (DYOR 🧠), talk to a real financial advisor if you're serious, and never bet money you'd cry about losing.
-                </p>
+                <p><strong class="disclaimer-highlight">DISCLAIMER</strong> This page is for <em>education only</em> — not financial advice, not a "buy this coin" signal, not your crypto guru.</p>
+                <p>Crypto is basically a rollercoaster on steroids 🎢💀 — you can gain big, lose everything, or both in the same week. Everything here is auto-generated from data + vibes (mostly data), but <strong>nothing is guaranteed</strong>.</p>
+                <p>Do your own research (DYOR 🧠), talk to a real financial advisor if you're serious, and never bet money you'd cry about losing.</p>
             </div>
         </div>
         <div class="debug-section">
@@ -862,7 +815,6 @@ function getHalvingPosition() {
     const daysFromHalving = Math.floor((now - HALVING_DATE) / (1000 * 60 * 60 * 24));
     const normalizedDays = daysFromHalving % CYCLE_LENGTH;
     const percent = normalizedDays / CYCLE_LENGTH;
-
     let position;
     if (percent <= 0.33) {
         position = 0.5 + (percent / 0.33) * 0.5;
@@ -871,7 +823,6 @@ function getHalvingPosition() {
     } else {
         position = ((percent - 0.67) / 0.33) * 0.5;
     }
-
     return { raw: daysFromHalving, norm: Number(position.toFixed(4)) };
 }
 
@@ -895,23 +846,72 @@ async function getMA200() {
     return { diff, norm: normalized };
 }
 
+// =======================
+// RSI — METODO WILDER (standard industriale)
+// uguale a TradingView, Bitbo, ecc.
+// =======================
 async function getMonthlyRSI() {
     const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1M&limit=100");
     const data = await res.json();
-    const closes = data.map(d => parseFloat(d[4]));
-    let gains = 0, losses = 0;
-    for (let i = closes.length - 14; i < closes.length; i++) {
-        let diff = closes[i] - closes[i - 1];
-        if (diff > 0) gains += diff;
-        else losses -= diff;
+
+    // Escludi l'ultima candela (mese corrente ancora aperta → prezzo instabile)
+    // Calcoliamo solo sui mesi CHIUSI
+    const closes = data.slice(0, -1).map(d => parseFloat(d[4]));
+
+    const period = 14;
+
+    // Calcola le variazioni prezzo tra mesi consecutivi
+    let changes = [];
+    for (let i = 1; i < closes.length; i++) {
+        changes.push(closes[i] - closes[i - 1]);
     }
-    let rs = (gains / 14) / (losses / 14);
+
+    // Primo average: SMA semplice delle prime 14 variazioni
+    let firstAvgGain = 0;
+    let firstAvgLoss = 0;
+    for (let i = 0; i < period; i++) {
+        if (changes[i] > 0) {
+            firstAvgGain += changes[i];
+        } else {
+            firstAvgLoss += Math.abs(changes[i]);
+        }
+    }
+    firstAvgGain /= period;
+    firstAvgLoss /= period;
+
+    // Wilder smoothing: media esponenziale ricorsiva
+    // ogni nuovo periodo: avg = (prev * 13 + current) / 14
+    let avgGain = firstAvgGain;
+    let avgLoss = firstAvgLoss;
+
+    for (let i = period; i < changes.length; i++) {
+        let gain = changes[i] > 0 ? changes[i] : 0;
+        let loss = changes[i] < 0 ? Math.abs(changes[i]) : 0;
+
+        avgGain = (avgGain * (period - 1) + gain) / period;
+        avgLoss = (avgLoss * (period - 1) + loss) / period;
+    }
+
+    // Evita divisione per zero
+    let rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
     let rsi = 100 - (100 / (1 + rs));
-    let norm;
-    if (rsi <= 20) norm = 0;
-    else if (rsi >= 80) norm = 1;
-    else norm = (rsi - 35) / 45;
-    return { raw: rsi, norm };
+
+    return { raw: rsi, norm: normalizeRSI(rsi) };
+}
+
+// =======================
+// NORMALIZZAZIONE SIGMOIDALE (tanh)
+// Nessun clamping duro: ogni valore RSI produce un output unico
+// RSI 50 → 0.50 · RSI 30 → ~0.10 · RSI 70 → ~0.90
+// =======================
+function normalizeRSI(rsi) {
+    // steepness=18 controlla la "larghezza" della curva
+    // più alto = più ripida (più differenza ai centri, meno agli estremi)
+    // più basso = più piatta (più lineare)
+    const steepness = 18;
+    const x = (rsi - 50) / steepness;
+    // tanh restituisce [-1, 1] → lo mappiamo a [0, 1]
+    return (Math.tanh(x) + 1) / 2;
 }
 
 function reasoningData(halvingObj, fearGreedNorm, maNorm, rsiNorm) {
@@ -978,34 +978,29 @@ function reasoningDataV2(halvingObj, fearGreedNorm, maNorm, rsiNorm, maDiff) {
     const rsiHigh = rsiNorm > 0.6;
     const rsiLow = rsiNorm < 0.4;
 
-    // BULL TRAP
     if (isBear && days >= 500 && days <= 900 && priceAbove && sentimentHigh) {
         scenario = "BULL TRAP";
         notes.push("rialzo in fase bear");
         notes.push("sentiment alto → retail euforico");
     }
-    // BEAR TRAP
     else if (isBull && priceBelow && sentimentLow) {
         scenario = "BEAR TRAP";
         notes.push("paura in bull market");
         notes.push("prezzo sotto valore medio");
     }
-    // CYCLE BOTTOM
     else if (days >= 800 && days <= 1000 && maDiff <= -20) {
         scenario = "CYCLE BOTTOM";
         notes.push("final bear phase");
         if (sentimentLow) notes.push("✔ confirms sentiment (fear)");
         if (rsiLow) notes.push("✔ confirms RSI (oversold)");
     }
-    // CYCLE TOP
     else if (days >= 450 && days <= 550 && maDiff > 0) {
         scenario = "CYCLE TOP";
         notes.push("fase avanzata bull");
-        if (sentimentHigh) notes.push("✔ sentiment confirmed (greed)");
-        if (rsiHigh) notes.push("✔ RSI confirmed (overbought)");
+        if (sentimentHigh) notes.push("✔ conferma sentiment (avidità)");
+        if (rsiHigh) notes.push("✔ conferma RSI (ipercomprato)");
     }
 
-    // action non più qui — viene costruita in run() con la label corretta
     return { scenario, notes };
 }
 
@@ -1037,7 +1032,6 @@ async function run() {
         else if (final <= 0.8)  { label = "SELL"; signalClass = 'signal-sell'; }
         else                    { label = "HARD SELL"; signalClass = 'signal-hard-sell'; }
 
-        // ✅ action dinamica: usa la label della fascia (HARD BUY, BUY, ecc.)
         const reasoningV2Action = `scenario ${label.toLowerCase()} confirmed by reasoning`;
 
         let regimeClass = reasoning.regime === 'BULL' ? 'value-bull' : 'value-bear';
@@ -1136,6 +1130,7 @@ async function run() {
                     <span class="data-label">Normalized</span>
                     <span class="data-value">${rsiObj.norm.toFixed(4)}</span>
                 </div>
+                <div class="method-tag">wilder method · last closed month · sigmoid norm</div>
                 <div class="progress-container">
                     <div class="progress-bar">
                         <div class="progress-fill fill-rsi" style="width: ${rsiObj.norm * 100}%"></div>
