@@ -308,7 +308,7 @@ function App() {
 
         e("div", { className: "space-y-2" },
           e("div", { className: "flex justify-between items-center" },
-            e("span", null, "Capitale iniziale"),
+            e("span", null, "🏦 Capitale iniziale"),
             !editCapitale
               ? e("div", { className: "flex items-center gap-2 cursor-pointer", onClick: function() { setEditCapitale(true); } },
                   e("b", { className: "text-viola text-lg" }, "€" + formattaNumero(capitaleIniziale)),
@@ -328,7 +328,7 @@ function App() {
 
         e("div", { className: "space-y-2" },
           e("div", { className: "flex justify-between" },
-            e("span", null, "Risparmio mensile"),
+            e("span", null, "➕ Risparmio mensile"),
             e("span", { className: "font-bold text-rosso" }, "€" + formattaNumero(risparmio))
           ),
           e(Slider, { min: 0, max: 2000, step: 10, value: [risparmio], onValueChange: function(v) { setRisparmio(v[0]); } })
@@ -336,7 +336,7 @@ function App() {
 
         e("div", { className: "space-y-2" },
           e("div", { className: "flex justify-between" },
-            e("span", null, "Interesse annuale"),
+            e("span", null, "📈 Interesse annuale"),
             e("span", { className: "font-bold text-verde" }, formattaNumero(interesse, 1) + "%")
           ),
           e(Slider, { min: 0, max: 30, step: 0.1, value: [interesse], onValueChange: function(v) { setInteresse(v[0]); } })
@@ -344,7 +344,7 @@ function App() {
 
         e("div", { className: "space-y-2" },
           e("div", { className: "flex justify-between" },
-            e("span", null, "Tassazione plusvalenza"),
+            e("span", null, "❌ Tassazione plusvalenza"),
             e("span", { className: "font-bold text-orange-500" }, formattaNumero(tasse, 1) + "%")
           ),
           e(Slider, { min: 0, max: 60, step: 0.5, value: [tasse], onValueChange: function(v) { setTasse(v[0]); } })
@@ -352,7 +352,7 @@ function App() {
 
         e("div", { className: "space-y-2" },
           e("div", { className: "flex justify-between" },
-            e("span", null, "Numero di anni"),
+            e("span", null, "🔢 Numero di anni"),
             e("span", { className: "font-bold text-blu" }, anni)
           ),
           e(Slider, { min: 1, max: 100, step: 1, value: [anni], onValueChange: function(v) { setAnni(v[0]); } })
