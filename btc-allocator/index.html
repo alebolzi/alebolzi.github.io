@@ -1,56 +1,38 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bitcoin Portfolio Allocator</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #06060a;
-    --card: #0d0d13;
-    --card-border: rgba(255,255,255,0.045);
-    --fg: #e6e6ec;
-    --muted: #48485e;
+    --card: #0c0c12;
+    --card-border: rgba(255,255,255,0.05);
+    --fg: #f0f0f5;
+    --fg-dim: #b0b0c4;
+    --muted: #6a6a82;
     --accent: #f7931a;
     --accent-light: #ffc864;
     --accent-soft: rgba(247,147,26,0.1);
     --accent-glow: rgba(247,147,26,0.3);
-    --track: #181822;
-    --thumb-size: 20px;
-    --radius: 22px;
+    --track: #1a1a26;
+    --thumb-size: 22px;
+    --radius: 24px;
     --stroke: 5;
   }
 
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
 
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* ── Scrollbar arancione ── */
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: var(--bg);
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--accent);
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-light);
-  }
-
-  /* Firefox */
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent) var(--bg);
-  }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+  * { scrollbar-width: thin; scrollbar-color: var(--accent) var(--bg); }
 
   body {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Outfit', sans-serif;
     background: var(--bg);
     color: var(--fg);
     display: flex;
@@ -66,7 +48,7 @@
     position: fixed;
     inset: 0;
     background:
-      radial-gradient(ellipse 50% 60% at 50% 45%, rgba(247,147,26,0.035) 0%, transparent 100%),
+      radial-gradient(ellipse 50% 60% at 50% 40%, rgba(247,147,26,0.04) 0%, transparent 100%),
       radial-gradient(ellipse 80% 40% at 50% 100%, rgba(247,147,26,0.02) 0%, transparent 100%);
     pointer-events: none;
   }
@@ -75,8 +57,8 @@
     content: '';
     position: fixed;
     inset: 0;
-    background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size: 32px 32px;
+    background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 30px 30px;
     pointer-events: none;
   }
 
@@ -85,52 +67,70 @@
     z-index: 1;
     background: var(--card);
     border: 1px solid var(--card-border);
-    padding: 36px 32px 28px;
+    padding: 40px 34px 30px;
     border-radius: var(--radius);
     width: 100%;
-    max-width: 420px;
+    max-width: 430px;
     box-shadow:
       0 0 0 1px rgba(255,255,255,0.02) inset,
-      0 2px 40px rgba(0,0,0,0.5),
-      0 0 80px rgba(247,147,26,0.04);
-    animation: cardIn 0.8s cubic-bezier(0.16,1,0.3,1);
+      0 2px 60px rgba(0,0,0,0.55),
+      0 0 80px rgba(247,147,26,0.035);
+    animation: cardIn 0.7s cubic-bezier(0.16,1,0.3,1);
     transition: box-shadow 0.6s ease;
   }
 
   @keyframes cardIn {
-    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 
-  .header { text-align: center; margin-bottom: 30px; }
+  /* ── Header ── */
+  .header { text-align: center; margin-bottom: 36px; }
 
-  .header-icon {
+  .header-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
     background: var(--accent-soft);
-    margin-bottom: 14px;
-    font-size: 22px;
+    margin-bottom: 16px;
+    font-size: 24px;
     color: var(--accent);
+    border: 1px solid rgba(247,147,26,0.12);
   }
 
   .header-title {
-    font-size: 19px;
-    font-weight: 600;
-    letter-spacing: -0.4px;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--fg);
   }
 
   .header-sub {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 4px;
+    font-size: 12.5px;
+    color: var(--fg-dim);
+    margin-top: 5px;
+    font-weight: 400;
   }
 
-  .slider-group { margin-bottom: 22px; }
-  .slider-group:last-of-type { margin-bottom: 0; }
+  /* ── Section label ── */
+  .section-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    margin-bottom: 18px;
+    padding-left: 2px;
+  }
+
+  /* ── Sliders ── */
+  .sliders { margin-bottom: 0; }
+
+  .slider-group { margin-bottom: 24px; }
+  .slider-group:last-child { margin-bottom: 0; }
 
   .slider-top {
     display: flex;
@@ -140,39 +140,37 @@
   }
 
   .slider-name {
-    font-size: 12px;
+    font-size: 13.5px;
     font-weight: 500;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    color: var(--fg-dim);
   }
 
   .slider-name .tag {
     display: inline-block;
-    font-size: 9px;
+    font-size: 9.5px;
     font-weight: 400;
     color: var(--accent);
     background: var(--accent-soft);
-    padding: 1px 5px;
-    border-radius: 4px;
-    margin-left: 6px;
-    letter-spacing: 0.4px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    margin-left: 7px;
+    letter-spacing: 0.3px;
     vertical-align: middle;
-    text-transform: none;
+    border: 1px solid rgba(247,147,26,0.08);
   }
 
   .slider-val {
     font-size: 15px;
     font-weight: 600;
     color: var(--fg);
-    min-width: 42px;
+    min-width: 50px;
     text-align: right;
     font-variant-numeric: tabular-nums;
     line-height: 1;
   }
 
   .slider-val .dim {
-    font-weight: 300;
+    font-weight: 400;
     color: var(--muted);
     font-size: 11px;
     margin-left: 1px;
@@ -198,7 +196,7 @@
     background: var(--accent);
     border: 3px solid var(--card);
     cursor: pointer;
-    box-shadow: 0 0 0 2px var(--accent-soft), 0 0 12px var(--accent-glow);
+    box-shadow: 0 0 0 2px var(--accent-soft), 0 0 14px var(--accent-glow);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
     z-index: 2;
@@ -206,7 +204,7 @@
 
   input[type=range]::-webkit-slider-thumb:hover {
     transform: scale(1.2);
-    box-shadow: 0 0 0 5px var(--accent-soft), 0 0 20px var(--accent-glow);
+    box-shadow: 0 0 0 5px var(--accent-soft), 0 0 22px var(--accent-glow);
   }
 
   input[type=range]::-moz-range-thumb {
@@ -216,13 +214,13 @@
     background: var(--accent);
     border: 3px solid var(--card);
     cursor: pointer;
-    box-shadow: 0 0 0 2px var(--accent-soft), 0 0 12px var(--accent-glow);
+    box-shadow: 0 0 0 2px var(--accent-soft), 0 0 14px var(--accent-glow);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
   input[type=range]::-moz-range-thumb:hover {
     transform: scale(1.2);
-    box-shadow: 0 0 0 5px var(--accent-soft), 0 0 20px var(--accent-glow);
+    box-shadow: 0 0 0 5px var(--accent-soft), 0 0 22px var(--accent-glow);
   }
 
   input[type=range]::-moz-range-track {
@@ -238,41 +236,51 @@
   }
 
   input[type=range]:focus-visible::-webkit-slider-thumb {
-    box-shadow: 0 0 0 5px var(--accent-soft), 0 0 24px var(--accent-glow);
+    box-shadow: 0 0 0 5px var(--accent-soft), 0 0 26px var(--accent-glow);
   }
 
   input[type=range]:focus-visible::-moz-range-thumb {
-    box-shadow: 0 0 0 5px var(--accent-soft), 0 0 24px var(--accent-glow);
+    box-shadow: 0 0 0 5px var(--accent-soft), 0 0 26px var(--accent-glow);
   }
 
   .slider-hints {
     display: flex;
     justify-content: space-between;
-    margin-top: 7px;
-    font-size: 10px;
+    margin-top: 8px;
+    font-size: 10.5px;
     color: var(--muted);
-    opacity: 0.5;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
+    opacity: 0.6;
+    letter-spacing: 0.3px;
   }
 
+  /* ── Separator ── */
   .sep {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--card-border), transparent);
-    margin: 28px 0;
+    margin: 32px 0;
   }
 
-  .gauge-area {
+  /* ── Result section ── */
+  .result-section {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 24px;
+  }
+
+  .result-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    margin-bottom: 20px;
   }
 
   .gauge-box {
     position: relative;
-    width: 156px;
-    height: 156px;
+    width: 164px;
+    height: 164px;
+    margin-bottom: 28px;
   }
 
   .gauge-svg {
@@ -294,7 +302,7 @@
     stroke-width: var(--stroke);
     stroke-linecap: round;
     transition: stroke-dashoffset 0.55s cubic-bezier(0.22,1,0.36,1);
-    filter: drop-shadow(0 0 5px var(--accent-glow));
+    filter: drop-shadow(0 0 6px var(--accent-glow));
   }
 
   .gauge-center {
@@ -307,66 +315,72 @@
   }
 
   .g-num {
-    font-size: 44px;
-    font-weight: 700;
+    font-size: 48px;
+    font-weight: 800;
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -1px;
+    letter-spacing: -2px;
     transition: color 0.3s;
   }
 
   .g-unit {
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
     color: var(--accent);
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    margin-top: 3px;
+    margin-top: 4px;
   }
 
-  .bar-wrap { width: 100%; margin-bottom: 14px; }
+  /* ── Bar ── */
+  .bar-wrap { width: 100%; margin-bottom: 16px; }
 
   .bar-track {
-    height: 4px;
-    border-radius: 2px;
+    height: 5px;
+    border-radius: 3px;
     background: var(--track);
     overflow: hidden;
   }
 
   .bar-fill {
     height: 100%;
-    border-radius: 2px;
+    border-radius: 3px;
     background: linear-gradient(90deg, var(--accent), var(--accent-light));
     width: 0%;
     transition: width 0.55s cubic-bezier(0.22,1,0.36,1);
+    box-shadow: 0 0 10px rgba(247,147,26,0.25);
   }
 
   .bar-labels {
     display: flex;
     justify-content: space-between;
-    margin-top: 8px;
-    font-size: 11px;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 500;
   }
 
-  .bar-labels .l-btc { color: var(--accent); font-weight: 500; }
-  .bar-labels .l-rest { color: var(--muted); }
+  .bar-labels .l-btc { color: var(--accent); }
+  .bar-labels .l-rest { color: var(--fg-dim); }
 
+  /* ── Hint ── */
   .hint {
     text-align: center;
-    font-size: 13px;
-    color: var(--muted);
-    letter-spacing: 0.2px;
-    min-height: 20px;
+    font-size: 13.5px;
+    color: var(--fg-dim);
+    font-weight: 400;
+    min-height: 22px;
     transition: opacity 0.3s;
+    letter-spacing: 0.1px;
   }
 
+  /* ── Footer ── */
   .foot {
     text-align: center;
-    margin-top: 18px;
-    font-size: 10px;
+    margin-top: 22px;
+    font-size: 10.5px;
     color: var(--muted);
-    opacity: 0.35;
-    letter-spacing: 0.6px;
+    opacity: 0.4;
+    letter-spacing: 0.5px;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -378,9 +392,10 @@
   }
 
   @media (max-width: 460px) {
-    .container { padding: 28px 22px 22px; border-radius: 18px; }
-    .g-num { font-size: 38px; }
-    .gauge-box { width: 140px; height: 140px; }
+    .container { padding: 32px 24px 24px; border-radius: 20px; }
+    .g-num { font-size: 42px; }
+    .gauge-box { width: 146px; height: 146px; }
+    .header-title { font-size: 19px; }
   }
 </style>
 </head>
@@ -390,41 +405,47 @@
 <div class="container" id="card">
 
   <header class="header">
-    <div class="header-icon" aria-hidden="true">&#8383;</div>
+    <div class="header-badge" aria-hidden="true">&#8383;</div>
     <h1 class="header-title">Bitcoin Allocator</h1>
-    <p class="header-sub">Modello sigmoidale non lineare</p>
+    <p class="header-sub">Non-linear sigmoidal allocation model</p>
   </header>
 
-  <div class="slider-group">
-    <div class="slider-top">
-      <span class="slider-name">Et&agrave;</span>
-      <span class="slider-val" id="vAge">30</span>
-    </div>
-    <input id="sAge" type="range" min="10" max="100" value="30" aria-label="Eta">
-    <div class="slider-hints"><span>Giovane</span><span>Anziano</span></div>
-  </div>
+  <p class="section-label">Inputs</p>
 
-  <div class="slider-group">
-    <div class="slider-top">
-      <span class="slider-name">Rischio<span class="tag">^0.9</span></span>
-      <span class="slider-val" id="vRisk">50<span class="dim">/100</span></span>
+  <div class="sliders">
+    <div class="slider-group">
+      <div class="slider-top">
+        <span class="slider-name">Age</span>
+        <span class="slider-val" id="vAge">30</span>
+      </div>
+      <input id="sAge" type="range" min="10" max="100" value="30" aria-label="Age">
+      <div class="slider-hints"><span>Young</span><span>Old</span></div>
     </div>
-    <input id="sRisk" type="range" min="0" max="100" value="50" aria-label="Propensione al rischio">
-    <div class="slider-hints"><span>Prudente</span><span>Audace</span></div>
-  </div>
 
-  <div class="slider-group">
-    <div class="slider-top">
-      <span class="slider-name">Convinzione<span class="tag">^1.4</span></span>
-      <span class="slider-val" id="vBelief">50<span class="dim">/100</span></span>
+    <div class="slider-group">
+      <div class="slider-top">
+        <span class="slider-name">Risk Tolerance<span class="tag">^0.9</span></span>
+        <span class="slider-val" id="vRisk">50<span class="dim">/100</span></span>
+      </div>
+      <input id="sRisk" type="range" min="0" max="100" value="50" aria-label="Risk tolerance">
+      <div class="slider-hints"><span>Cautious</span><span>Bold</span></div>
     </div>
-    <input id="sBelief" type="range" min="0" max="100" value="50" aria-label="Convinzione che Bitcoin salga">
-    <div class="slider-hints"><span>Scettico</span><span>Ottimista</span></div>
+
+    <div class="slider-group">
+      <div class="slider-top">
+        <span class="slider-name">Conviction<span class="tag">^1.4</span></span>
+        <span class="slider-val" id="vBelief">50<span class="dim">/100</span></span>
+      </div>
+      <input id="sBelief" type="range" min="0" max="100" value="50" aria-label="Conviction that Bitcoin will rise">
+      <div class="slider-hints"><span>Skeptical</span><span>Optimistic</span></div>
+    </div>
   </div>
 
   <div class="sep" role="separator"></div>
 
-  <section class="gauge-area" aria-label="Risultato allocazione">
+  <section class="result-section" aria-label="Allocation result">
+    <p class="result-label">Suggested Allocation</p>
+
     <div class="gauge-box">
       <svg class="gauge-svg" viewBox="0 0 160 160">
         <defs>
@@ -444,19 +465,19 @@
         <span class="g-unit">% BTC</span>
       </div>
     </div>
+
+    <div class="bar-wrap">
+      <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+      <div class="bar-labels">
+        <span class="l-btc" id="lBtc">0% Bitcoin</span>
+        <span class="l-rest" id="lRest">100% Other</span>
+      </div>
+    </div>
+
+    <p class="hint" id="hint" aria-live="polite">&mdash;</p>
   </section>
 
-  <div class="bar-wrap">
-    <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
-    <div class="bar-labels">
-      <span class="l-btc" id="lBtc">0% Bitcoin</span>
-      <span class="l-rest" id="lRest">100% Altro</span>
-    </div>
-  </div>
-
-  <p class="hint" id="hint" aria-live="polite">&mdash;</p>
-
-  <footer class="foot">Range suggerito: 0 &ndash; 70%</footer>
+  <footer class="foot">Suggested range: 0 &ndash; 70%</footer>
 
 </div>
 
@@ -478,6 +499,7 @@
   const ARC    = 2 * Math.PI * 68 * 0.75;
   const MAX    = 70;
 
+  /* Sigmoid normalization constants */
   const SIG_C  = 0.3;
   const SIG_K  = 8;
   const SIG_LO = 1 / (1 + Math.exp(SIG_K * SIG_C));
@@ -486,6 +508,7 @@
 
   let cur = 0, raf = null;
 
+  /* Smooth number animation */
   function animTo(target) {
     if (raf) cancelAnimationFrame(raf);
     (function step() {
@@ -497,24 +520,27 @@
     })();
   }
 
+  /* Paint the filled portion of a slider track (WebKit) */
   function paintTrack(el) {
     const p = ((el.value - el.min) / (el.max - el.min)) * 100;
     el.style.background =
       'linear-gradient(to right, var(--accent) ' + p + '%, var(--track) ' + p + '%)';
   }
 
+  /* Descriptive hint based on allocation percentage */
   function tip(p) {
-    if (p <= 0)  return 'Nessuna esposizione crypto';
-    if (p <= 5) return 'Posizione ultra-conservativa';
-    if (p <= 10) return 'Esposizione cauta';
-    if (p <= 15) return 'Esposizione moderata';
-    if (p <= 20) return 'Esposizione bilanciata';
-    if (p <= 30) return 'Esposizione decisa';
-    if (p <= 40) return 'Esposizione aggressiva';
-    if (p <= 60) return 'Esposizione molto aggressiva';
-    return 'Esposizione estrema';
+    if (p <= 0)  return 'No crypto exposure';
+    if (p <= 5)  return 'Ultra-conservative position';
+    if (p <= 10) return 'Cautious exposure';
+    if (p <= 15) return 'Moderate exposure';
+    if (p <= 20) return 'Balanced exposure';
+    if (p <= 30) return 'Decided exposure';
+    if (p <= 40) return 'Aggressive exposure';
+    if (p <= 60) return 'Very aggressive exposure';
+    return 'Extreme exposure';
   }
 
+  /* Main calculation */
   function calc() {
     const a = +sAge.value;
     const r = +sRisk.value;
@@ -531,6 +557,7 @@
     let alloc = Math.max(0, Math.min(MAX, (2 + norm * 68) * ageMul));
     const rounded = Math.round(alloc);
 
+    /* Update value labels */
     vAge.textContent = a;
     vRisk.innerHTML   = r + '<span class="dim">/100</span>';
     vBelief.innerHTML = b + '<span class="dim">/100</span>';
@@ -539,24 +566,28 @@
     paintTrack(sRisk);
     paintTrack(sBelief);
 
+    /* Gauge arc */
     gFill.style.strokeDashoffset = ARC * (1 - alloc / MAX);
     animTo(rounded);
 
+    /* Number color shift: white → orange */
     const t = alloc / MAX;
     gNum.style.color = 'rgb(' +
-      Math.round(230 + 17 * t) + ',' +
-      Math.round(230 - 83 * t) + ',' +
-      Math.round(236 - 210 * t) + ')';
+      Math.round(240 + 7 * t) + ',' +
+      Math.round(240 - 93 * t) + ',' +
+      Math.round(245 - 219 * t) + ')';
 
+    /* Bar */
     barFill.style.width = (t * 100) + '%';
     lBtc.textContent  = rounded + '% Bitcoin';
-    lRest.textContent = (100 - rounded) + '% Altro';
+    lRest.textContent = (100 - rounded) + '% Other';
     hint.textContent = tip(alloc);
 
+    /* Card glow intensity follows allocation */
     card.style.boxShadow =
       '0 0 0 1px rgba(255,255,255,0.02) inset,' +
-      '0 2px 40px rgba(0,0,0,0.5),' +
-      '0 0 ' + (50 + t * 80) + 'px rgba(247,147,26,' + (0.03 + t * 0.1).toFixed(3) + ')';
+      '0 2px 60px rgba(0,0,0,0.55),' +
+      '0 0 ' + (50 + t * 90) + 'px rgba(247,147,26,' + (0.03 + t * 0.1).toFixed(3) + ')';
   }
 
   sAge.addEventListener('input', calc);
