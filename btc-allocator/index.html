@@ -84,7 +84,6 @@
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 
-  /* ── Header ── */
   .header { text-align: center; margin-bottom: 36px; }
 
   .header-badge {
@@ -115,7 +114,6 @@
     font-weight: 400;
   }
 
-  /* ── Section label ── */
   .section-label {
     font-size: 10.5px;
     font-weight: 600;
@@ -126,7 +124,6 @@
     padding-left: 2px;
   }
 
-  /* ── Sliders ── */
   .sliders { margin-bottom: 0; }
 
   .slider-group { margin-bottom: 24px; }
@@ -137,6 +134,79 @@
     justify-content: space-between;
     align-items: baseline;
     margin-bottom: 10px;
+  }
+
+  /* ── Tooltip system ── */
+  .tip-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: help;
+  }
+
+  .tip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--muted);
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: border-color 0.2s, color 0.2s;
+    user-select: none;
+  }
+
+  .tip-wrap:hover .tip-icon {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .tip-bubble {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    width: max-content;
+    max-width: 280px;
+    padding: 10px 14px;
+    background: #1a1a28;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--fg-dim);
+    line-height: 1.5;
+    letter-spacing: 0;
+    text-transform: none;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+    z-index: 50;
+  }
+
+  .tip-bubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1a1a28;
+  }
+
+  .tip-wrap:hover .tip-bubble {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
   }
 
   .slider-name {
@@ -253,14 +323,12 @@
     letter-spacing: 0.3px;
   }
 
-  /* ── Separator ── */
   .sep {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--card-border), transparent);
     margin: 32px 0;
   }
 
-  /* ── Result section ── */
   .result-section {
     display: flex;
     flex-direction: column;
@@ -332,7 +400,6 @@
     margin-top: 4px;
   }
 
-  /* ── Bar ── */
   .bar-wrap { width: 100%; margin-bottom: 16px; }
 
   .bar-track {
@@ -362,7 +429,6 @@
   .bar-labels .l-btc { color: var(--accent); }
   .bar-labels .l-rest { color: var(--fg-dim); }
 
-  /* ── Hint ── */
   .hint {
     text-align: center;
     font-size: 13.5px;
@@ -373,7 +439,6 @@
     letter-spacing: 0.1px;
   }
 
-  /* ── Footer ── */
   .foot {
     text-align: center;
     margin-top: 22px;
@@ -389,6 +454,7 @@
     .g-fill, .bar-fill { transition: none; }
     input[type=range]::-webkit-slider-thumb,
     input[type=range]::-moz-range-thumb { transition: none; }
+    .tip-bubble { transition: none; }
   }
 
   @media (max-width: 460px) {
@@ -396,6 +462,7 @@
     .g-num { font-size: 42px; }
     .gauge-box { width: 146px; height: 146px; }
     .header-title { font-size: 19px; }
+    .tip-bubble { max-width: 220px; font-size: 11.5px; }
   }
 </style>
 </head>
@@ -424,7 +491,11 @@
 
     <div class="slider-group">
       <div class="slider-top">
-        <span class="slider-name">Risk Tolerance<span class="tag">^0.9</span></span>
+        <span class="tip-wrap">
+          <span class="slider-name">Risk Tolerance<span class="tag">^0.9</span></span>
+          <span class="tip-icon" aria-hidden="true">?</span>
+          <span class="tip-bubble" role="tooltip">How comfortable you are with volatility and potential losses. A high value means you can tolerate large drawdowns without panic-selling.</span>
+        </span>
         <span class="slider-val" id="vRisk">50<span class="dim">/100</span></span>
       </div>
       <input id="sRisk" type="range" min="0" max="100" value="50" aria-label="Risk tolerance">
@@ -433,7 +504,11 @@
 
     <div class="slider-group">
       <div class="slider-top">
-        <span class="slider-name">Conviction<span class="tag">^1.4</span></span>
+        <span class="tip-wrap">
+          <span class="slider-name">Conviction<span class="tag">^1.4</span></span>
+          <span class="tip-icon" aria-hidden="true">?</span>
+          <span class="tip-bubble" role="tooltip">Your personal belief that Bitcoin will appreciate over time. Higher conviction amplifies allocation more aggressively due to the ^1.4 exponent.</span>
+        </span>
         <span class="slider-val" id="vBelief">50<span class="dim">/100</span></span>
       </div>
       <input id="sBelief" type="range" min="0" max="100" value="50" aria-label="Conviction that Bitcoin will rise">
@@ -499,7 +574,6 @@
   const ARC    = 2 * Math.PI * 68 * 0.75;
   const MAX    = 70;
 
-  /* Sigmoid normalization constants */
   const SIG_C  = 0.3;
   const SIG_K  = 8;
   const SIG_LO = 1 / (1 + Math.exp(SIG_K * SIG_C));
@@ -508,7 +582,6 @@
 
   let cur = 0, raf = null;
 
-  /* Smooth number animation */
   function animTo(target) {
     if (raf) cancelAnimationFrame(raf);
     (function step() {
@@ -520,14 +593,12 @@
     })();
   }
 
-  /* Paint the filled portion of a slider track (WebKit) */
   function paintTrack(el) {
     const p = ((el.value - el.min) / (el.max - el.min)) * 100;
     el.style.background =
       'linear-gradient(to right, var(--accent) ' + p + '%, var(--track) ' + p + '%)';
   }
 
-  /* Descriptive hint based on allocation percentage */
   function tip(p) {
     if (p <= 0)  return 'No crypto exposure';
     if (p <= 5)  return 'Ultra-conservative position';
@@ -540,7 +611,6 @@
     return 'Extreme exposure';
   }
 
-  /* Main calculation */
   function calc() {
     const a = +sAge.value;
     const r = +sRisk.value;
@@ -557,7 +627,6 @@
     let alloc = Math.max(0, Math.min(MAX, (2 + norm * 68) * ageMul));
     const rounded = Math.round(alloc);
 
-    /* Update value labels */
     vAge.textContent = a;
     vRisk.innerHTML   = r + '<span class="dim">/100</span>';
     vBelief.innerHTML = b + '<span class="dim">/100</span>';
@@ -566,24 +635,20 @@
     paintTrack(sRisk);
     paintTrack(sBelief);
 
-    /* Gauge arc */
     gFill.style.strokeDashoffset = ARC * (1 - alloc / MAX);
     animTo(rounded);
 
-    /* Number color shift: white → orange */
     const t = alloc / MAX;
     gNum.style.color = 'rgb(' +
       Math.round(240 + 7 * t) + ',' +
       Math.round(240 - 93 * t) + ',' +
       Math.round(245 - 219 * t) + ')';
 
-    /* Bar */
     barFill.style.width = (t * 100) + '%';
     lBtc.textContent  = rounded + '% Bitcoin';
     lRest.textContent = (100 - rounded) + '% Other';
     hint.textContent = tip(alloc);
 
-    /* Card glow intensity follows allocation */
     card.style.boxShadow =
       '0 0 0 1px rgba(255,255,255,0.02) inset,' +
       '0 2px 60px rgba(0,0,0,0.55),' +
