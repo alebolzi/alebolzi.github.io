@@ -504,13 +504,15 @@
   }
 
   function tip(p) {
-    if (p <= 5)  return 'Nessuna esposizione crypto';
-    if (p <= 14) return 'Posizione ultra-conservativa';
-    if (p <= 24) return 'Esposizione cauta';
-    if (p <= 38) return 'Allocazione moderata';
-    if (p <= 54) return 'Bilanciata con inclinazione crypto';
-    if (p <= 64) return 'Posizione aggressiva';
-    return 'Convizione forte, alta concentrazione';
+    if (p <= 0)  return 'Nessuna esposizione crypto';
+    if (p <= 5) return 'Posizione ultra-conservativa';
+    if (p <= 10) return 'Esposizione cauta';
+    if (p <= 15) return 'Esposizione moderata';
+    if (p <= 20) return 'Esposizione bilanciata';
+    if (p <= 30) return 'Esposizione decisa';
+    if (p <= 40) return 'Esposizione aggressiva';
+    if (p <= 60) return 'Esposizione molto aggressiva';
+    return 'Esposizione estrema';
   }
 
   function calc() {
