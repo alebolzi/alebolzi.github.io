@@ -145,12 +145,12 @@ var formatNumber = function(n, decimals = 0) {
 
     function App() {
   var s1 = useState(27);     var eta = s1[0];          var setEta = s1[1];
-  var s2 = useState(1400);   var spesa = s2[0];        var setSpesa = s2[1];
+  var s2 = useState(1500);   var spesa = s2[0];        var setSpesa = s2[1];
   var s3 = useState(100000); var patrimonio = s3[0];   var setPatrimonio = s3[1];
   var s4 = useState(60);     var etaPensione = s4[0];  var setEtaPensione = s4[1];
   var s5 = useState(7.0);    var rendimento = s5[0];   var setRendimento = s5[1];
-  var s6 = useState(2.0);    var inflazione = s6[0];   var setInflazione = s6[1];
-  var s7 = useState(4.0);    var swr = s7[0];          var setSwr = s7[1];
+  var s6 = useState(2.5);    var inflazione = s6[0];   var setInflazione = s6[1];
+  var s7 = useState(40);     var anniPensione = s7[0]; var setAnniPensione = s7[1];
   var s8 = useState(false);  var showSettings = s8[0]; var setShowSettings = s8[1];
 
       var chartRef = useRef(null);
@@ -162,17 +162,22 @@ var formatNumber = function(n, decimals = 0) {
       var spesaFuturaMensile = spesa * Math.pow(1 + (inflazione / 100), anniMancanti);
       var annualeFuturo = spesaFuturaMensile * 12;
 
-      // Calcoli finanziari con Equazione di Fisher
-      var fireTarget = swr > 0 ? annualeFuturo / (swr / 100) : 0;
+  // Calcoli finanziari con Equazione di Fisher e Anni di Pensione (senza SWR)
       var realReturn = ((1 + (rendimento / 100)) / (1 + (inflazione / 100))) - 1;
+  var annualeOdierno = spesa * 12;
+
+  // Calcolo del capitale necessario alla pensione basato sugli anni di durata (Annuity Present Value)
+  var fireTargetOdierno = 0;
+  if (realReturn <= 0) {
+    fireTargetOdierno = annualeOdierno * anniPensione;
+  } else {
+    fireTargetOdierno = annualeOdierno * (1 - Math.pow(1 + realReturn, -anniPensione)) / realReturn;
+  }
 
       var cfireNumber = 0;
       if (anniMancanti === 0 || realReturn <= 0) {
-        cfireNumber = fireTarget;
+    cfireNumber = fireTargetOdierno;
       } else {
-        // Sconto il target futuro al valore attuale usando il rendimento reale
-        var annualeOdierno = spesa * 12;
-        var fireTargetOdierno = swr > 0 ? annualeOdierno / (swr / 100) : 0;
         cfireNumber = fireTargetOdierno / Math.pow(1 + realReturn, anniMancanti);
       }
 
@@ -186,7 +191,7 @@ var formatNumber = function(n, decimals = 0) {
         for (let a = eta; a <= etaPensione; a++) {
           labels.push("Età " + a);
           let anniAllAnziano = etaPensione - a;
-          let targetAnno = anniAllAnziano === 0 || realReturn <= 0 ? (spesa * 12 / (swr / 100)) : (spesa * 12 / (swr / 100)) / Math.pow(1 + realReturn, anniAllAnziano);
+      let targetAnno = anniAllAnziano === 0 || realReturn <= 0 ? fireTargetOdierno : fireTargetOdierno / Math.pow(1 + realReturn, anniAllAnziano);
           cfireTargetData.push(Math.round(targetAnno));
         }
 
@@ -222,7 +227,7 @@ var formatNumber = function(n, decimals = 0) {
           }
         });
 
-      }, [eta, etaPensione, spesa, swr, realReturn]);
+  }, [eta, etaPensione, realReturn, fireTargetOdierno]);
 
       return e("div", { className: "max-w-3xl mx-auto p-6 space-y-6" },
 
@@ -274,7 +279,7 @@ var formatNumber = function(n, decimals = 0) {
       onClick: function() { setShowSettings(!showSettings); },
           className: "bg-white shadow rounded-xl px-4 py-3 font-semibold w-full text-left hover:bg-gray-50 transition"
         },
-          showSettings ? "⚙️ Nascondi parametri avanzati" : "⚙️ Parametri avanzati (Età pensione, Rendimento, Inflazione, SWR)"
+      showSettings ? "⚙️ Nascondi parametri avanzati" : "⚙️ Parametri avanzati (Età pensione, Rendimento, Inflazione, Anni di pensione)"
         ),
 
         /* SETTINGS PANEL */
@@ -307,13 +312,13 @@ var formatNumber = function(n, decimals = 0) {
             e(Slider, { value: inflazione, setValue: setInflazione, min: 0, max: 10, step: 0.1 })
           ),
 
-          /* SWR */
+      /* ANNI DI SIMULAZIONE IN PENSIONE (Sostituisce SWR) */
           e("div", { className: "space-y-3" },
             e("div", { className: "flex justify-between items-center font-bold" },
-              e("span", null, "🛡️ Safe Withdrawal Rate (SWR)"),
-              e("span", { className: "text-blue-600" }, formatNumber(swr, 1) + "%")
+          e("span", null, "⏳ Anni di simulazione in pensione"),
+          e("span", { className: "text-blue-600" }, anniPensione + " anni")
             ),
-            e(Slider, { value: swr, setValue: setSwr, min: 1, max: 8, step: 0.1 })
+        e(Slider, { value: anniPensione, setValue: setAnniPensione, min: 10, max: 70, step: 1 })
           )
         ),
 
