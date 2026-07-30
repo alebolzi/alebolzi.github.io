@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🚀 Coast FIRE Calculator</title>
+  <title>🔥 Sei in Coast FIRE?</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -57,10 +57,10 @@
   <script>
 
     const e = React.createElement;
-    const { useState, useRef, useEffect } = React;
+const {useState, useRef, useEffect} = React;
 
-    var formatNumber = function (n, decimals = 0) {
-      return Number(n).toLocaleString("it-IT", {
+var formatNumber = function(n, decimals = 0) {
+  return Number(n).toLocaleString("it-IT",{
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
       });
@@ -86,7 +86,7 @@
         setValue(v);
       }
 
-      useEffect(function () {
+  useEffect(function() {
         function onMouseMove(ev) {
           update(ev.clientX);
         }
@@ -120,7 +120,7 @@
         el.addEventListener("mousedown", onMouseDown);
         el.addEventListener("touchstart", onTouchStart, { passive: false });
 
-        return function () {
+    return function() {
           el.removeEventListener("mousedown", onMouseDown);
           el.removeEventListener("touchstart", onTouchStart);
         };
@@ -144,13 +144,14 @@
     }
 
     function App() {
-      var s1 = useState(27); var eta = s1[0]; var setEta = s1[1];
-      var s2 = useState(1500); var spesa = s2[0]; var setSpesa = s2[1];
-      var s3 = useState(65); var etaPensione = s3[0]; var setEtaPensione = s3[1];
-      var s4 = useState(7.0); var rendimento = s4[0]; var setRendimento = s4[1];
-      var s5 = useState(2.0); var inflazione = s5[0]; var setInflazione = s5[1];
-      var s6 = useState(4.0); var swr = s6[0]; var setSwr = s6[1];
-      var s7 = useState(false); var showSettings = s7[0]; var setShowSettings = s7[1];
+  var s1 = useState(27);     var eta = s1[0];          var setEta = s1[1];
+  var s2 = useState(1400);   var spesa = s2[0];        var setSpesa = s2[1];
+  var s3 = useState(100000); var patrimonio = s3[0];   var setPatrimonio = s3[1];
+  var s4 = useState(60);     var etaPensione = s4[0];  var setEtaPensione = s4[1];
+  var s5 = useState(7.0);    var rendimento = s5[0];   var setRendimento = s5[1];
+  var s6 = useState(2.0);    var inflazione = s6[0];   var setInflazione = s6[1];
+  var s7 = useState(4.0);    var swr = s7[0];          var setSwr = s7[1];
+  var s8 = useState(false);  var showSettings = s8[0]; var setShowSettings = s8[1];
 
       var chartRef = useRef(null);
       var chartInstance = useRef(null);
@@ -175,7 +176,10 @@
         cfireNumber = fireTargetOdierno / Math.pow(1 + realReturn, anniMancanti);
       }
 
-      useEffect(function () {
+  var isCfire = patrimonio >= cfireNumber;
+  var diff = Math.abs(patrimonio - cfireNumber);
+
+  useEffect(function() {
         var labels = [];
         var cfireTargetData = [];
 
@@ -211,7 +215,7 @@
             scales: {
               y: {
                 ticks: {
-                  callback: function (v) { return "€" + (v / 1000) + "k"; }
+              callback: function(v) { return "€" + (v / 1000) + "k"; }
                 }
               }
             }
@@ -253,12 +257,21 @@
               e("span", { className: "text-blue-600" }, formatNumber(spesa) + " €")
             ),
             e(Slider, { value: spesa, setValue: setSpesa, min: 500, max: 5000, step: 50 })
+      ),
+
+      /* Capitale attuale */
+      e("div", { className: "space-y-3 pt-2" },
+        e("div", { className: "flex justify-between items-center font-bold" },
+          e("span", null, "💰 Il tuo capitale attuale"),
+          e("span", { className: "text-blue-600" }, "€ " + formatNumber(patrimonio))
+        ),
+        e(Slider, { value: patrimonio, setValue: setPatrimonio, min: 0, max: 500000, step: 1000 })
           )
         ),
 
         /* SETTINGS BUTTON */
         e("button", {
-          onClick: function () { setShowSettings(!showSettings); },
+      onClick: function() { setShowSettings(!showSettings); },
           className: "bg-white shadow rounded-xl px-4 py-3 font-semibold w-full text-left hover:bg-gray-50 transition"
         },
           showSettings ? "⚙️ Nascondi parametri avanzati" : "⚙️ Parametri avanzati (Età pensione, Rendimento, Inflazione, SWR)"
@@ -304,21 +317,37 @@
           )
         ),
 
-        /* RISULTATO PRINCIPALE (CFIRE NUMBER) */
-        e("div", { className: "bg-white p-6 rounded-xl text-center space-y-3 shadow" },
+    /* RISULTATO SEMPLIFICATO */
+    e("div", { className: "bg-white p-6 rounded-xl text-center space-y-4 shadow" },
 
-          e("div", { className: "text-xl font-bold text-gray-800" },
-            "Il tuo Target Coast FIRE:"
+      e("div", { className: "text-xl font-bold text-gray-800" }, "🌱 Il tuo Coast FIRE"),
+
+      e("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4 py-3 border-y border-gray-100 text-sm" },
+        e("div", null,
+          e("div", { className: "text-gray-500" }, "Capitale necessario oggi:"),
+          e("div", { className: "text-2xl font-bold text-gray-900" }, "€ " + formatNumber(cfireNumber))
+        ),
+        e("div", null,
+          e("div", { className: "text-gray-500" }, "Il tuo capitale attuale:"),
+          e("div", { className: "text-2xl font-bold text-blue-600" }, "€ " + formatNumber(patrimonio))
+        )
+      ),
+
+      isCfire ?
+        e("div", { className: "space-y-2 bg-green-50 p-4 rounded-xl border border-green-200" },
+          e("div", { className: "text-xl font-bold text-green-700" }, "🎉 Sei sopra il Coast FIRE!"),
+          e("div", { className: "text-sm text-green-800 leading-relaxed" },
+            "Hai già costruito la base. Da oggi puoi smettere di investire e lasciare lavorare l'interesse composto fino alla pensione."
           ),
-
-          e("div", { className: "text-4xl font-bold fire" },
-            "€ " + formatNumber(cfireNumber)
-          ),
-
-          /* SPIEGAZIONE DEL RISULTATO */
-          e("div", { className: "text-sm text-gray-600 leading-relaxed pt-2 max-w-lg mx-auto" },
-            "Questo è il capitale che devi possedere oggi per raggiungere il traguardo Coast FIRE. ",
-            "Se il tuo patrimonio attuale è inferiore a questa cifra, significa che non sei ancora in Coast FIRE e hai bisogno di continuare a investire o risparmiare per colmare il divario."
+          e("div", { className: "text-sm font-semibold text-green-900 pt-1" },
+            "Margine: + €" + formatNumber(diff) + " sopra il target"
+          )
+        )
+      :
+        e("div", { className: "space-y-2 bg-red-50 p-4 rounded-xl border border-red-200" },
+          e("div", { className: "text-xl font-bold text-red-700" }, "🔥 Sei sotto il Coast FIRE"),
+          e("div", { className: "text-sm text-red-800 font-semibold" }, "Ti mancano:"),
+          e("div", { className: "text-2xl font-bold text-red-600" }, "€ " + formatNumber(diff))
           ),
 
           /* INFO AGGIUNTIVE */
