@@ -1,344 +1,346 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>🚀 Coast FIRE Calculator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🚀 Coast FIRE Calculator</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
-body {
-  background: #f3f4f6;
-  touch-action: manipulation;
-}
+  <style>
+    body {
+      background: #f3f4f6;
+      touch-action: manipulation;
+    }
 
-.slider-container {
-  position: relative;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 9999px;
-  cursor: pointer;
-  touch-action: none;
-}
+    .slider-container {
+      position: relative;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 9999px;
+      cursor: pointer;
+      touch-action: none;
+    }
 
-.slider-fill {
-  position: absolute;
-  height: 100%;
-  background: #111827;
-  border-radius: 9999px;
-}
+    .slider-fill {
+      position: absolute;
+      height: 100%;
+      background: #111827;
+      border-radius: 9999px;
+    }
 
-.slider-thumb {
-  position: absolute;
-  top: 50%;
-  width: 22px;
-  height: 22px;
-  background: white;
-  border: 2px solid #111827;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-}
+    .slider-thumb {
+      position: absolute;
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border: 2px solid #111827;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
 
-.fire { color: #16a34a; }
-</style>
+    .fire {
+      color: #16a34a;
+    }
+  </style>
 </head>
 
 <body>
 
-<div id="root"></div>
+  <div id="root"></div>
 
-<script>
+  <script>
 
-const e = React.createElement;
-const {useState, useRef, useEffect} = React;
+    const e = React.createElement;
+    const { useState, useRef, useEffect } = React;
 
-var formatNumber = function(n, decimals = 0) {
-  return Number(n).toLocaleString("it-IT",{
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals
-  });
-};
-
-/* SLIDER COMPONENT ROBUSTO (MOUSE + TOUCH) */
-function Slider(props) {
-  var value = props.value;
-  var setValue = props.setValue;
-  var min = props.min;
-  var max = props.max;
-  var step = props.step;
-
-  var ref = useRef();
-
-  function update(clientX) {
-    if (!ref.current) return;
-    var r = ref.current.getBoundingClientRect();
-    var p = (clientX - r.left) / r.width;
-    p = Math.max(0, Math.min(1, p));
-    var v = min + p * (max - min);
-    v = Math.round(v / step) * step;
-    setValue(v);
-  }
-
-  useEffect(function() {
-    function onMouseMove(ev) {
-      update(ev.clientX);
-    }
-    function onTouchMove(ev) {
-      if (ev.touches.length > 0) {
-        update(ev.touches[0].clientX);
-      }
-    }
-    function onEnd() {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onEnd);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onEnd);
-    }
-
-    function onMouseDown(ev) {
-      update(ev.clientX);
-      window.addEventListener("mousemove", onMouseMove);
-      window.addEventListener("mouseup", onEnd);
-    }
-    function onTouchStart(ev) {
-      if (ev.touches.length > 0) {
-        update(ev.touches[0].clientX);
-        window.addEventListener("touchmove", onTouchMove, { passive: false });
-        window.addEventListener("touchend", onEnd);
-      }
-    }
-
-    var el = ref.current;
-    if (!el) return;
-    el.addEventListener("mousedown", onMouseDown);
-    el.addEventListener("touchstart", onTouchStart, { passive: false });
-
-    return function() {
-      el.removeEventListener("mousedown", onMouseDown);
-      el.removeEventListener("touchstart", onTouchStart);
+    var formatNumber = function (n, decimals = 0) {
+      return Number(n).toLocaleString("it-IT", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
     };
-  }, [min, max, step]);
 
-  var pct = ((value - min) / (max - min)) * 100;
+    /* SLIDER COMPONENT ROBUSTO (MOUSE + TOUCH) */
+    function Slider(props) {
+      var value = props.value;
+      var setValue = props.setValue;
+      var min = props.min;
+      var max = props.max;
+      var step = props.step;
 
-  return e("div", {
-    ref: ref,
-    className: "slider-container"
-  },
-    e("div", {
-      className: "slider-fill",
-      style: { width: pct + "%" }
-    }),
-    e("div", {
-      className: "slider-thumb",
-      style: { left: pct + "%" }
-    })
-  );
-}
+      var ref = useRef();
 
-function App() {
-  var s1 = useState(27);    var eta = s1[0];         var setEta = s1[1];
-  var s2 = useState(1500);  var spesa = s2[0];       var setSpesa = s2[1];
-  var s3 = useState(65);    var etaPensione = s3[0];   var setEtaPensione = s3[1];
-  var s4 = useState(7.0);   var rendimento = s4[0];    var setRendimento = s4[1];
-  var s5 = useState(2.0);   var inflazione = s5[0];    var setInflazione = s5[1];
-  var s6 = useState(4.0);   var swr = s6[0];           var setSwr = s6[1];
-  var s7 = useState(false); var showSettings = s7[0];  var setShowSettings = s7[1];
+      function update(clientX) {
+        if (!ref.current) return;
+        var r = ref.current.getBoundingClientRect();
+        var p = (clientX - r.left) / r.width;
+        p = Math.max(0, Math.min(1, p));
+        var v = min + p * (max - min);
+        v = Math.round(v / step) * step;
+        setValue(v);
+      }
 
-  var chartRef = useRef(null);
-  var chartInstance = useRef(null);
-
-  var anniMancanti = Math.max(0, etaPensione - eta);
-  
-  // Spesa inflazionata a fine percorso (Nominale)
-  var spesaFuturaMensile = spesa * Math.pow(1 + (inflazione / 100), anniMancanti);
-  var annualeFuturo = spesaFuturaMensile * 12;
-
-  // Calcoli finanziari con Equazione di Fisher
-  var fireTarget = swr > 0 ? annualeFuturo / (swr / 100) : 0;
-  var realReturn = ((1 + (rendimento / 100)) / (1 + (inflazione / 100))) - 1;
-  
-  var cfireNumber = 0;
-  if (anniMancanti === 0 || realReturn <= 0) {
-    cfireNumber = fireTarget;
-  } else {
-    // Sconto il target futuro al valore attuale usando il rendimento reale
-    var annualeOdierno = spesa * 12;
-    var fireTargetOdierno = swr > 0 ? annualeOdierno / (swr / 100) : 0;
-    cfireNumber = fireTargetOdierno / Math.pow(1 + realReturn, anniMancanti);
-  }
-
-  useEffect(function() {
-    var labels = [];
-    var cfireTargetData = [];
-
-    for (let a = eta; a <= etaPensione; a++) {
-      labels.push("Età " + a);
-      let anniAllAnziano = etaPensione - a;
-      let targetAnno = anniAllAnziano === 0 || realReturn <= 0 ? (spesa * 12 / (swr / 100)) : (spesa * 12 / (swr / 100)) / Math.pow(1 + realReturn, anniAllAnziano);
-      cfireTargetData.push(Math.round(targetAnno));
-    }
-
-    if (chartInstance.current) chartInstance.current.destroy();
-
-    chartInstance.current = new Chart(chartRef.current, {
-      type: "line",
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: "Soglia Coast FIRE Richiesta per Età (già adeguata all'inflazione)",
-            data: cfireTargetData,
-            borderColor: "#3b82f6",
-            backgroundColor: "rgba(59, 130, 246, 0.08)",
-            fill: true,
-            tension: 0.3
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: { 
-          legend: { position: 'bottom' } 
-        },
-        scales: {
-          y: {
-            ticks: {
-              callback: function(v) { return "€" + (v / 1000) + "k"; }
-            }
+      useEffect(function () {
+        function onMouseMove(ev) {
+          update(ev.clientX);
+        }
+        function onTouchMove(ev) {
+          if (ev.touches.length > 0) {
+            update(ev.touches[0].clientX);
           }
         }
+        function onEnd() {
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("mouseup", onEnd);
+          window.removeEventListener("touchmove", onTouchMove);
+          window.removeEventListener("touchend", onEnd);
+        }
+
+        function onMouseDown(ev) {
+          update(ev.clientX);
+          window.addEventListener("mousemove", onMouseMove);
+          window.addEventListener("mouseup", onEnd);
+        }
+        function onTouchStart(ev) {
+          if (ev.touches.length > 0) {
+            update(ev.touches[0].clientX);
+            window.addEventListener("touchmove", onTouchMove, { passive: false });
+            window.addEventListener("touchend", onEnd);
+          }
+        }
+
+        var el = ref.current;
+        if (!el) return;
+        el.addEventListener("mousedown", onMouseDown);
+        el.addEventListener("touchstart", onTouchStart, { passive: false });
+
+        return function () {
+          el.removeEventListener("mousedown", onMouseDown);
+          el.removeEventListener("touchstart", onTouchStart);
+        };
+      }, [min, max, step]);
+
+      var pct = ((value - min) / (max - min)) * 100;
+
+      return e("div", {
+        ref: ref,
+        className: "slider-container"
+      },
+        e("div", {
+          className: "slider-fill",
+          style: { width: pct + "%" }
+        }),
+        e("div", {
+          className: "slider-thumb",
+          style: { left: pct + "%" }
+        })
+      );
+    }
+
+    function App() {
+      var s1 = useState(27); var eta = s1[0]; var setEta = s1[1];
+      var s2 = useState(1500); var spesa = s2[0]; var setSpesa = s2[1];
+      var s3 = useState(65); var etaPensione = s3[0]; var setEtaPensione = s3[1];
+      var s4 = useState(7.0); var rendimento = s4[0]; var setRendimento = s4[1];
+      var s5 = useState(2.0); var inflazione = s5[0]; var setInflazione = s5[1];
+      var s6 = useState(4.0); var swr = s6[0]; var setSwr = s6[1];
+      var s7 = useState(false); var showSettings = s7[0]; var setShowSettings = s7[1];
+
+      var chartRef = useRef(null);
+      var chartInstance = useRef(null);
+
+      var anniMancanti = Math.max(0, etaPensione - eta);
+
+      // Spesa inflazionata a fine percorso (Nominale)
+      var spesaFuturaMensile = spesa * Math.pow(1 + (inflazione / 100), anniMancanti);
+      var annualeFuturo = spesaFuturaMensile * 12;
+
+      // Calcoli finanziari con Equazione di Fisher
+      var fireTarget = swr > 0 ? annualeFuturo / (swr / 100) : 0;
+      var realReturn = ((1 + (rendimento / 100)) / (1 + (inflazione / 100))) - 1;
+
+      var cfireNumber = 0;
+      if (anniMancanti === 0 || realReturn <= 0) {
+        cfireNumber = fireTarget;
+      } else {
+        // Sconto il target futuro al valore attuale usando il rendimento reale
+        var annualeOdierno = spesa * 12;
+        var fireTargetOdierno = swr > 0 ? annualeOdierno / (swr / 100) : 0;
+        cfireNumber = fireTargetOdierno / Math.pow(1 + realReturn, anniMancanti);
       }
-    });
 
-  }, [eta, etaPensione, spesa, swr, realReturn]);
+      useEffect(function () {
+        var labels = [];
+        var cfireTargetData = [];
 
-  return e("div", { className: "max-w-3xl mx-auto p-6 space-y-6" },
+        for (let a = eta; a <= etaPensione; a++) {
+          labels.push("Età " + a);
+          let anniAllAnziano = etaPensione - a;
+          let targetAnno = anniAllAnziano === 0 || realReturn <= 0 ? (spesa * 12 / (swr / 100)) : (spesa * 12 / (swr / 100)) / Math.pow(1 + realReturn, anniAllAnziano);
+          cfireTargetData.push(Math.round(targetAnno));
+        }
 
-    /* TITOLO */
-    e("h1", { className: "text-4xl font-bold text-center" },
-      "🚀 Coast FIRE Calculator"
-    ),
+        if (chartInstance.current) chartInstance.current.destroy();
 
-    /* SPIEGAZIONE COAST FIRE */
-    e("div", { className: "bg-white p-5 rounded-xl shadow space-y-2 text-sm text-gray-700 leading-relaxed" },
-      e("div", { className: "font-bold text-base text-gray-900" }, "Cos'è il Coast FIRE?"),
-      e("p", null, "È il momento in cui il tuo portafoglio cresce da solo fino alla pensione, grazie all'interesse composto, senza versare più nulla. Tu continui a lavorare, ma smetti di investire ogni mese e ti godi i soldi extra.")
-    ),
+        chartInstance.current = new Chart(chartRef.current, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Coast FIRE",
+                data: cfireTargetData,
+                borderColor: "#3b82f6",
+                backgroundColor: "rgba(59, 130, 246, 0.08)",
+                fill: true,
+                tension: 0.3
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom' }
+            },
+            scales: {
+              y: {
+                ticks: {
+                  callback: function (v) { return "€" + (v / 1000) + "k"; }
+                }
+              }
+            }
+          }
+        });
 
-    /* BOX UNIFICATO INPUT PRINCIPALI */
-    e("div", { className: "bg-white p-6 rounded-xl shadow space-y-6" },
-      e("div", { className: "text-lg font-bold text-gray-800 border-b border-gray-100 pb-3" }, "📌 Parametri Principali"),
-      
-      /* Età attuale */
-      e("div", { className: "space-y-3" },
-        e("div", { className: "flex justify-between items-center font-bold" },
-          e("span", null, "👤 Età attuale"),
-          e("span", { className: "text-blue-600" }, eta + " anni")
+      }, [eta, etaPensione, spesa, swr, realReturn]);
+
+      return e("div", { className: "max-w-3xl mx-auto p-6 space-y-6" },
+
+        /* TITOLO */
+        e("h1", { className: "text-4xl font-bold text-center" },
+          "🚀 Coast FIRE Calculator"
         ),
-        e(Slider, { value: eta, setValue: setEta, min: 18, max: 70, step: 1 })
-      ),
 
-      /* Spesa mensile */
-      e("div", { className: "space-y-3 pt-2" },
-        e("div", { className: "flex justify-between items-center font-bold" },
-          e("span", null, "🛒 Spesa mensile in pensione (a prezzi odierni)"),
-          e("span", { className: "text-blue-600" }, formatNumber(spesa) + " €")
+        /* SPIEGAZIONE COAST FIRE */
+        e("div", { className: "bg-white p-5 rounded-xl shadow space-y-2 text-sm text-gray-700 leading-relaxed" },
+          e("div", { className: "font-bold text-base text-gray-900" }, "Cos'è il Coast FIRE?"),
+          e("p", null, "È il punto in cui hai già messo in moto la macchina dell'interesse composto. Non devi più versare nulla: il tuo portafoglio continuerà a crescere da solo fino alla pensione. Tu puoi continuare a lavorare senza la pressione di investire ogni mese, godendoti tutto lo stipendio. Quando arriverà la pensione, il capitale accumulato sarà sufficiente per trasformare il tuo CoastFIRE in un FIRE completo.")
         ),
-        e(Slider, { value: spesa, setValue: setSpesa, min: 500, max: 5000, step: 50 })
-      )
-    ),
 
-    /* SETTINGS BUTTON */
-    e("button", {
-      onClick: function() { setShowSettings(!showSettings); },
-      className: "bg-white shadow rounded-xl px-4 py-3 font-semibold w-full text-left hover:bg-gray-50 transition"
-    },
-      showSettings ? "⚙️ Nascondi parametri avanzati" : "⚙️ Parametri avanzati (Età pensione, Rendimento, Inflazione, SWR)"
-    ),
+        /* BOX UNIFICATO INPUT PRINCIPALI */
+        e("div", { className: "bg-white p-6 rounded-xl shadow space-y-6" },
+          e("div", { className: "text-lg font-bold text-gray-800 border-b border-gray-100 pb-3" }, "📌 Parametri Principali"),
 
-    /* SETTINGS PANEL */
-    showSettings && e("div", { className: "bg-white p-6 rounded-xl space-y-6 shadow" },
+          /* Età attuale */
+          e("div", { className: "space-y-3" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "👤 Età attuale"),
+              e("span", { className: "text-blue-600" }, eta + " anni")
+            ),
+            e(Slider, { value: eta, setValue: setEta, min: 18, max: 70, step: 1 })
+          ),
 
-      /* ETÀ PENSIONE */
-      e("div", { className: "space-y-3" },
-        e("div", { className: "flex justify-between items-center font-bold" },
-          e("span", null, "⏳ Età di pensionamento"),
-          e("span", { className: "text-blue-600" }, etaPensione + " anni")
+          /* Spesa mensile */
+          e("div", { className: "space-y-3 pt-2" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "🛒 Spesa mensile"),
+              e("span", { className: "text-blue-600" }, formatNumber(spesa) + " €")
+            ),
+            e(Slider, { value: spesa, setValue: setSpesa, min: 500, max: 5000, step: 50 })
+          )
         ),
-        e(Slider, { value: etaPensione, setValue: setEtaPensione, min: Math.max(19, eta + 1), max: 90, step: 1 })
-      ),
 
-      /* RENDIMENTO LORDO */
-      e("div", { className: "space-y-3" },
-        e("div", { className: "flex justify-between items-center font-bold" },
-          e("span", null, "📈 Rendimento lordo atteso"),
-          e("span", { className: "text-blue-600" }, formatNumber(rendimento, 1) + "%")
+        /* SETTINGS BUTTON */
+        e("button", {
+          onClick: function () { setShowSettings(!showSettings); },
+          className: "bg-white shadow rounded-xl px-4 py-3 font-semibold w-full text-left hover:bg-gray-50 transition"
+        },
+          showSettings ? "⚙️ Nascondi parametri avanzati" : "⚙️ Parametri avanzati (Età pensione, Rendimento, Inflazione, SWR)"
         ),
-        e(Slider, { value: rendimento, setValue: setRendimento, min: 0, max: 20, step: 0.1 })
-      ),
 
-      /* INFLAZIONE */
-      e("div", { className: "space-y-3" },
-        e("div", { className: "flex justify-between items-center font-bold" },
-          e("span", null, "📊 Inflazione stimata"),
-          e("span", { className: "text-blue-600" }, formatNumber(inflazione, 1) + "%")
+        /* SETTINGS PANEL */
+        showSettings && e("div", { className: "bg-white p-6 rounded-xl space-y-6 shadow" },
+
+          /* ETÀ PENSIONE */
+          e("div", { className: "space-y-3" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "⏳ Età di pensionamento"),
+              e("span", { className: "text-blue-600" }, etaPensione + " anni")
+            ),
+            e(Slider, { value: etaPensione, setValue: setEtaPensione, min: Math.max(19, eta + 1), max: 90, step: 1 })
+          ),
+
+          /* RENDIMENTO LORDO */
+          e("div", { className: "space-y-3" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "📈 Rendimento lordo atteso"),
+              e("span", { className: "text-blue-600" }, formatNumber(rendimento, 1) + "%")
+            ),
+            e(Slider, { value: rendimento, setValue: setRendimento, min: 0, max: 20, step: 0.1 })
+          ),
+
+          /* INFLAZIONE */
+          e("div", { className: "space-y-3" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "📊 Inflazione stimata"),
+              e("span", { className: "text-blue-600" }, formatNumber(inflazione, 1) + "%")
+            ),
+            e(Slider, { value: inflazione, setValue: setInflazione, min: 0, max: 10, step: 0.1 })
+          ),
+
+          /* SWR */
+          e("div", { className: "space-y-3" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "🛡️ Safe Withdrawal Rate (SWR)"),
+              e("span", { className: "text-blue-600" }, formatNumber(swr, 1) + "%")
+            ),
+            e(Slider, { value: swr, setValue: setSwr, min: 1, max: 8, step: 0.1 })
+          )
         ),
-        e(Slider, { value: inflazione, setValue: setInflazione, min: 0, max: 10, step: 0.1 })
-      ),
 
-      /* SWR */
-      e("div", { className: "space-y-3" },
-        e("div", { className: "flex justify-between items-center font-bold" },
-          e("span", null, "🛡️ Safe Withdrawal Rate (SWR)"),
-          e("span", { className: "text-blue-600" }, formatNumber(swr, 1) + "%")
+        /* RISULTATO PRINCIPALE (CFIRE NUMBER) */
+        e("div", { className: "bg-white p-6 rounded-xl text-center space-y-3 shadow" },
+
+          e("div", { className: "text-xl font-bold text-gray-800" },
+            "Il tuo Target Coast FIRE:"
+          ),
+
+          e("div", { className: "text-4xl font-bold fire" },
+            "€ " + formatNumber(cfireNumber)
+          ),
+
+          /* SPIEGAZIONE DEL RISULTATO */
+          e("div", { className: "text-sm text-gray-600 leading-relaxed pt-2 max-w-lg mx-auto" },
+            "Questo è il capitale che devi possedere oggi per raggiungere il traguardo Coast FIRE. ",
+            "Se il tuo patrimonio attuale è inferiore a questa cifra, significa che non sei ancora in Coast FIRE e hai bisogno di continuare a investire o risparmiare per colmare il divario."
+          ),
+
+          /* INFO AGGIUNTIVE */
+          e("div", { className: "text-xs text-gray-400 pt-2 border-t border-gray-100" },
+            "Orizzonte: " + anniMancanti + " anni · ",
+            "Spesa mensile a " + etaPensione + " anni (inflazionata): " + formatNumber(spesaFuturaMensile) + " € · ",
+            "Rendimento Reale (Fisher): " + formatNumber(realReturn * 100, 2) + "%"
+          )
         ),
-        e(Slider, { value: swr, setValue: setSwr, min: 1, max: 8, step: 0.1 })
-      )
-    ),
 
-    /* RISULTATO PRINCIPALE (CFIRE NUMBER) */
-    e("div", { className: "bg-white p-6 rounded-xl text-center space-y-3 shadow" },
+        /* GRAFICO */
+        e("div", { className: "bg-white p-6 rounded-xl shadow space-y-2" },
+          e("div", { className: "text-sm font-semibold text-gray-700 text-center mb-2" }, "Curva della Soglia Coast FIRE in base all'Età (già adeguata all'inflazione)"),
+          e("canvas", { ref: chartRef })
+        )
+      );
+    }
 
-      e("div", { className: "text-xl font-bold text-gray-800" },
-        "Il tuo Target Coast FIRE:"
-      ),
+    ReactDOM.createRoot(document.getElementById("root")).render(e(App));
 
-      e("div", { className: "text-4xl font-bold fire" },
-        "€ " + formatNumber(cfireNumber)
-      ),
-
-      /* SPIEGAZIONE DEL RISULTATO */
-      e("div", { className: "text-sm text-gray-600 leading-relaxed pt-2 max-w-lg mx-auto" },
-        "Questo è il capitale che devi possedere oggi per raggiungere il traguardo Coast FIRE. ",
-        "Se il tuo patrimonio attuale è ",
-        e("b", null, "inferiore"),
-        " a questa cifra, significa che non sei ancora in Coast FIRE e hai bisogno di continuare a investire o risparmiare per colmare il divario."
-      ),
-
-      /* INFO AGGIUNTIVE */
-      e("div", { className: "text-xs text-gray-400 pt-2 border-t border-gray-100" },
-        "Orizzonte: " + anniMancanti + " anni · ",
-        "Spesa mensile a " + etaPensione + " anni (inflazionata): " + formatNumber(spesaFuturaMensile) + " € · ",
-        "Rendimento Reale (Fisher): " + formatNumber(realReturn * 100, 2) + "%"
-      )
-    ),
-
-    /* GRAFICO */
-    e("div", { className: "bg-white p-6 rounded-xl shadow space-y-2" },
-      e("div", { className: "text-sm font-semibold text-gray-700 text-center mb-2" }, "Curva della Soglia Coast FIRE in base all'Età"),
-      e("canvas", { ref: chartRef })
-    )
-  );
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(e(App));
-
-</script>
+  </script>
 
 </body>
+
 </html>
