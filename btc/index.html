@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡️</text></svg>">
-<title>₿ Bitcoin Price</title>
+<title>BTC Neon Mobile & Desktop</title>
 <style>
   :root {
     --neon: #b026ff;
@@ -70,7 +70,7 @@
     pointer-events: none;
     text-align: center;
     width: 100vw;
-    padding: 30px 10px;
+    padding: 0 16px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -85,9 +85,9 @@
     text-shadow: 0 0 45px rgba(var(--neon-rgb), 0.75), 0 0 15px rgba(var(--neon-rgb), 0.4);
     line-height: 1.15;
     white-space: nowrap;
-    max-width: 96vw;
+    max-width: 88vw;
     display: inline-block;
-    padding: 10px 20px;
+    padding: 10px 0;
     will-change: transform, filter, opacity;
 
     opacity: 0;
@@ -565,19 +565,19 @@
   }
 
   function fitPriceText() {
-    if (!priceEl) return;
+    if (!priceEl || priceEl.style.display === 'none') return;
     const sliderVal = parseFloat(priceSizeInput.value) || 60;
     const charCount = Math.max(priceEl.textContent.length, 1);
     
-    const maxFittingVw = 100 / (charCount * 0.58); 
+    const maxFittingVw = 100 / (charCount * 0.62); 
     const targetVw = (sliderVal / 100) * maxFittingVw;
     
-    priceEl.style.fontSize = `clamp(10px, ${targetVw}vw, 95vw)`;
+    priceEl.style.fontSize = `clamp(10px, ${targetVw}vw, 88vw)`;
 
-    const maxAllowedWidth = window.innerWidth * 0.92;
+    const maxAllowedWidth = window.innerWidth * 0.88;
     if (priceEl.offsetWidth > maxAllowedWidth && priceEl.offsetWidth > 0) {
       const currentPx = parseFloat(window.getComputedStyle(priceEl).fontSize);
-      const scaledPx = Math.max(10, currentPx * (maxAllowedWidth / priceEl.offsetWidth));
+      const scaledPx = Math.floor(currentPx * (maxAllowedWidth / priceEl.offsetWidth));
       priceEl.style.fontSize = `${scaledPx}px`;
     }
   }
