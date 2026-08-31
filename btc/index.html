@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡️</text></svg>">
 <title>BTC Neon Mobile & Desktop</title>
 <style>
   :root {
@@ -16,6 +19,7 @@
     margin: 0; 
     padding: 0; 
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
 
   html, body {
@@ -256,6 +260,7 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 8px;
+    align-items: center;
   }
 
   .preset-dot {
@@ -264,27 +269,59 @@
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid transparent;
-    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    transition: transform 0.2s, border-color 0.2s, filter 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
   }
 
   .preset-dot:active { transform: scale(1.1); }
+  
   .preset-dot.active {
     border-color: #ffffff;
-    box-shadow: 0 0 12px currentColor;
+    filter: drop-shadow(0 0 6px currentColor);
   }
 
-  .preset-dot.rainbow {
-    background: conic-gradient(from 0deg, #ff0055, #ff9900, #33ff00, #00ffff, #6600ff, #ff0055);
+  .preset-dot.palette-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    overflow: hidden;
   }
 
-  .preset-dot.rainbow input[type="color"] {
-    opacity: 0;
+  .preset-dot.palette-btn.active {
+    border-color: var(--neon);
+    background: rgba(var(--neon-rgb), 0.25);
+    filter: drop-shadow(0 0 8px var(--neon));
+  }
+
+  .preset-dot.palette-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: rgba(255, 255, 255, 0.85);
+    stroke-width: 1.8;
+    fill: none;
+    pointer-events: none;
+    transition: stroke 0.3s ease;
+  }
+
+  .preset-dot.palette-btn.active svg {
+    stroke: #ffffff;
+  }
+
+  .preset-dot.palette-btn input[type="color"] {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: -5px;
+    left: -5px;
+    width: 42px;
+    height: 42px;
+    opacity: 0;
     cursor: pointer;
-    border-radius: 50%;
+    border: none;
+    padding: 0;
+    margin: 0;
   }
 </style>
 </head>
@@ -326,11 +363,11 @@
     </svg>
     <input type="range" id="animDurationInput" min="0.1" max="5.0" step="0.1">
     <svg class="slider-icon" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M 11 17 C 7.7 17 5 14.3 5 11 C 5 7.7 7.7 5 11 5 C 14.3 5 17 7.7 17 11 C 17 13.5 15 15.5 12.5 15.5 C 10 15.5 8.5 14 8.5 12 C 8.5 10 10 8.5 11.5 8.5"></path>
-  <path d="M 2 19 C 2 19 14 19 17 19 C 20 19 22 17.5 22 15 C 22 12.5 20 11 18 11"></path>
-  <path d="M 18 11 L 16.5 6.5"></path>
-  <path d="M 20 12 L 22.5 8"></path>
-</svg>
+      <path d="M 11 17 C 7.7 17 5 14.3 5 11 C 5 7.7 7.7 5 11 5 C 14.3 5 17 7.7 17 11 C 17 13.5 15 15.5 12.5 15.5 C 10 15.5 8.5 14 8.5 12 C 8.5 10 10 8.5 11.5 8.5"></path>
+      <path d="M 2 19 C 2 19 14 19 17 19 C 20 19 22 17.5 22 15 C 22 12.5 20 11 18 11"></path>
+      <path d="M 18 11 L 16.5 6.5"></path>
+      <path d="M 20 12 L 22.5 8"></path>
+    </svg>
   </div>
 
   <div class="slider-row">
@@ -351,7 +388,14 @@
     <div class="preset-dot" style="background: #00f3ff;" data-color="#00f3ff"></div>
     <div class="preset-dot" style="background: #39ff9d;" data-color="#39ff9d"></div>
     <div class="preset-dot" style="background: #ff007f;" data-color="#ff007f"></div>
-    <div class="preset-dot rainbow" id="rainbowDot" title="Personalizzato">
+    
+    <div class="preset-dot palette-btn" id="paletteBtn" title="Colore Personalizzato">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 21a9 9 0 1 1 0-18c4.97 0 9 3.58 9 8 0 2.21-1.79 4-4 4h-2.5a1.5 1.5 0 0 0-1.5 1.5c0 .41.16.79.44 1.06.27.27.44.65.44 1.06 0 1.33-1.12 2.38-2.88 2.38z"></path>
+        <circle cx="7.5" cy="10.5" r=".75" fill="currentColor"></circle>
+        <circle cx="12" cy="7.5" r=".75" fill="currentColor"></circle>
+        <circle cx="16.5" cy="10.5" r=".75" fill="currentColor"></circle>
+      </svg>
       <input type="color" id="customColor">
     </div>
   </div>
@@ -364,8 +408,8 @@
   const settingsToggle = document.getElementById('settingsToggle');
   const settingsPanel = document.getElementById('settingsPanel');
   const customColorInput = document.getElementById('customColor');
-  const presetDots = document.querySelectorAll('.preset-dot:not(.rainbow)');
-  const rainbowDot = document.getElementById('rainbowDot');
+  const presetDots = document.querySelectorAll('.preset-dot:not(.palette-btn)');
+  const paletteBtn = document.getElementById('paletteBtn');
 
   const btnChart = document.getElementById('btnChart');
   const btnPrice = document.getElementById('btnPrice');
@@ -387,6 +431,7 @@
 
   let initialTouchDist = 0;
   let initialVisibleCount = visibleCount;
+  let startX = 0;
 
   let isInitialAnimation = true;
   let currentAnimProgress = 1;
@@ -441,7 +486,7 @@
       dot.classList.toggle('active', isMatch);
       if (isMatch) matched = true;
     });
-    rainbowDot.classList.toggle('active', !matched);
+    paletteBtn.classList.toggle('active', !matched);
   }
 
   function easeInOutCubic(x) {
@@ -664,6 +709,11 @@
     }
   }
 
+  canvas.addEventListener('dblclick', () => {
+    visibleCount = 180;
+    updateView();
+  });
+
   window.addEventListener('wheel', (e) => {
     e.preventDefault();
     if (allPoints.length === 0) return;
@@ -678,7 +728,9 @@
   }, { passive: false });
 
   window.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 2) {
+    if (e.touches.length === 1) {
+      startX = e.touches[0].clientX;
+    } else if (e.touches.length === 2) {
       initialTouchDist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
@@ -688,7 +740,14 @@
   }, { passive: false });
 
   window.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 2 && initialTouchDist > 0) {
+    if (e.touches.length === 1 && allPoints.length > 0) {
+      const deltaX = e.touches[0].clientX - startX;
+      if (Math.abs(deltaX) > 15) {
+        visibleCount = Math.max(10, Math.min(allPoints.length, visibleCount + (deltaX > 0 ? 3 : -3)));
+        startX = e.touches[0].clientX;
+        updateView();
+      }
+    } else if (e.touches.length === 2 && initialTouchDist > 0) {
       e.preventDefault();
       const currentDist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
