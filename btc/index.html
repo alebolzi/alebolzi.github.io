@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡️</text></svg>">
-<title>BTC Neon Mobile & Desktop</title>
+<title>₿</title>
 <style>
   :root {
     --neon: #b026ff;
@@ -495,21 +495,21 @@
 
   function animateHackerPrice(targetText) {
     if (priceAnimFrameId) cancelAnimationFrame(priceAnimFrameId);
-
+  
     const chars = '0123456789$#%&*!?@';
     const duration = (parseFloat(animDurationInput.value) || 2.6) * 1000; 
     const startTime = performance.now();
-
+  
     priceEl.classList.remove('show-price');
     void priceEl.offsetWidth; 
     priceEl.classList.add('show-price');
-
+  
     function scramble(now) {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
       const lockedLength = Math.floor(progress * targetText.length);
-
+  
       let currentStr = '';
       for (let i = 0; i < targetText.length; i++) {
         if (i < lockedLength || progress === 1) {
@@ -518,14 +518,16 @@
           currentStr += chars[Math.floor(Math.random() * chars.length)];
         }
       }
-
+  
       priceEl.textContent = currentStr;
+      document.title = `₿ : ${currentStr}`; // ⚡️ Scramble live nel titolo della tab
       fitPriceText();
-
+  
       if (progress < 1) {
         priceAnimFrameId = requestAnimationFrame(scramble);
       } else {
         priceEl.textContent = targetText;
+        document.title = `₿ : ${targetText}`; // ⚡️ Prezzo finale nel titolo
         fitPriceText();
         priceAnimFrameId = null;
       }
@@ -769,7 +771,10 @@
     if (!allPoints || allPoints.length === 0) return;
     const visible = allPoints.slice(-visibleCount);
     finalFormattedPrice = formatPrice(visible[visible.length - 1]);
-
+  
+    // ⚡️ AGGIORNAMENTO DEL TITOLO DEL DOCUMENTO
+    document.title = `₿ : ${finalFormattedPrice}`;
+  
     if (isInitialAnimation) {
       if (!priceAnimTriggered) {
         priceAnimTriggered = true;
@@ -782,7 +787,7 @@
       draw(1);
     }
   }
-
+  
   function draw(progress = 1) {
     const w = window.innerWidth;
     const h = window.innerHeight;
