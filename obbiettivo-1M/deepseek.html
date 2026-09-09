@@ -1,0 +1,38 @@
+function calculateMilestones(initial, monthly, annualReturn) {
+    const monthlyRate = annualReturn / 100 / 12;
+    let value = initial;
+    let month = 0;
+    const milestones = [100000, 500000, 1000000];
+    const results = {};
+    let nextIndex = 0;
+    
+    // Check if already past any milestones
+    for (let i = 0; i < milestones.length; i++) {
+        if (value >= milestones[i]) {
+            results[milestones[i]] = { reached: true, month: 0, date: new Date() };
+            nextIndex = i + 1;
+        }
+    }
+    
+    // Simulate until we reach 1M or max 100 years
+    while (value < 1000000 && month < 1200) {
+        value = value * (1 + monthlyRate) + monthly;
+        month++;
+        
+        // Check for milestones
+        for (let i = nextIndex; i < milestones.length; i++) {
+            if (value >= milestones[i]) {
+                const date = new Date();
+                date.setMonth(date.getMonth() + month);
+                results[milestones[i]] = { reached: true, month: month, date: date };
+                nextIndex = i + 1;
+                break;
+            }
+        }
+    }
+    
+    // For milestones not reached, estimate
+    // ... actually, let me just keep track of the last value and project
+    
+    return results;
+}

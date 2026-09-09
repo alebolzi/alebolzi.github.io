@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Financial Quest - Scalata ai Traguardi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-amber: #f59e0b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #38bdf8, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-sub);
+            font-size: 1rem;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+
+        @media (min-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Controls Section */
+        .controls-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+
+        /* Custom Styling for Sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #334155;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        /* Results / Targets Section */
+        .results-card {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .target-box {
+            position: relative;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .target-box::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+        }
+
+        .target-100k::before { background: var(--accent-green); }
+        .target-500k::before { background: var(--accent-amber); }
+        .target-1m::before { background: var(--accent-purple); }
+
+        .target-box:hover {
+            transform: translateY(-2px);
+            border-color: #475569;
+        }
+
+        .target-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .target-icon {
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .target-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .target-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+
+        .target-date-group {
+            text-align: right;
+        }
+
+        .target-date {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .target-100k .target-date { color: var(--accent-green); }
+        .target-500k .target-date { color: var(--accent-amber); }
+        .target-1m .target-date { color: var(--accent-purple); }
+
+        .target-time {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+        }
+
+        .summary-banner {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .summary-banner p {
+            font-size: 0.9rem;
+            color: #d1fae5;
+        }
+
+        .summary-banner span {
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🎯 Financial Quest</h1>
+        <p>Imposta le tue risorse e scopri la data esatta dei tuoi traguardi patrimoniali</p>
+    </header>
+
+    <div class="grid-layout">
+        <!-- Controls -->
+        <div class="controls-card">
+            <!-- Initial Capital -->
+            <div class="input-group">
+                <div class="input-header">
+                    <span class="input-label">💰 Capitale Iniziale</span>
+                    <span class="input-value" id="val-initial">10.000 €</span>
+                </div>
+                <input type="range" id="input-initial" min="0" max="100000" step="1000" value="10000">
+            </div>
+
+            <!-- Monthly PAC -->
+            <div class="input-group">
+                <div class="input-header">
+                    <span class="input-label">🚀 PAC Mensile</span>
+                    <span class="input-value" id="val-pac">500 €</span>
+                </div>
+                <input type="range" id="input-pac" min="50" max="3000" step="50" value="500">
+            </div>
+
+            <!-- Annual Return -->
+            <div class="input-group">
+                <div class="input-header">
+                    <span class="input-label">📈 Rendimento Annuo Stima</span>
+                    <span class="input-value" id="val-rate">7.0 %</span>
+                </div>
+                <input type="range" id="input-rate" min="1" max="15" step="0.5" value="7.0">
+            </div>
+        </div>
+
+        <!-- Targets Output -->
+        <div class="results-card">
+            <!-- Target 100k -->
+            <div class="target-box target-100k">
+                <div class="target-info">
+                    <div class="target-icon">🎯</div>
+                    <div>
+                        <div class="target-title">100.000 €</div>
+                        <div class="target-subtitle">Primo Grande Traguardo</div>
+                    </div>
+                </div>
+                <div class="target-date-group">
+                    <div class="target-date" id="date-100k">--/----</div>
+                    <div class="target-time" id="time-100k">--</div>
+                </div>
+            </div>
+
+            <!-- Target 500k -->
+            <div class="target-box target-500k">
+                <div class="target-info">
+                    <div class="target-icon">🚀</div>
+                    <div>
+                        <div class="target-title">500.000 €</div>
+                        <div class="target-subtitle">Libertà Finanziaria</div>
+                    </div>
+                </div>
+                <div class="target-date-group">
+                    <div class="target-date" id="date-500k">--/----</div>
+                    <div class="target-time" id="time-500k">--</div>
+                </div>
+            </div>
+
+            <!-- Target 1M -->
+            <div class="target-box target-1m">
+                <div class="target-info">
+                    <div class="target-icon">👑</div>
+                    <div>
+                        <div class="target-title">1.000.000 €</div>
+                        <div class="target-subtitle">Club dei Milionari</div>
+                    </div>
+                </div>
+                <div class="target-date-group">
+                    <div class="target-date" id="date-1m">--/----</div>
+                    <div class="target-time" id="time-1m">--</div>
+                </div>
+            </div>
+
+            <div class="summary-banner">
+                <p>💡 L'effetto dell'<b>interesse composto</b> accelera la crescita esponenzialmente col passare del tempo.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const inputInitial = document.getElementById('input-initial');
+    const inputPac = document.getElementById('input-pac');
+    const inputRate = document.getElementById('input-rate');
+
+    const valInitial = document.getElementById('val-initial');
+    const valPac = document.getElementById('val-pac');
+    const valRate = document.getElementById('val-rate');
+
+    const date100k = document.getElementById('date-100k');
+    const time100k = document.getElementById('time-100k');
+
+    const date500k = document.getElementById('date-500k');
+    const time500k = document.getElementById('time-500k');
+
+    const date1m = document.getElementById('date-1m');
+    const time1m = document.getElementById('time-1m');
+
+    const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
+                        "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+
+    function formatCurrency(val) {
+        return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+    }
+
+    function calculateMonthsToTarget(P, PMT, target, annualRate) {
+        if (P >= target) return 0;
+        
+        // Rate per month
+        const r = Math.pow(1 + annualRate / 100, 1 / 12) - 1;
+
+        if (r <= 0) {
+            if (PMT <= 0) return Infinity;
+            return Math.ceil((target - P) / PMT);
+        }
+
+        // Formula: t = ln((Target * r + PMT) / (P * r + PMT)) / ln(1 + r)
+        const numerator = target * r + PMT;
+        const denominator = P * r + PMT;
+
+        if (denominator <= 0 || numerator <= 0) return Infinity;
+
+        const months = Math.log(numerator / denominator) / Math.log(1 + r);
+        return Math.ceil(months);
+    }
+
+    function getDateFromMonths(months) {
+        if (months === 0) return { dateStr: "Raggiunto!", timeStr: "Oggi" };
+        if (!isFinite(months) || months < 0) return { dateStr: "Mai", timeStr: "Impossibile" };
+
+        const now = new Date();
+        const futureDate = new Date(now.getFullYear(), now.getMonth() + months, 1);
+
+        const year = futureDate.getFullYear();
+        const month = monthNames[futureDate.getMonth()];
+
+        const yearsCount = Math.floor(months / 12);
+        const remainingMonths = months % 12;
+
+        let timeStr = "";
+        if (yearsCount > 0) timeStr += `${yearsCount} an${yearsCount > 1 ? 'i' : 'no'}`;
+        if (remainingMonths > 0) {
+            if (timeStr !== "") timeStr += " e ";
+            timeStr += `${remainingMonths} m${remainingMonths > 1 ? 'esi' : 'ese'}`;
+        }
+
+        return {
+            dateStr: `${month} ${year}`,
+            timeStr: `tra ${timeStr}`
+        };
+    }
+
+    function update() {
+        const P = parseFloat(inputInitial.value);
+        const PMT = parseFloat(inputPac.value);
+        const R = parseFloat(inputRate.value);
+
+        valInitial.textContent = formatCurrency(P);
+        valPac.textContent = formatCurrency(PMT);
+        valRate.textContent = `${R.toFixed(1)} %`;
+
+        // Calculate for 100k
+        const m100k = calculateMonthsToTarget(P, PMT, 100000, R);
+        const res100k = getDateFromMonths(m100k);
+        date100k.textContent = res100k.dateStr;
+        time100k.textContent = res100k.timeStr;
+
+        // Calculate for 500k
+        const m500k = calculateMonthsToTarget(P, PMT, 500000, R);
+        const res500k = getDateFromMonths(m500k);
+        date500k.textContent = res500k.dateStr;
+        time500k.textContent = res500k.timeStr;
+
+        // Calculate for 1M
+        const m1m = calculateMonthsToTarget(P, PMT, 1000000, R);
+        const res1m = getDateFromMonths(m1m);
+        date1m.textContent = res1m.dateStr;
+        time1m.textContent = res1m.timeStr;
+    }
+
+    inputInitial.addEventListener('input', update);
+    inputPac.addEventListener('input', update);
+    inputRate.addEventListener('input', update);
+
+    // Initial calculation
+    update();
+</script>
+
+</body>
+</html>

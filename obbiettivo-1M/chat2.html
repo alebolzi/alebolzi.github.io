@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Road to €1M</title>
+  <style>
+    :root {
+      --bg: #09090d;
+      --card: #111119;
+      --card2: #171721;
+      --text: #f5f5f7;
+      --muted: #8e8e9d;
+      --line: #282833;
+      --accent: #9d7cff;
+      --green: #55e6a5;
+      --gold: #ffd166;
+      --pink: #ff6fae;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 50% -10%, #211747 0, transparent 38%),
+        radial-gradient(circle at 10% 90%, #111b2b 0, transparent 28%),
+        var(--bg);
+    }
+
+    .wrap {
+      width: min(920px, 94vw);
+      height: 100dvh;
+      margin: 0 auto;
+      padding: clamp(10px, 3vh, 40px) 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: clamp(14px, 3vh, 34px);
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .16em
+    }
+
+    h1 {
+      font-size: clamp(2.8rem, 8vw, 5.5rem);
+      line-height: .9;
+      margin: 12px 0;
+      font-weight: 950;
+      letter-spacing: -.07em
+    }
+
+    h1 span {
+      color: var(--accent)
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 1.05rem
+    }
+
+    .panel {
+      background: rgba(17, 17, 25, .88);
+      border: 1px solid var(--line);
+      border-radius: clamp(18px, 3vw, 28px);
+      padding: clamp(16px, 2.5vw, 26px);
+      box-shadow: 0 20px 80px #0008;
+      backdrop-filter: blur(16px);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px
+    }
+
+    .control {
+      background: var(--card2);
+      border: 1px solid var(--line);
+      padding: clamp(12px, 1.8vw, 20px);
+      border-radius: clamp(14px, 2vw, 20px);
+    }
+
+    .label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: .83rem;
+      font-weight: 700
+    }
+
+    .value {
+      font-size: 1.55rem;
+      font-weight: 900;
+      color: var(--text);
+      margin: 7px 0 16px
+    }
+
+    /* SLIDER */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 9px;
+      margin: 7px 0 3px;
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+    }
+
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      box-shadow:
+        0 0 0 4px rgba(157, 124, 255, .16),
+        0 0 20px rgba(255, 111, 174, .75);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.25);
+    }
+
+
+    input[type="range"]::-moz-range-track {
+      height: 9px;
+      background: #1c1c27;
+      border-radius: 999px;
+    }
+
+    /* Pallino */
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent);
+      box-shadow:
+        0 0 0 2px rgba(139, 92, 246, .25),
+        0 0 14px rgba(139, 92, 246, .7);
+      transition:
+        transform .15s ease,
+        box-shadow .15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+      box-shadow:
+        0 0 0 4px rgba(139, 92, 246, .18),
+        0 0 20px rgba(236, 72, 153, .8);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.28);
+    }
+
+    /* Firefox */
+    input[type="range"]::-moz-range-thumb {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent);
+      box-shadow:
+        0 0 0 2px rgba(139, 92, 246, .25),
+        0 0 14px rgba(139, 92, 246, .7);
+      cursor: pointer;
+    }
+
+    /* Track Firefox */
+    input[type="range"]::-moz-range-track {
+      height: 10px;
+      background: #1c1b29;
+      border-radius: 999px;
+    }
+
+    .range {
+      display: flex;
+      justify-content: space-between;
+      color: #666675;
+      font-size: .68rem;
+      margin-top: 5px
+    }
+
+    .road {
+      margin: 28px 0 20px
+    }
+
+    .roadtop {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      margin-bottom: 9px
+    }
+
+    .roadtop strong {
+      font-size: 1.1rem
+    }
+
+    .percent {
+      color: var(--green);
+      font-weight: 900
+    }
+
+    .track {
+      height: 18px;
+      background: #08080c;
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      overflow: hidden
+    }
+
+    .fill {
+      height: 100%;
+      width: 5.6%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--pink));
+      transition: width .35s ease
+    }
+
+    .moneyline {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: .78rem;
+      margin-top: 8px
+    }
+
+    .targets {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 22px
+    }
+
+    .target {
+      position: relative;
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: clamp(16px, 2.2vw, 22px);
+      padding: clamp(14px, 2vw, 22px);
+    }
+
+    .target::after {
+      content: "";
+      position: absolute;
+      inset: auto -30px -50px auto;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: .07;
+      filter: blur(5px)
+    }
+
+    .rank {
+      font-size: .72rem;
+      color: var(--muted);
+      font-weight: 900;
+      letter-spacing: .12em
+    }
+
+    .target h2 {
+      margin: 7px 0 15px;
+      font-size: 1.7rem;
+      letter-spacing: -.04em
+    }
+
+    .date {
+      font-size: 1.2rem;
+      font-weight: 900
+    }
+
+    .years {
+      color: var(--muted);
+      font-size: .8rem;
+      margin-top: 5px
+    }
+
+    .bar {
+      height: 5px;
+      background: #252530;
+      border-radius: 99px;
+      margin-top: 18px;
+      overflow: hidden
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--green);
+      transition: width .4s
+    }
+
+    .goal {
+      margin-top: 18px;
+      padding: 17px 20px;
+      border-radius: 18px;
+      background: #0c0c12;
+      border: 1px dashed #30303c;
+      color: var(--muted);
+      text-align: center
+    }
+
+    .goal b {
+      color: var(--text)
+    }
+
+    /* OBIETTIVO COMPLETATO */
+    .target.completed {
+      border-color: var(--green);
+      box-shadow:
+        0 0 0 1px rgba(85, 230, 165, .15),
+        0 0 28px rgba(85, 230, 165, .18);
+      cursor: pointer;
+      transition: border-color .25s ease, box-shadow .25s ease, transform .2s ease;
+    }
+
+    .target.completed:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 0 0 1px rgba(85, 230, 165, .25),
+        0 0 38px rgba(85, 230, 165, .28);
+    }
+
+    .target.completed .rank {
+      color: var(--green);
+    }
+
+    .target.completed .bar i {
+      background: var(--green);
+    }
+
+    /* EMOJI CONFETTI */
+    .confetti {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(.3);
+      animation: confettiFly var(--duration) cubic-bezier(.15, .65, .25, 1) forwards;
+      will-change: transform, opacity;
+    }
+
+    @keyframes confettiFly {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(.3) rotate(0deg);
+      }
+
+      18% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.1) rotate(var(--rotation));
+      }
+    }
+
+    .note {
+      text-align: center;
+      color: #626270;
+      font-size: .72rem;
+      margin-top: 18px;
+      line-height: 1.5
+    }
+
+    @media (max-width: 700px) {
+      .wrap {
+        width: 94vw;
+        padding: 12px 0;
+      }
+
+      .controls,
+      .targets {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+      }
+
+      .control {
+        padding: 10px;
+      }
+
+      .label {
+        font-size: .58rem;
+      }
+
+      .value {
+        font-size: 1rem;
+        margin: 5px 0 8px;
+      }
+
+      .range {
+        display: none;
+      }
+
+      .road {
+        margin: 12px 0;
+      }
+
+      .track {
+        height: 12px;
+      }
+
+      .moneyline {
+        font-size: .6rem;
+      }
+
+      .target {
+        padding: 10px;
+      }
+
+      .rank {
+        font-size: .45rem;
+      }
+
+      .target h2 {
+        font-size: 1rem;
+        margin: 5px 0 8px;
+      }
+
+      .date {
+        font-size: .75rem;
+      }
+
+      .years {
+        font-size: .58rem;
+      }
+
+      .bar {
+        margin-top: 9px;
+      }
+
+      .goal {
+        padding: 9px;
+        font-size: .7rem;
+      }
+
+      .note {
+        font-size: .55rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">PERSONAL WEALTH SIMULATOR</div>
+      <h1>ROAD TO <span>€1M</span> 🚀</h1>
+      <div class="sub">Imposta le tue regole. Scopri quando superi ogni checkpoint.</div>
+    </header>
+
+    <main class="panel">
+      <section class="controls">
+        <div class="control">
+          <div class="label"><span>💰 INVESTITO</span><span id="initialHint"></span></div>
+          <div class="value" id="initialValue"></div>
+          <input id="initial" type="range" min="0" max="1000000" step="5000" value="55000">
+          <div class="range"><span>€0</span><span>€1M</span></div>
+        </div>
+        <div class="control">
+          <div class="label"><span>⚡ PAC MENSILE</span><span>∞</span></div>
+          <div class="value" id="pacValue"></div>
+          <input id="pac" type="range" min="0" max="5000" step="100" value="700">
+          <div class="range"><span>€0</span><span>€5K</span></div>
+        </div>
+        <div class="control">
+          <div class="label"><span>📈 RENDIMENTO</span><span>annuo</span></div>
+          <div class="value" id="returnValue"></div>
+          <input id="return" type="range" min="0" max="20" step=".1" value="8">
+          <div class="range"><span>0%</span><span>20%</span></div>
+        </div>
+      </section>
+
+      <section class="road">
+        <div class="roadtop">
+          <strong id="current">€56.000</strong>
+          <span class="percent" id="percent">5,6%</span>
+        </div>
+        <div class="track">
+          <div class="fill" id="fill"></div>
+        </div>
+        <div class="moneyline"><span>START</span><span>€1.000.000</span></div>
+      </section>
+
+      <section class="targets">
+        <article class="target">
+          <div class="rank">LEVEL 01 · BRONZE</div>
+          <h2>€100K 🥉</h2>
+          <div class="date" id="date100">--</div>
+          <div class="years" id="years100"></div>
+          <div class="bar"><i id="bar100"></i></div>
+        </article>
+        <article class="target">
+          <div class="rank">LEVEL 02 · SILVER</div>
+          <h2>€500K 🥈</h2>
+          <div class="date" id="date500">--</div>
+          <div class="years" id="years500"></div>
+          <div class="bar"><i id="bar500"></i></div>
+        </article>
+        <article class="target">
+          <div class="rank">FINAL BOSS · GOLD</div>
+          <h2>€1M 🥇</h2>
+          <div class="date" id="date1000">--</div>
+          <div class="years" id="years1000"></div>
+          <div class="bar"><i id="bar1000"></i></div>
+        </article>
+      </section>
+
+      <div class="goal" id="goal"></div>
+      <div class="note">Simulazione matematica con capitalizzazione mensile. Il rendimento è ipotizzato costante e non
+        rappresenta una previsione garantita del mercato.</div>
+    </main>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const initial = $("initial"), pac = $("pac"), ret = $("return");
+    const euro = n => {
+      if (n >= 1000000) return "€" + (n / 1000000).toFixed(n % 1000000 === 0 ? 0 : 1) + "M";
+      if (n >= 1000) return "€" + (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + "K";
+      return "€" + Math.round(n);
+    };
+
+    const now = new Date();
+
+    function celebrate(card) {
+      const emojis = ["🚀", "🎉", "💰", "✨", "🥳", "🤑", "🎊", "⭐"];
+      const rect = card.getBoundingClientRect();
+
+      for (let i = 0; i < 32; i++) {
+        const emoji = document.createElement("span");
+
+        emoji.className = "confetti";
+        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+
+        // Posizione di partenza casuale sulla card
+        const startX = rect.left + Math.random() * rect.width;
+        const startY = rect.top + Math.random() * rect.height;
+
+        // Movimento casuale
+        const x = (Math.random() - 0.5) * 550;
+        const y = -70 - Math.random() * 400;
+
+        // Dimensione casuale
+        const size = 20 + Math.random() * 25;
+
+        // Rotazione casuale
+        const rotation = (Math.random() - 0.5) * 1000;
+
+        // Ritardo casuale tra un'emoji e l'altra
+        const delay = Math.random() * 700;
+
+        // Velocità casuale, abbastanza lenta
+        const duration = 1.8 + Math.random() * 1.4;
+
+        emoji.style.left = `${startX}px`;
+        emoji.style.top = `${startY}px`;
+        emoji.style.fontSize = `${size}px`;
+
+        emoji.style.setProperty("--x", `${x}px`);
+        emoji.style.setProperty("--y", `${y}px`);
+        emoji.style.setProperty("--rotation", `${rotation}deg`);
+        emoji.style.setProperty("--duration", `${duration}s`);
+
+        emoji.style.animationDelay = `${delay}ms`;
+
+        document.body.appendChild(emoji);
+
+        setTimeout(() => {
+          emoji.remove();
+        }, delay + duration * 1000 + 200);
+      }
+    }
+
+    function updateSlider(slider) {
+      const min = +slider.min;
+      const max = +slider.max;
+      const value = +slider.value;
+      const percent = ((value - min) / (max - min)) * 100;
+
+      slider.style.background = `
+    linear-gradient(
+      90deg,
+      var(--accent) 0%,
+      var(--pink) ${percent}%,
+      #1c1c27 ${percent}%,
+      #1c1c27 100%
+    )
+  `;
+    }
+    function monthsToTarget(P, PMT, annual, target) {
+      if (P >= target) return 0;
+      const r = Math.pow(1 + annual / 100, 1 / 12) - 1;
+      if (PMT === 0) {
+        if (r === 0) return Infinity;
+        const n = Math.log(target / P) / Math.log(1 + r);
+        return Math.ceil(n);
+      }
+      if (r === 0) return Math.ceil((target - P) / PMT);
+
+      // Binary search avoids numerical headaches and finds the first whole month above target.
+      let lo = 0, hi = 1200;
+      while (lo < hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        const fv = P * Math.pow(1 + r, mid) + PMT * ((Math.pow(1 + r, mid) - 1) / r);
+        if (fv >= target) hi = mid; else lo = mid + 1;
+      }
+      return lo;
+    }
+    function futureDate(months) {
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() + months);
+      return d;
+    }
+    function dateText(months) {
+      if (!Number.isFinite(months)) return "Mai raggiunto";
+      if (months === 0) return "GIÀ RAGGIUNTO 🎯";
+      return futureDate(months).toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+    }
+    function yearsText(months) {
+      if (!Number.isFinite(months)) return "Con questi parametri non raggiungi il target";
+      if (months === 0) return "Sei già qui.";
+      const y = Math.floor(months / 12), m = months % 12;
+      return `${y ? y + " ann" + (y === 1 ? "o" : "i") : ""}${y && m ? " e " : ""}${m ? m + " mes" + (m === 1 ? "e" : "i") : ""}`;
+    }
+    function update() {
+      const P = +initial.value, PMT = +pac.value, R = +ret.value;
+
+      updateSlider(initial);
+      updateSlider(pac);
+      updateSlider(ret);
+      $("initialValue").textContent = euro(Math.round(P / 500) * 500);
+      $("pacValue").textContent = euro(PMT);
+      $("returnValue").textContent = R.toFixed(1) + "%";
+      $("current").textContent = euro(P);
+      const progress = Math.min(P / 1000000 * 100, 100);
+      $("percent").textContent = progress.toFixed(1) + "%";
+      $("fill").style.width = progress + "%";
+
+      [[100000, "100"], [500000, "500"], [1000000, "1000"]].forEach(([target, id]) => {
+        const n = monthsToTarget(P, PMT, R, target);
+
+        $("date" + id).textContent = dateText(n);
+        $("years" + id).textContent = yearsText(n);
+
+        const bar = Math.min(P / target * 100, 100);
+        $("bar" + id).style.width = bar + "%";
+
+        const card = $("bar" + id).closest(".target");
+
+        if (P >= target) {
+          card.classList.add("completed");
+        } else {
+          card.classList.remove("completed");
+        }
+      });
+
+      if (P >= 1000000) {
+        $("goal").innerHTML = "🏆 <b>FINAL BOSS SCONFITTO.</b> Hai già raggiunto €1M.";
+      } else {
+        const n = monthsToTarget(P, PMT, R, 1000000);
+        const remaining = Math.max(0, 1000000 - P);
+        $("goal").innerHTML = `🎯 Mancano <b>${euro(remaining)}</b> al milione · ${Number.isFinite(n) ? `checkpoint finale tra <b>${yearsText(n)}</b>` : "il target non viene raggiunto"}`;
+      }
+    }
+    initial.addEventListener("input", () => {
+      initial.value = Math.round(+initial.value / 500) * 500;
+      update();
+    });
+
+    pac.addEventListener("input", () => {
+      pac.value = Math.round(+pac.value / 50) * 50;
+      update();
+    });
+
+    ret.addEventListener("input", () => {
+      ret.value = Math.round(+ret.value / 0.1) * 0.1;
+      update();
+    });
+
+    document.querySelectorAll(".target").forEach(card => {
+      card.addEventListener("click", () => {
+        if (card.classList.contains("completed")) {
+          celebrate(card);
+        }
+      });
+    });
+
+    update();
+  </script>
+</body>
+
+</html>

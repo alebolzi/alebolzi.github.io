@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚀 Missione Patrimonio — 100k • 500k • 1M</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;600;700&display=swap');
+
+    :root {
+      --bg: #0a0e17;
+      --card: #121826;
+      --accent: #00f5d4;
+      --accent2: #7b2cbf;
+      --gold: #ffd60a;
+      --text: #e8eef7;
+      --muted: #8b9bb4;
+      --danger: #ff6b6b;
+      --success: #00f5d4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(0, 245, 212, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(123, 44, 191, 0.12) 0%, transparent 50%);
+    }
+
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 2rem 1.2rem 4rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      position: relative;
+    }
+
+    .badge {
+      display: inline-block;
+      background: linear-gradient(90deg, var(--accent2), #5a189a);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      line-height: 1.15;
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.4rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px;
+      padding: 1.6rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+    }
+
+    .card-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.95rem;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .slider-group {
+      margin-bottom: 1.6rem;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.5rem;
+    }
+
+    .slider-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .slider-value {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--gold);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #1e293b;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, var(--accent), #00c4a7);
+      box-shadow: 0 0 0 4px rgba(0,245,212,0.25), 0 4px 12px rgba(0,245,212,0.4);
+      cursor: grab;
+      transition: transform 0.15s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.15);
+      cursor: grabbing;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 50%;
+      background: linear-gradient(145deg, var(--accent), #00c4a7);
+      box-shadow: 0 0 0 4px rgba(0,245,212,0.25);
+      cursor: grab;
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+    }
+
+    .targets {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+
+    .target-card {
+      background: linear-gradient(160deg, #161f2e 0%, #0f1520 100%);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 1.3rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .target-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(0,245,212,0.3);
+    }
+
+    .target-card.reached {
+      border-color: var(--success);
+      box-shadow: 0 0 25px rgba(0,245,212,0.15);
+    }
+
+    .target-amount {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .target-100k { color: #4cc9f0; }
+    .target-500k { color: #f72585; }
+    .target-1m   { color: var(--gold); }
+
+    .target-date {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin: 0.6rem 0 0.3rem;
+    }
+
+    .target-years {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .progress-wrap {
+      margin-top: 1rem;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 999px;
+      width: 0%;
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .bar-100k { background: linear-gradient(90deg, #4cc9f0, #4895ef); }
+    .bar-500k { background: linear-gradient(90deg, #f72585, #b5179e); }
+    .bar-1m   { background: linear-gradient(90deg, #ffd60a, #f4a261); }
+
+    .status {
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      font-weight: 600;
+    }
+
+    .status.reached { color: var(--success); }
+    .status.pending { color: var(--muted); }
+
+    .summary {
+      text-align: center;
+      padding: 1.2rem;
+      background: rgba(0,245,212,0.05);
+      border: 1px dashed rgba(0,245,212,0.25);
+      border-radius: 14px;
+      margin-top: 1.2rem;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .summary strong { color: var(--accent); }
+
+    footer {
+      text-align: center;
+      margin-top: 2.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 1.2rem 0.9rem 3rem; }
+      .target-amount { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">🚀 Missione Patrimonio</div>
+      <h1>Quando arrivo a<br>100k · 500k · 1M?</h1>
+      <p class="subtitle">Muovi gli slider e scopri la data esatta della tua vittoria</p>
+    </header>
+
+    <div class="card">
+      <div class="card-title">⚙️ Parametri della missione</div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">Capitale già investito</span>
+          <span class="slider-value" id="val-capitale">€ 10.000</span>
+        </div>
+        <input type="range" id="capitale" min="0" max="200000" step="500" value="10000">
+        <div class="hint">Quanto hai già messo da parte oggi</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">PAC mensile</span>
+          <span class="slider-value" id="val-pac">€ 300</span>
+        </div>
+        <input type="range" id="pac" min="0" max="5000" step="50" value="300">
+        <div class="hint">Quanto investi ogni mese (costante)</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">Rendimento annuo atteso</span>
+          <span class="slider-value" id="val-rendimento">7,0 %</span>
+        </div>
+        <input type="range" id="rendimento" min="1" max="15" step="0.1" value="7">
+        <div class="hint">Media storica azioni globali ≈ 7-8%. Sii realistico 😉</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎯 Obiettivi sbloccabili</div>
+      <div class="targets" id="targets">
+        <!-- generati da JS -->
+      </div>
+      <div class="summary" id="summary">
+        Muovi gli slider per iniziare la missione…
+      </div>
+    </div>
+
+    <footer>
+      Simulazione semplificata · interesse composto mensile · non è consulenza finanziaria
+    </footer>
+  </div>
+
+  <script>
+    const fmt = (n) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+    const fmtDate = (d) => d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const capitaleEl = document.getElementById('capitale');
+    const pacEl = document.getElementById('pac');
+    const rendimentoEl = document.getElementById('rendimento');
+    const targetsEl = document.getElementById('targets');
+    const summaryEl = document.getElementById('summary');
+
+    const targets = [
+      { id: '100k', amount: 100000, label: '100.000 €', class: 'target-100k', bar: 'bar-100k' },
+      { id: '500k', amount: 500000, label: '500.000 €', class: 'target-500k', bar: 'bar-500k' },
+      { id: '1m',   amount: 1000000, label: '1.000.000 €', class: 'target-1m', bar: 'bar-1m' }
+    ];
+
+    function calcMonthsToTarget(principal, monthly, annualRate, target) {
+      if (principal >= target) return 0;
+      if (monthly <= 0 && annualRate <= 0) return Infinity;
+
+      const r = annualRate / 100 / 12;
+      let balance = principal;
+      let months = 0;
+      const maxMonths = 1200; // 100 anni di sicurezza
+
+      while (balance < target && months < maxMonths) {
+        balance = balance * (1 + r) + monthly;
+        months++;
+      }
+      return months >= maxMonths ? Infinity : months;
+    }
+
+    function addMonths(date, months) {
+      const d = new Date(date);
+      d.setMonth(d.getMonth() + months);
+      return d;
+    }
+
+    function update() {
+      const principale = +capitaleEl.value;
+      const pac = +pacEl.value;
+      const rendimento = +rendimentoEl.value;
+
+      document.getElementById('val-capitale').textContent = fmt(principale);
+      document.getElementById('val-pac').textContent = fmt(pac);
+      document.getElementById('val-rendimento').textContent = rendimento.toFixed(1).replace('.', ',') + ' %';
+
+      const today = new Date();
+      let html = '';
+      let firstFuture = null;
+
+      targets.forEach(t => {
+        const months = calcMonthsToTarget(principale, pac, rendimento, t.amount);
+        const reached = months === 0;
+        const infinite = !isFinite(months);
+
+        let dateStr, yearsStr, statusClass, statusText, progress;
+
+        if (reached) {
+          dateStr = '🎯 Già raggiunto!';
+          yearsStr = 'Complimenti, obiettivo superato';
+          statusClass = 'reached';
+          statusText = 'OBIETTIVO SBLOCCATO';
+          progress = 100;
+        } else if (infinite) {
+          dateStr = '∞ Impossibile';
+          yearsStr = 'Aumenta PAC o rendimento';
+          statusClass = 'pending';
+          statusText = 'Missione bloccata';
+          progress = Math.min(99, (principale / t.amount) * 100);
+        } else {
+          const targetDate = addMonths(today, months);
+          dateStr = fmtDate(targetDate);
+          const years = (months / 12).toFixed(1).replace('.', ',');
+          yearsStr = months < 12 ? `${months} mesi` : `${years} anni (${months} mesi)`;
+          statusClass = 'pending';
+          statusText = 'In arrivo…';
+          progress = Math.min(99, (principale / t.amount) * 100);
+          if (!firstFuture) firstFuture = { label: t.label, date: dateStr, years: yearsStr };
+        }
+
+        html += `
+          <div class="target-card ${reached ? 'reached' : ''}">
+            <div class="target-amount ${t.class}">${t.label}</div>
+            <div class="target-date">${dateStr}</div>
+            <div class="target-years">${yearsStr}</div>
+            <div class="progress-wrap">
+              <div class="progress-bar ${t.bar}" style="width:${progress}%"></div>
+            </div>
+            <div class="status ${statusClass}">${statusText}</div>
+          </div>
+        `;
+      });
+
+      targetsEl.innerHTML = html;
+
+      // Messaggio motivazionale
+      if (principale >= 1000000) {
+        summaryEl.innerHTML = `🏆 <strong>LEGGENDA!</strong> Hai già superato il milione. Ora alza l’asticella.`;
+      } else if (firstFuture) {
+        summaryEl.innerHTML = `🔥 Il tuo prossimo traguardo è <strong>${firstFuture.label}</strong> previsto per il <strong>${firstFuture.date}</strong> (tra ${firstFuture.years}). Continua così!`;
+      } else {
+        summaryEl.innerHTML = `Muovi gli slider e scopri quando sblocchi i tuoi obiettivi.`;
+      }
+    }
+
+    // Eventi
+    [capitaleEl, pacEl, rendimentoEl].forEach(el => {
+      el.addEventListener('input', update);
+    });
+
+    // Prima esecuzione
+    update();
+  </script>
+</body>
+</html>

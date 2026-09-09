@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gioco di Investimento - Arrivo a 100k, 500k, 1M</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+    margin: 0;
+    padding: 20px;
+    color: #333;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: #fff;
+  }
+  .container {
+    max-width: 800px;
+    margin: auto;
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  }
+  .slider-group {
+    margin: 20px 0;
+  }
+  label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+  }
+  input[type=range] {
+    width: 100%;
+  }
+  .value-display {
+    font-size: 1.2em;
+    margin-top: 8px;
+    color: #222;
+  }
+  #results {
+    margin-top: 30px;
+    text-align: center;
+  }
+  .target {
+    font-size: 1.2em;
+    margin: 10px 0;
+    padding: 15px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  @media(max-width: 600px){
+    body {
+      padding: 10px;
+    }
+  }
+</style>
+</head>
+<body>
+<h1>Gioco di Investimento</h1>
+<div class="container">
+  <div class="slider-group">
+    <label for="initialInvestment">Quanto hai investito finora (€):</label>
+    <input type="range" id="initialInvestment" min="0" max="100000" step="1000" value="10000" oninput="updateDisplay('initial')">
+    <div class="value-display" id="initialDisplay">€10,000</div>
+  </div>
+  <div class="slider-group">
+    <label for="monthlyInvestment">Investi ogni mese (€):</label>
+    <input type="range" id="monthlyInvestment" min="0" max="10000" step="500" value="500" oninput="updateDisplay('monthly')">
+    <div class="value-display" id="monthlyDisplay">€500</div>
+  </div>
+  <div class="slider-group">
+    <label for="annualReturn">Rendimento annuo atteso (%):</label>
+    <input type="range" id="annualReturn" min="0" max="20" step="0.1" value="8" oninput="updateDisplay('return')">
+    <div class="value-display" id="returnDisplay">8%</div>
+  </div>
+</div>
+
+<div id="results">
+  <h2>Obiettivi di capitale</h2>
+  <div class="target">100.000€ arriverai il: <span id="date100k">--</span></div>
+  <div class="target">500.000€ arriverai il: <span id="date500k">--</span></div>
+  <div class="target">1.000.000€ arriverai il: <span id="date1M">--</span></div>
+</div>
+
+<script>
+  function formatDate(date) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('it-IT', options);
+  }
+
+  function updateDisplay(id) {
+    document.getElementById(id + 'Display').innerText = '€' + Number(document.getElementById(id + '').value).toLocaleString();
+    calculateDates();
+  }
+
+  document.getElementById('initialInvestment').oninput = () => updateDisplay('initial');
+  document.getElementById('monthlyInvestment').oninput = () => updateDisplay('monthly');
+  document.getElementById('annualReturn').oninput = () => updateDisplay('return');
+
+  function calculateDates() {
+    const initial = parseFloat(document.getElementById('initialInvestment').value);
+    const monthly = parseFloat(document.getElementById('monthlyInvestment').value);
+    const annualReturnPercent = parseFloat(document.getElementById('annualReturn').value);
+
+    const targets = [100000, 500000, 1000000];
+    const results = [];
+
+    targets.forEach(target => {
+      let year = 0;
+      let balance = initial;
+      const rate = annualReturnPercent / 100;
+      const monthlyRate = Math.pow(1 + rate, 1/12) - 1;
+      let date = new Date();
+
+      // Loop fino a raggiungere il target o superarlo
+      while (balance < target && year < 100) {
+        for (let month=0; month<12; month++) {
+          balance = balance * (1 + monthlyRate) + monthly;
+        }
+        year += 1;
+      }
+
+      if (balance >= target) {
+        // Calcolo data esatta
+        let months = year * 12;
+        let dateObj = new Date();
+        dateObj.setMonth(dateObj.getMonth() + months);
+        results.push(formatDate(dateObj));
+      } else {
+        results.push('Oltre 100 anni');
+      }
+    });
+
+    document.getElementById('date100k').innerText = results[0];
+    document.getElementById('date500k').innerText = results[1];
+    document.getElementById('date1M').innerText = results[2];
+  }
+
+  // Calcola inizialmente
+  updateDisplay('initial');
+</script>
+</body>
+</html>
