@@ -940,62 +940,85 @@
     console.log('%c🧪 Bolzi Lab', 'font-size: 24px; font-weight: bold; color: #ff006e;');
     console.log('%cMuovi il mouse e guarda la magia ✨', 'color: #00d4ff;');
   </script>
+
+
   <!-- SMOOTH SCROLL PACK -->
 <style>
+    html {
+        scroll-behavior: auto !important;
+    }
+
     body {
         overflow-x: hidden;
     }
-
-    body > * {
-        will-change: transform;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        body > * {
-            will-change: auto;
-        }
-    }
 </style>
 
-  <script>
-    (() => {
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    
-        let current = window.scrollY;
-        let target = current;
-    
-        const ease = 0.06;
-    
-        function clamp() {
-            const max = document.documentElement.scrollHeight - window.innerHeight;
-            target = Math.max(0, Math.min(target, max));
+<script>
+(() => {
+    // Disattiva su dispositivi che chiedono meno animazioni
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let current = window.scrollY;
+    let target = window.scrollY;
+
+    let ticking = false;
+
+    // Quanto è "pesante" l'inerzia
+    // 0.04 = molto smooth
+    // 0.07 = smooth
+    // 0.10 = più reattivo
+    const ease = 0.07;
+
+    function updateTarget() {
+        const maxScroll =
+            document.documentElement.scrollHeight - window.innerHeight;
+
+        target = Math.max(0, Math.min(target, maxScroll));
+    }
+
+    // Rotella / trackpad
+    window.addEventListener('wheel', (e) => {
+        target += e.deltaY;
+        updateTarget();
+    }, { passive: true });
+
+    // Se qualcosa modifica lo scroll esternamente
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            ticking = true;
+
+            requestAnimationFrame(() => {
+                // Se il browser ci ha spostati davvero,
+                // sincronizziamo il target.
+                if (Math.abs(window.scrollY - current) > 2) {
+                    target = window.scrollY;
+                    current = window.scrollY;
+                }
+
+                ticking = false;
+            });
         }
-    
-        window.addEventListener("wheel", e => {
-            target += e.deltaY;
-            clamp();
-        }, { passive: true });
-    
-        window.addEventListener("scroll", () => {
-            if (Math.abs(window.scrollY - target) > 2) {
-                target = window.scrollY;
-            }
-        }, { passive: true });
-    
-        function render() {
-            current += (target - current) * ease;
-    
-            if (Math.abs(target - current) < 0.1) {
-                current = target;
-            }
-    
-            window.scrollTo(0, current);
-    
-            requestAnimationFrame(render);
+    }, { passive: true });
+
+    function render() {
+        const difference = target - current;
+
+        current += difference * ease;
+
+        // Evita il micro-jitter infinito
+        if (Math.abs(difference) < 0.05) {
+            current = target;
         }
-    
-        render();
-    })();
-    </script>
+
+        window.scrollTo(0, current);
+
+        requestAnimationFrame(render);
+    }
+
+    render();
+})();
+</script>
+
+  
 </body>
 </html>
