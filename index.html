@@ -940,6 +940,62 @@
     console.log('%c🧪 Bolzi Lab', 'font-size: 24px; font-weight: bold; color: #ff006e;');
     console.log('%cMuovi il mouse e guarda la magia ✨', 'color: #00d4ff;');
   </script>
+  <!-- SMOOTH SCROLL PACK -->
+<style>
+    body {
+        overflow-x: hidden;
+    }
 
+    body > * {
+        will-change: transform;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        body > * {
+            will-change: auto;
+        }
+    }
+</style>
+
+  <script>
+    (() => {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    
+        let current = window.scrollY;
+        let target = current;
+    
+        const ease = 0.06;
+    
+        function clamp() {
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            target = Math.max(0, Math.min(target, max));
+        }
+    
+        window.addEventListener("wheel", e => {
+            target += e.deltaY;
+            clamp();
+        }, { passive: true });
+    
+        window.addEventListener("scroll", () => {
+            if (Math.abs(window.scrollY - target) > 2) {
+                target = window.scrollY;
+            }
+        }, { passive: true });
+    
+        function render() {
+            current += (target - current) * ease;
+    
+            if (Math.abs(target - current) < 0.1) {
+                current = target;
+            }
+    
+            window.scrollTo(0, current);
+    
+            requestAnimationFrame(render);
+        }
+    
+        render();
+    })();
+    </script>
 </body>
 </html>
