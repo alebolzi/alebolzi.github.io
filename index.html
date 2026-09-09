@@ -941,5 +941,30 @@
     console.log('%cMuovi il mouse e guarda la magia ✨', 'color: #00d4ff;');
   </script>
 
+
+  <script>
+    const content = document.body;
+    
+    let current = 0;
+    let target = 0;
+    
+    window.addEventListener("wheel", e => {
+        target += e.deltaY;
+        target = Math.max(0, Math.min(
+            target,
+            document.documentElement.scrollHeight - window.innerHeight
+        ));
+    }, { passive: true });
+    
+    function render() {
+        current += (target - current) * 0.05;
+    
+        content.style.transform = `translate3d(0, ${-current}px, 0)`;
+    
+        requestAnimationFrame(render);
+    }
+    
+    render();
+  </script>
 </body>
 </html>
