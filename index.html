@@ -1006,7 +1006,7 @@
         current += difference * ease;
 
         // Evita il micro-jitter infinito
-        if (Math.abs(difference) < 0.05) {
+        if (Math.abs(difference) < 0.04) {
             current = target;
         }
 
