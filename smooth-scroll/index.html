@@ -1,0 +1,370 @@
+```html
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Smooth Scroll</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #08080c;
+    color: white;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+
+/* ═══════════════════════════════════════
+   SMOOTH SCROLL
+   ═══════════════════════════════════════ */
+
+#smooth-wrapper {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+}
+
+#smooth-content {
+    width: 100%;
+    will-change: transform;
+}
+
+
+/* ═══════════════════════════════════════
+   SECTIONS
+   ═══════════════════════════════════════ */
+
+section {
+    height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: clamp(60px, 10vw, 150px);
+    font-weight: 800;
+    letter-spacing: -0.06em;
+
+    user-select: none;
+}
+
+.s1 {
+    background: #08080c;
+}
+
+.s2 {
+    background: #101018;
+}
+
+.s3 {
+    background: #18101d;
+}
+
+.s4 {
+    background: #0d1715;
+}
+
+.s5 {
+    background: #151218;
+}
+
+
+/* ═══════════════════════════════════════
+   COPY SCRIPT
+   ═══════════════════════════════════════ */
+
+.s6 {
+    background: #101018;
+
+    cursor: pointer;
+
+    transition:
+        opacity 0.25s ease;
+}
+
+.s6:hover {
+    opacity: 0.65;
+}
+
+.s6:active {
+    opacity: 0.4;
+}
+
+
+/* mobile */
+
+@media (max-width: 600px) {
+
+    section {
+        font-size: clamp(48px, 14vw, 90px);
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div id="smooth-wrapper">
+
+    <div id="smooth-content">
+
+        <section class="s1">
+            SCROLL
+        </section>
+
+        <section class="s2">
+            SLOWLY.
+        </section>
+
+        <section class="s3">
+            VERY.
+        </section>
+
+        <section class="s4">
+            VERY.
+        </section>
+
+        <section class="s5">
+            SMOOTH.
+        </section>
+
+        <section class="s6" id="copy-script">
+            COPY SCRIPT
+        </section>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* ═══════════════════════════════════════
+   SMOOTH SCROLL
+   ═══════════════════════════════════════ */
+
+const content =
+    document.querySelector("#smooth-content");
+
+let current = 0;
+let target = 0;
+
+let maxScroll = 0;
+
+
+/* ═══════════════════════════════════════
+   CALCOLO ALTEZZA
+   ═══════════════════════════════════════ */
+
+function updateSize() {
+
+    maxScroll =
+        content.scrollHeight - window.innerHeight;
+
+    maxScroll =
+        Math.max(0, maxScroll);
+
+}
+
+updateSize();
+
+window.addEventListener(
+    "resize",
+    updateSize
+);
+
+
+/* ═══════════════════════════════════════
+   MOUSE / TRACKPAD
+   ═══════════════════════════════════════ */
+
+window.addEventListener(
+    "wheel",
+    (event) => {
+
+        event.preventDefault();
+
+        target += event.deltaY;
+
+        target = Math.max(
+            0,
+            Math.min(target, maxScroll)
+        );
+
+    },
+    {
+        passive: false
+    }
+);
+
+
+/* ═══════════════════════════════════════
+   TOUCH
+   ═══════════════════════════════════════ */
+
+let touchCurrent = 0;
+
+window.addEventListener(
+    "touchstart",
+    (event) => {
+
+        touchCurrent =
+            event.touches[0].clientY;
+
+    },
+    {
+        passive: true
+    }
+);
+
+
+window.addEventListener(
+    "touchmove",
+    (event) => {
+
+        const y =
+            event.touches[0].clientY;
+
+        const delta =
+            touchCurrent - y;
+
+        touchCurrent = y;
+
+        target += delta;
+
+        target = Math.max(
+            0,
+            Math.min(target, maxScroll)
+        );
+
+    },
+    {
+        passive: true
+    }
+);
+
+
+/* ═══════════════════════════════════════
+   INERZIA
+   ═══════════════════════════════════════ */
+
+function render() {
+
+    current +=
+        (target - current) * 0.05;
+
+    content.style.transform =
+        `translate3d(0, ${-current}px, 0)`;
+
+    requestAnimationFrame(render);
+
+}
+
+render();
+
+
+/* ═══════════════════════════════════════
+   COPY SCRIPT
+   ═══════════════════════════════════════ */
+
+const copySection =
+    document.querySelector("#copy-script");
+
+const smoothScript = [
+    '<!-- BOLZI LAB SMOOTH SCROLL -->',
+    '<!-- Paste before </body> -->',
+    '',
+    '<link rel="stylesheet" href="https://unpkg.com/lenis@1.3.26/dist/lenis.css">',
+    '',
+    '<script src="https://unpkg.com/lenis@1.3.26/dist/lenis.min.js"></' + 'script>',
+    '',
+    '<script>',
+    '(() => {',
+    '',
+    '    if (',
+    '        window.matchMedia(',
+    '            "(prefers-reduced-motion: reduce)"',
+    '        ).matches',
+    '    ) {',
+    '        return;',
+    '    }',
+    '',
+    '    new Lenis({',
+    '        autoRaf: true,',
+    '        autoToggle: true,',
+    '        anchors: true,',
+    '        allowNestedScroll: true,',
+    '        naiveDimensions: true,',
+    '        stopInertiaOnNavigate: true,',
+    '',
+    '        lerp: 0.075,',
+    '        smoothWheel: true,',
+    '',
+    '        syncTouch: true,',
+    '        syncTouchLerp: 0.05,',
+    '',
+    '        touchMultiplier: 1,',
+    '        gestureOrientation: "vertical"',
+    '    });',
+    '',
+    '})();',
+    '</' + 'script>'
+].join('\n');
+
+/* ═══════════════════════════════════════
+   CLICK → COPY
+   ═══════════════════════════════════════ */
+
+copySection.addEventListener(
+    "click",
+    async () => {
+
+        try {
+
+            await navigator.clipboard.writeText(
+                smoothScript
+            );
+
+            copySection.textContent =
+                "COPIED.";
+
+            setTimeout(() => {
+
+                copySection.textContent =
+                    "COPY SCRIPT";
+
+            }, 1500);
+
+        } catch (error) {
+
+            console.error(
+                "Unable to copy script:",
+                error
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>
