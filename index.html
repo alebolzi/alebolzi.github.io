@@ -941,81 +941,53 @@
     console.log('%cMuovi il mouse e guarda la magia ✨', 'color: #00d4ff;');
   </script>
 
+<!-- ═══════════════════════════════════════════════
+     BOLZI LAB • SMOOTH SCROLL
+     Mouse + Trackpad + Touch + Mobile
+     ═══════════════════════════════════════════════ -->
 
-  <!-- SMOOTH SCROLL PACK -->
-<style>
-    html {
-        scroll-behavior: auto !important;
-    }
-
-    body {
-        overflow-x: hidden;
-    }
-</style>
+<script src="https://unpkg.com/lenis@latest/dist/lenis.min.js"></script>
 
 <script>
 (() => {
-    // Disattiva su dispositivi che chiedono meno animazioni
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    let current = window.scrollY;
-    let target = window.scrollY;
-
-    let ticking = false;
-
-    // Quanto è "pesante" l'inerzia
-    // 0.04 = molto smooth
-    // 0.07 = smooth
-    // 0.10 = più reattivo
-    const ease = 0.07;
-
-    function updateTarget() {
-        const maxScroll =
-            document.documentElement.scrollHeight - window.innerHeight;
-
-        target = Math.max(0, Math.min(target, maxScroll));
+    // Rispetta chi ha richiesto meno movimento
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
     }
 
-    // Rotella / trackpad
-    window.addEventListener('wheel', (e) => {
-        target += e.deltaY;
-        updateTarget();
-    }, { passive: true });
+    const lenis = new Lenis({
+        // Fluidità generale
+        lerp: 0.075,
 
-    // Se qualcosa modifica lo scroll esternamente
-    window.addEventListener('scroll', () => {
-        if (!ticking) {
-            ticking = true;
+        // Rotellina mouse
+        smoothWheel: true,
 
-            requestAnimationFrame(() => {
-                // Se il browser ci ha spostati davvero,
-                // sincronizziamo il target.
-                if (Math.abs(window.scrollY - current) > 2) {
-                    target = window.scrollY;
-                    current = window.scrollY;
-                }
+        // Touch / smartphone
+        syncTouch: true,
 
-                ticking = false;
-            });
-        }
-    }, { passive: true });
+        // Quanto velocemente risponde al touch
+        syncTouchLerp: 0.05,
 
-    function render() {
-        const difference = target - current;
+        // Non rallentare troppo gli swipe
+        touchMultiplier: 1,
 
-        current += difference * ease;
+        // Mantiene il comportamento naturale sui dispositivi touch
+        gestureOrientation: 'vertical'
+    });
 
-        // Evita il micro-jitter infinito
-        if (Math.abs(difference) < 0.04) {
-            current = target;
-        }
-
-        window.scrollTo(0, current);
-
-        requestAnimationFrame(render);
+    // Un solo loop di animazione
+    function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
     }
 
-    render();
+    requestAnimationFrame(raf);
+
+    // Evita problemi quando la pagina cambia dimensione
+    window.addEventListener('resize', () => {
+        lenis.resize();
+    }, { passive: true });
+
 })();
 </script>
 
