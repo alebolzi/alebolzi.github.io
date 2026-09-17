@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PENSACI BENE 💸</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0c;
+  --card:rgba(255,255,255,.03);
+  --border:rgba(255,255,255,.08);
+  --text:#f5f5f7;
+  --muted:#8a8a93;
+  --accent:#f5b942;
+  --accent2:#ff6b9d;
+  --accent3:#6b9dff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Space Grotesk',system-ui,sans-serif;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow-x:hidden;
+  overflow-y:auto;
+  position:relative;
+  padding:40px 20px;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* orbs */
+.orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
+.o1{width:520px;height:520px;background:#f5b942;top:-220px;left:-160px;opacity:.28;animation:f1 22s ease-in-out infinite}
+.o2{width:420px;height:420px;background:#ff6b9d;bottom:-170px;right:-120px;opacity:.22;animation:f2 26s ease-in-out infinite}
+.o3{width:320px;height:320px;background:#6b9dff;top:40%;left:55%;opacity:.12;animation:f3 30s ease-in-out infinite}
+@keyframes f1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(120px,90px) scale(1.1)}}
+@keyframes f2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-90px,-70px) scale(1.15)}}
+@keyframes f3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-70px,50px) scale(.9)}}
+
+main{
+  position:relative;z-index:1;
+  max-width:560px;width:100%;
+  padding:48px 32px;
+  background:var(--card);
+  backdrop-filter:blur(40px);
+  -webkit-backdrop-filter:blur(40px);
+  border:1px solid var(--border);
+  border-radius:32px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);
+  animation:rise .8s cubic-bezier(.16,1,.3,1);
+  text-align:center;
+}
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+.eyebrow{
+  font-size:11px;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:24px;font-weight:500;
+}
+
+.pre-title{
+  font-family:'Instrument Serif',serif;
+  font-size:42px;font-weight:400;
+  font-style:italic;
+  letter-spacing:-.02em;line-height:1.1;
+  margin-bottom:18px;
+  color:var(--text);
+}
+
+.sub{
+  color:var(--muted);font-size:14px;
+  max-width:420px;margin:0 auto 28px;line-height:1.7;
+}
+.sfizio{
+  font-family:'Instrument Serif',serif;
+  font-style:italic;
+  font-weight:400;
+  color:var(--accent2);
+  font-size:17px;
+  letter-spacing:0;
+}
+
+h1{
+  font-family:'Instrument Serif',serif;
+  font-size:68px;font-weight:400;
+  font-style:italic;
+  letter-spacing:-.02em;
+  line-height:1;margin-bottom:36px;
+  background:linear-gradient(135deg, var(--accent) 20%, var(--accent2) 80%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.field{margin-bottom:20px;position:relative}
+.input-wrap{position:relative}
+input.amount{
+  width:100%;
+  padding:24px 20px 24px 56px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:rgba(255,255,255,.02);
+  color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+  font-size:26px;font-weight:500;
+  outline:none;transition:all .3s ease;
+  -moz-appearance:textfield;
+  touch-action:manipulation;
+  text-align:center;
+}
+input.amount::-webkit-outer-spin-button,
+input.amount::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input.amount:focus{
+  border-color:var(--accent);
+  background:rgba(245,185,66,.05);
+  box-shadow:0 0 0 4px rgba(245,185,66,.1);
+}
+input.amount::placeholder{color:#444}
+.currency{
+  position:absolute;left:24px;top:50%;transform:translateY(-50%);
+  color:var(--accent);font-size:26px;font-weight:500;pointer-events:none;
+}
+
+.years{
+  display:flex;align-items:center;gap:14px;
+  padding:18px 20px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:rgba(255,255,255,.02);
+  touch-action:manipulation;
+}
+.years .lbl{font-size:12px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.years .val{font-size:22px;font-weight:600;color:var(--accent);min-width:34px;text-align:center;font-variant-numeric:tabular-nums}
+input[type=range]{
+  flex:1;-webkit-appearance:none;appearance:none;
+  height:4px;background:rgba(255,255,255,.1);
+  border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:24px;height:24px;border-radius:50%;
+  background:var(--accent);cursor:pointer;
+  box-shadow:0 0 0 4px rgba(245,185,66,.18),0 4px 12px rgba(245,185,66,.4);
+  transition:transform .2s;
+}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25)}
+input[type=range]::-moz-range-thumb{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--accent);cursor:pointer;border:none;
+  box-shadow:0 0 0 4px rgba(245,185,66,.18);
+}
+
+#out{
+  margin-top:32px;
+  opacity:0;transform:translateY(10px);
+  transition:opacity .5s cubic-bezier(.16,1,.3,1),transform .5s cubic-bezier(.16,1,.3,1);
+}
+#out.show{opacity:1;transform:translateY(0)}
+
+.compare{
+  display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:center;gap:12px;margin-bottom:22px;
+}
+.cell{
+  text-align:center;padding:22px 10px;
+  border:1px solid var(--border);border-radius:18px;
+  background:rgba(255,255,255,.02);
+  min-width:0;
+}
+.cell .lab{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.cell .v{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;word-break:break-word}
+.cell.future{
+  border-color:rgba(245,185,66,.3);
+  background:linear-gradient(180deg,rgba(245,185,66,.06),rgba(245,185,66,.02));
+}
+.cell.future .v{color:var(--accent);font-size:28px}
+.arrow{color:var(--muted);font-size:22px}
+
+.msg{font-size:14px;line-height:1.65;color:var(--text)}
+.msg strong{color:var(--accent2);font-weight:600}
+
+.tag{
+  margin-top:22px;
+  font-family:'Instrument Serif',serif;
+  font-size:22px;font-style:italic;
+  color:var(--accent);letter-spacing:-.01em;
+}
+
+/* EASTER EGG STYLES */
+.egg-trigger{
+  margin-top:48px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:pointer;color:var(--muted);
+  transition:color .3s ease;
+  user-select:none;
+}
+.egg-trigger:hover{color:var(--text)}
+.egg-trigger span{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:500}
+.chevron{
+  width:14px;height:14px;
+  border-right:2px solid currentColor;
+  border-bottom:2px solid currentColor;
+  transform:rotate(45deg) translate(-2px,-2px);
+  transition:transform .4s cubic-bezier(.16,1,.3,1);
+  margin-bottom:10px;
+}
+.egg-trigger.open .chevron{
+  transform:rotate(-135deg) translate(-2px,-2px);
+}
+
+.egg-container{
+  max-height:0;
+  overflow:hidden;
+  opacity:0;
+  transition:max-height .6s cubic-bezier(.16,1,.3,1),opacity .4s ease,margin-top .4s ease;
+  margin-top:0;
+}
+.egg-container.open{
+  max-height:600px;
+  opacity:1;
+  margin-top:32px;
+}
+
+.voices{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+}
+.voice{
+  padding:24px 16px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:rgba(255,255,255,.02);
+  text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+}
+.voice .emoji{font-size:36px;line-height:1}
+.voice .quote{
+  font-family:'Instrument Serif',serif;
+  font-size:18px;font-style:italic;line-height:1.4;
+}
+
+.voice.evil{
+  background:linear-gradient(180deg,rgba(255,107,157,.06),rgba(255,107,157,.01));
+  border-color:rgba(255,107,157,.2);
+}
+.voice.evil .quote{color:var(--accent2)}
+
+.voice.angel{
+  background:linear-gradient(180deg,rgba(107,157,255,.06),rgba(107,157,255,.01));
+  border-color:rgba(107,157,255,.2);
+}
+.voice.angel .quote{color:var(--accent3)}
+
+@media(max-width:520px){
+  body{padding:20px 12px}
+  main{padding:36px 20px}
+  .pre-title{font-size:32px}
+  h1{font-size:50px}
+  .sub{font-size:13px;max-width:300px}
+  .sfizio{font-size:15px}
+  input.amount{font-size:22px;padding:20px 16px 20px 48px}
+  .currency{left:18px;font-size:22px}
+  .cell .v{font-size:20px}
+  .cell.future .v{font-size:22px}
+  .compare{gap:6px}
+  .arrow{font-size:16px}
+  .voices{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+<div class="orb o3"></div>
+
+<main>
+  <div class="eyebrow">💰 il calcolatore dei rimpianti</div>
+  
+  <h2 class="pre-title">Stai per fare una spesa grossa?</h2>
+  <p class="sub">Quella spesa non è un investimento vero? È solo uno <i class="sfizio">sfizio</i> che non ti serve per lavorare, in questo caso...</p>
+  <h1>Pensaci bene!</h1>
+
+  <div class="field">
+    <div class="input-wrap">
+      <span class="currency">€</span>
+      <input id="spesa" class="amount" type="number" placeholder="Quanto costa?" oninput="calc()">
+    </div>
+  </div>
+
+  <div class="years">
+    <span class="lbl">Tra</span>
+    <input id="anni" type="range" min="1" max="40" value="10" oninput="calc()">
+    <span class="val" id="anniVal">10</span>
+    <span class="lbl">anni</span>
+  </div>
+
+  <div id="out"></div>
+
+  <!-- EASTER EGG -->
+  <div class="egg-trigger" id="eggTrigger" onclick="toggleEgg()">
+    <span>La voce della coscienza</span>
+    <div class="chevron"></div>
+  </div>
+
+  <div class="egg-container" id="eggContainer">
+    <div class="voices">
+      <div class="voice evil">
+        <div class="emoji">😈</div>
+        <div class="quote" id="devilQuote">Compra l'auto dei tuoi sogni, si vive solo una volta!</div>
+      </div>
+      <div class="voice angel">
+        <div class="emoji">😇</div>
+        <div class="quote" id="angelQuote">Risparmia poi mi ringrazierai, pensa al futuro!</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// Funzione di calcolo principale
+function calc(){
+  const x = +spesa.value;
+  const y = +anni.value;
+  anniVal.textContent = y;
+
+  if(!x || x < 0){
+    out.classList.remove('show');
+    out.innerHTML = "";
+    return;
+  }
+
+  const futuro = x * Math.pow(1.07, y);
+  const mult = futuro / x;
+  let multText = "";
+
+  if (mult < 1.8) {
+    multText = `${mult.toFixed(1).replace('.', ',')} volte tanto`;
+  } else if (mult < 2.2) {
+    multText = "circa il doppio";
+  } else if (mult < 2.5) {
+    multText = "più del doppio";
+  } else if (mult < 2.8) {
+    multText = "quasi il triplo";
+  } else if (mult < 3.2) {
+    multText = "circa il triplo";
+  } else if (mult < 3.5) {
+    multText = "più del triplo";
+  } else if (mult < 3.8) {
+    multText = "quasi il quadruplo";
+  } else if (mult < 4.2) {
+    multText = "circa il quadruplo";
+  } else if (mult < 4.8) {
+    multText = "più del quadruplo";
+  } else {
+    multText = `circa ${Math.round(mult)} volte tanto`;
+  }
+
+  out.classList.add('show');
+  out.innerHTML = `
+    <div class="compare">
+      <div class="cell now">
+        <div class="lab">Oggi 🫠</div>
+        <div class="v">${x.toLocaleString('it-IT')} €</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="cell future">
+        <div class="lab">Fra ${y} ${y===1?'anno':'anni'} 🚀</div>
+        <div class="v">${futuro.toLocaleString('it-IT',{maximumFractionDigits:0})} €</div>
+      </div>
+    </div>
+    <p class="msg">Al 7% annuo composto varrebbe <strong>${multText}</strong>.<br>Potrai comprare roba migliore.<br>Ti serve davvero? 😏</p>
+    <div class="tag">Ringraziami dopo. 😎</div>
+  `;
+}
+
+// EASTER EGG LOGICA
+const devilQuotes = [
+  "Acquisto eccellente! 🤑",  
+  "Compra l'auto dei tuoi sogni! 🚗",  
+  "Si vive solo una volta! (YOLO) ⚰️",
+  "Una BMW ti apre le porte! Vivila!",
+  "Tanto domani muore tutto, goditela ora! 🔥",
+  "Bitcoin domani va a 0, fidati bro. 📉",
+  "Domani va tutto a 0, fidati bro. 📉",
+  "Prendi a rate!",
+  "Il minimalismo è per chi è al verde!",
+  "Compra, compra, Compra! 🔥",
+  "Le rate non si sentono, i piaceri sì. Avanti tutta!",
+  "I soldi non te li porti nella tomba. Sgancia! ⚰️",
+  "Immagina i livelli di flex mai visti, Compra! 🤳",
+  "In futuro non avrai rimpianti, ma solo bei ricordi. 🧠"
+];
+
+const angelQuotes = [
+  "Investi! 📈",  
+  "Risparmia! 💰",  
+  "Risparmia poi mi ringrazierai, pensa al futuro! 📈",
+  "L'interesse composto è l'ottava meraviglia del mondo. Non buttarlo via! 💎",
+  "L'auto perde il 30% in pochissimo tempo. Acquista ETF, non problemi.",
+  "Sii minimalista: meno roba, meno pensieri, più soldi. 💵",
+  "Sii la persona che avresti voluto essere tra 10 anni. 🧠",
+  "Non comprare cagate. 💩",
+  "Non indebitarti per sta roba!",
+  "Il vero flex è il portafoglio in positivo. 🟢",
+  "Pensa alla spensieratezza di avere la scelta di vivere... Risparmia! 🤙",
+  "Pensa al futuro. 🧠",
+  "VWCE and chill, questa è la giusta filosofia! 📈"
+];
+
+function toggleEgg() {
+  const trigger = document.getElementById('eggTrigger');
+  const container = document.getElementById('eggContainer');
+  
+  const isOpen = container.classList.toggle('open');
+  trigger.classList.toggle('open', isOpen);
+
+  if (isOpen) {
+    // Prende una frase randomica dal listone
+    document.getElementById('devilQuote').innerText = devilQuotes[Math.floor(Math.random() * devilQuotes.length)];
+    document.getElementById('angelQuote').innerText = angelQuotes[Math.floor(Math.random() * angelQuotes.length)];
+  }
+}
+
+// Rotella del mouse sullo slider
+document.getElementById('anni').addEventListener('wheel', function(e) {
+  e.preventDefault();
+  let currentVal = parseInt(this.value);
+  if (e.deltaY < 0) {
+    currentVal += 1;
+  } else {
+    currentVal -= 1;
+  }
+  currentVal = Math.max(parseInt(this.min), Math.min(parseInt(this.max), currentVal));
+  if (this.value != currentVal) {
+    this.value = currentVal;
+    calc();
+  }
+});
+</script>
+</body>
+</html>
