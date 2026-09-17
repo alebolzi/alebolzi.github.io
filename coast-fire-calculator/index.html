@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🔥 Sei in Coast FIRE?</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: #f3f4f6;
+      touch-action: manipulation;
+    }
+
+    .slider-container {
+      position: relative;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 9999px;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .slider-fill {
+      position: absolute;
+      height: 100%;
+      background: #111827;
+      border-radius: 9999px;
+    }
+
+    .slider-thumb {
+      position: absolute;
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border: 2px solid #111827;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .fire {
+      color: #16a34a;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script>
+    const e = React.createElement;
+    const { useState, useRef, useEffect } = React;
+
+    var formatNumber = function (n, decimals = 0) {
+      return Number(n).toLocaleString("it-IT", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    };
+
+    /* SLIDER COMPONENT ROBUSTO (MOUSE + TOUCH) */
+    function Slider(props) {
+      var value = props.value;
+      var setValue = props.setValue;
+      var min = props.min;
+      var max = props.max;
+      var step = props.step;
+      var ref = useRef();
+
+      function update(clientX) {
+        if (!ref.current) return;
+        var r = ref.current.getBoundingClientRect();
+        var p = (clientX - r.left) / r.width;
+        p = Math.max(0, Math.min(1, p));
+        var v = min + p * (max - min);
+        v = Math.round(v / step) * step;
+        setValue(v);
+      }
+
+      useEffect(function () {
+        function onMouseMove(ev) {
+          update(ev.clientX);
+        }
+        function onTouchMove(ev) {
+          if (ev.touches.length > 0) {
+            update(ev.touches[0].clientX);
+          }
+        }
+        function onEnd() {
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("mouseup", onEnd);
+          window.removeEventListener("touchmove", onTouchMove);
+          window.removeEventListener("touchend", onEnd);
+        }
+        function onMouseDown(ev) {
+          update(ev.clientX);
+          window.addEventListener("mousemove", onMouseMove);
+          window.addEventListener("mouseup", onEnd);
+        }
+        function onTouchStart(ev) {
+          if (ev.touches.length > 0) {
+            update(ev.touches[0].clientX);
+            window.addEventListener("touchmove", onTouchMove, { passive: false });
+            window.addEventListener("touchend", onEnd);
+          }
+        }
+        var el = ref.current;
+        if (!el) return;
+        el.addEventListener("mousedown", onMouseDown);
+        el.addEventListener("touchstart", onTouchStart, { passive: false });
+        return function () {
+          el.removeEventListener("mousedown", onMouseDown);
+          el.removeEventListener("touchstart", onTouchStart);
+        };
+      }, [min, max, step]);
+
+      var safeValue = Math.min(Math.max(value, min), max);
+      var pct = ((safeValue - min) / (max - min)) * 100;
+      return e("div", {
+        ref: ref,
+        className: "slider-container"
+      },
+        e("div", {
+          className: "slider-fill",
+          style: { width: pct + "%" }
+        }),
+        e("div", {
+          className: "slider-thumb",
+          style: { left: pct + "%" }
+        })
+      );
+    }
+
+    function App() {
+      var s1 = useState(27); var eta = s1[0]; var setEta = s1[1];
+      var s2 = useState(1500); var spesa = s2[0]; var setSpesa = s2[1];
+      var s3 = useState(100000); var patrimonio = s3[0]; var setPatrimonio = s3[1];
+      var s10 = useState(false); var editPatrimonio = s10[0]; var setEditPatrimonio = s10[1];
+      var s4 = useState(60); var etaPensione = s4[0]; var setEtaPensione = s4[1];
+      var s5 = useState(7.0); var rendimento = s5[0]; var setRendimento = s5[1];
+      var s6 = useState(2.5); var inflazione = s6[0]; var setInflazione = s6[1];
+      var s7 = useState(40); var anniPensione = s7[0]; var setAnniPensione = s7[1];
+      var s8 = useState(false); var showSettings = s8[0]; var setShowSettings = s8[1];
+      var s9 = useState("zero"); var modalita = s9[0]; var setModalita = s9[1]; // "zero" | "perpetuo"
+
+      var chartRef = useRef(null);
+      var chartInstance = useRef(null);
+
+      var anniMancanti = Math.max(0, etaPensione - eta);
+
+      // Spesa inflazionata a fine percorso (Nominale)
+      var spesaFuturaMensile = spesa * Math.pow(1 + (inflazione / 100), anniMancanti);
+      var annualeFuturo = spesaFuturaMensile * 12;
+
+      // Calcoli finanziari con Equazione di Fisher
+      var realReturn = ((1 + (rendimento / 100)) / (1 + (inflazione / 100))) - 1;
+      var annualeOdierno = spesa * 12;
+
+      // === CALCOLO DEL TARGET IN BASE ALLA MODALITÀ ===
+      var fireTargetOdierno = 0;
+      if (modalita === "perpetuo") {
+        // Capitale perpetuo (regola del 4%)
+        fireTargetOdierno = annualeOdierno * 25;
+      } else {
+        // Esaurimento a zero (annualità)
+        if (realReturn <= 0) {
+          fireTargetOdierno = annualeOdierno * anniPensione;
+        } else {
+          fireTargetOdierno = annualeOdierno * (1 - Math.pow(1 + realReturn, -anniPensione)) / realReturn;
+        }
+      }
+
+      var cfireNumber = 0;
+      if (anniMancanti === 0 || realReturn <= 0) {
+        cfireNumber = fireTargetOdierno;
+      } else {
+        cfireNumber = fireTargetOdierno / Math.pow(1 + realReturn, anniMancanti);
+      }
+
+      var isCfire = patrimonio >= cfireNumber;
+      var diff = Math.abs(patrimonio - cfireNumber);
+
+      // === CALCOLO PAC MENSILE (solo se sotto target) ===
+      var pacMensile = 0;
+      if (!isCfire && anniMancanti > 0) {
+        var capitaleFuturoAttuale = patrimonio * Math.pow(1 + realReturn, anniMancanti);
+        var mancanteAPensione = fireTargetOdierno - capitaleFuturoAttuale;
+
+        if (mancanteAPensione > 0) {
+          var i = realReturn / 12;
+          var m = anniMancanti * 12;
+          if (i <= 0) {
+            pacMensile = mancanteAPensione / m;
+          } else {
+            pacMensile = mancanteAPensione * i / (Math.pow(1 + i, m) - 1);
+          }
+        }
+      }
+
+      useEffect(function () {
+        var labels = [];
+        var cfireTargetData = [];
+        for (let a = eta; a <= etaPensione; a++) {
+          labels.push("Età " + a);
+          let anniAllAnziano = etaPensione - a;
+          let targetAnno = anniAllAnziano === 0 || realReturn <= 0
+            ? fireTargetOdierno
+            : fireTargetOdierno / Math.pow(1 + realReturn, anniAllAnziano);
+          cfireTargetData.push(Math.round(targetAnno));
+        }
+        if (chartInstance.current) chartInstance.current.destroy();
+        chartInstance.current = new Chart(chartRef.current, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Coast FIRE",
+                data: cfireTargetData,
+                borderColor: "#3b82f6",
+                backgroundColor: "rgba(59, 130, 246, 0.08)",
+                fill: true,
+                tension: 0.3
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom' }
+            },
+            scales: {
+              y: {
+                ticks: {
+                  callback: function (v) { return "€" + (v / 1000) + "k"; }
+                }
+              }
+            }
+          }
+        });
+      }, [eta, etaPensione, realReturn, fireTargetOdierno]);
+
+      return e("div", { className: "max-w-3xl mx-auto p-6 space-y-6" },
+        /* TITOLO */
+        e("h1", { className: "text-4xl font-bold text-center" },
+          "🚀 Coast FIRE Calculator"
+        ),
+
+        /* SPIEGAZIONE COAST FIRE */
+        e("div", { className: "bg-white p-5 rounded-xl shadow space-y-2 text-sm text-gray-700 leading-relaxed" },
+          e("div", { className: "font-bold text-base text-gray-900" }, "Cos'è il Coast FIRE?"),
+          e("p", null, "È il punto in cui hai già messo in moto la macchina dell'interesse composto. Non devi più versare nulla: il tuo portafoglio continuerà a crescere da solo fino alla pensione. Tu puoi continuare a lavorare senza la pressione di investire ogni mese, godendoti tutto lo stipendio. Quando arriverà la pensione, il capitale accumulato sarà sufficiente per trasformare il tuo CoastFIRE in un FIRE completo.")
+        ),
+
+        /* BOX UNIFICATO INPUT PRINCIPALI */
+        e("div", { className: "bg-white p-6 rounded-xl shadow space-y-6" },
+          e("div", { className: "text-lg font-bold text-gray-800 border-b border-gray-100 pb-3" }, "📌 Parametri Principali"),
+
+          /* Età attuale */
+          e("div", { className: "space-y-3" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "👤 Età attuale"),
+              e("span", { className: "text-blue-600" }, eta + " anni")
+            ),
+            e(Slider, { value: eta, setValue: setEta, min: 18, max: 70, step: 1 })
+          ),
+
+          /* Spesa mensile */
+          e("div", { className: "space-y-3 pt-2" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "🛒 Spesa mensile"),
+              e("span", { className: "text-blue-600" }, formatNumber(spesa) + " €")
+            ),
+            e(Slider, { value: spesa, setValue: setSpesa, min: 500, max: 5000, step: 50 })
+          ),
+
+          /* Capitale attuale */
+          e("div", { className: "space-y-3 pt-2" },
+
+            e("div", { className: "flex justify-between items-center font-bold" },
+
+              e("span", null, "💰 Il tuo capitale attuale"),
+
+              !editPatrimonio
+                ? e("div", {
+                  className: "flex items-center gap-2 cursor-pointer",
+                  onClick: function () {
+                    setEditPatrimonio(true);
+                  }
+                },
+                  e("b", {
+                    className: "text-blue-600 text-lg"
+                  }, "€" + formatNumber(patrimonio)),
+
+                  e("span", {
+                    className: "text-gray-400 text-sm"
+                  }, "✏️")
+                )
+
+                : e("input", {
+                  autoFocus: true,
+                  type: "number",
+                  className: "text-right font-bold text-blue-600 bg-transparent border-b outline-none w-40",
+                  value: patrimonio,
+
+                  onChange: function (ev) {
+                    setPatrimonio(+ev.target.value);
+                  },
+
+                  onBlur: function () {
+                    setEditPatrimonio(false);
+                  },
+
+                  onKeyDown: function (ev) {
+                    if (ev.key === "Enter") {
+                      setEditPatrimonio(false);
+                    }
+                  }
+                })
+
+            ),
+
+            e(Slider, {
+              value: patrimonio,
+              setValue: setPatrimonio,
+              min: 0,
+              max: 1000000,
+              step: 1000
+            })
+
+          ),
+        ),
+
+        /* SETTINGS BUTTON */
+        e("button", {
+          onClick: function () { setShowSettings(!showSettings); },
+          className: "bg-white shadow rounded-xl px-4 py-3 font-semibold w-full text-left hover:bg-gray-50 transition"
+        },
+          showSettings ? "⚙️ Nascondi parametri avanzati" : "⚙️ Parametri avanzati (Età pensione, Rendimento, Inflazione, Modalità)"
+        ),
+
+        /* SETTINGS PANEL */
+        showSettings && e("div", { className: "bg-white p-6 rounded-xl space-y-6 shadow" },
+
+          /* ETÀ PENSIONE */
+          e("div", { className: "space-y-3" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "⏳ Età di pensionamento"),
+              e("span", { className: "text-blue-600" }, etaPensione + " anni")
+            ),
+            e(Slider, { value: etaPensione, setValue: setEtaPensione, min: Math.max(19, eta + 1), max: 90, step: 1 })
+          ),
+
+          /* RENDIMENTO NETTO (modificato) */
+          e("div", { className: "space-y-3" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "📈 Rendimento netto atteso"),
+              e("span", { className: "text-blue-600" }, formatNumber(rendimento, 1) + "%")
+            ),
+            e(Slider, { value: rendimento, setValue: setRendimento, min: 0, max: 20, step: 0.1 })
+          ),
+
+          /* INFLAZIONE */
+          e("div", { className: "space-y-3" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "📊 Inflazione stimata"),
+              e("span", { className: "text-blue-600" }, formatNumber(inflazione, 1) + "%")
+            ),
+            e(Slider, { value: inflazione, setValue: setInflazione, min: 0, max: 10, step: 0.1 })
+          ),
+
+          /* TOGGLE MODALITÀ */
+          e("div", { className: "space-y-3" },
+            e("div", { className: "font-bold" }, "🎯 Modalità di calcolo del capitale a pensione"),
+            e("div", { className: "flex gap-3" },
+              e("button", {
+                onClick: function () { setModalita("zero"); },
+                className: "flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold border transition " +
+                  (modalita === "zero"
+                    ? "bg-gray-900 text-white border-gray-900"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50")
+              }, "Esaurimento a zero"),
+              e("button", {
+                onClick: function () { setModalita("perpetuo"); },
+                className: "flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold border transition " +
+                  (modalita === "perpetuo"
+                    ? "bg-gray-900 text-white border-gray-900"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50")
+              }, "Capitale perpetuo (4%)")
+            ),
+            e("div", { className: "text-xs text-gray-500 leading-relaxed" },
+              modalita === "zero"
+                ? "Il capitale si esaurisce a zero dopo gli anni di pensione impostati."
+                : "Usa la regola del 4% (spesa annua × 25). Il capitale teoricamente dura per sempre."
+            )
+          ),
+
+          /* ANNI DI SIMULAZIONE (solo se modalità zero) */
+          modalita === "zero" && e("div", { className: "space-y-3" },
+            e("div", { className: "flex justify-between items-center font-bold" },
+              e("span", null, "⏳ Anni di simulazione in pensione"),
+              e("span", { className: "text-blue-600" }, anniPensione + " anni")
+            ),
+            e(Slider, { value: anniPensione, setValue: setAnniPensione, min: 10, max: 70, step: 1 })
+          )
+        ),
+
+        /* RISULTATO */
+        e("div", { className: "bg-white p-6 rounded-xl text-center space-y-4 shadow" },
+          e("div", { className: "text-xl font-bold text-gray-800" }, "🌱 Il tuo Coast FIRE"),
+
+          e("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4 py-3 border-y border-gray-100 text-sm" },
+            e("div", null,
+              e("div", { className: "text-gray-500" }, "Capitale necessario oggi:"),
+              e("div", { className: "text-2xl font-bold text-gray-900" }, "€ " + formatNumber(cfireNumber))
+            ),
+            e("div", null,
+              e("div", { className: "text-gray-500" }, "Il tuo capitale attuale:"),
+              e("div", { className: "text-2xl font-bold text-blue-600" }, "€ " + formatNumber(patrimonio))
+            )
+          ),
+
+          isCfire ?
+            e("div", { className: "space-y-2 bg-green-50 p-4 rounded-xl border border-green-200" },
+              e("div", { className: "text-xl font-bold text-green-700" }, "🎉 Sei sopra il Coast FIRE!"),
+              e("div", { className: "text-sm text-green-800 leading-relaxed" },
+                "Hai già costruito la base. Da oggi puoi smettere di investire e lasciare lavorare l'interesse composto fino alla pensione."
+              ),
+              e("div", { className: "text-sm font-semibold text-green-900 pt-1" },
+                "Margine: + €" + formatNumber(diff) + " sopra il target"
+              )
+            )
+            :
+            e("div", { className: "space-y-3 bg-red-50 p-4 rounded-xl border border-red-200" },
+              e("div", { className: "text-xl font-bold text-red-700" }, "🔥 Sei sotto il Coast FIRE"),
+              e("div", { className: "text-sm text-red-800 font-semibold" }, "Ti mancano:"),
+              e("div", { className: "text-2xl font-bold text-red-600" }, "€ " + formatNumber(diff)),
+
+              /* PAC MENSILE */
+              pacMensile > 0 && e("div", { className: "mt-3 pt-3 border-t border-red-200 space-y-1" },
+                e("div", { className: "text-sm font-semibold text-red-900" }, "📈 PAC mensile necessario"),
+                e("div", { className: "text-2xl font-bold text-red-700" }, "€ " + formatNumber(pacMensile)),
+                e("div", { className: "text-xs text-red-800 leading-relaxed" },
+                  "Versando questa cifra ogni mese fino a " + etaPensione + " anni raggiungerai esattamente il capitale necessario alla pensione."
+                )
+              )
+            ),
+
+          /* INFO AGGIUNTIVE */
+          e("div", { className: "text-xs text-gray-400 pt-2 border-t border-gray-100" },
+            "Orizzonte: " + anniMancanti + " anni · ",
+            "Spesa mensile a " + etaPensione + " anni (inflazionata): " + formatNumber(spesaFuturaMensile) + " € · ",
+            "Rendimento Reale (Fisher): " + formatNumber(realReturn * 100, 2) + "% · ",
+            "Modalità: " + (modalita === "zero" ? "Esaurimento a zero" : "Capitale perpetuo")
+          )
+        ),
+
+        /* GRAFICO */
+        e("div", { className: "bg-white p-6 rounded-xl shadow space-y-2" },
+          e("div", { className: "text-sm font-semibold text-gray-700 text-center mb-2" }, "Curva della Soglia Coast FIRE in base all'Età (già adeguata all'inflazione)"),
+          e("canvas", { ref: chartRef })
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(e(App));
+  </script>
+</body>
+
+</html>
