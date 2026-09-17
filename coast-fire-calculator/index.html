@@ -137,6 +137,7 @@
     function App() {
       var s1 = useState(27); var eta = s1[0]; var setEta = s1[1];
       var s2 = useState(1500); var spesa = s2[0]; var setSpesa = s2[1];
+      var s11 = useState(false); var editSpesa = s11[0]; var setEditSpesa = s11[1];
       var s3 = useState(100000); var patrimonio = s3[0]; var setPatrimonio = s3[1];
       var s10 = useState(false); var editPatrimonio = s10[0]; var setEditPatrimonio = s10[1];
       var s4 = useState(60); var etaPensione = s4[0]; var setEtaPensione = s4[1];
@@ -270,11 +271,58 @@
 
           /* Spesa mensile */
           e("div", { className: "space-y-3 pt-2" },
+
             e("div", { className: "flex justify-between items-center font-bold" },
+
               e("span", null, "🛒 Spesa mensile"),
-              e("span", { className: "text-blue-600" }, formatNumber(spesa) + " €")
+
+              !editSpesa
+                ? e("div", {
+                  className: "flex items-center gap-2 cursor-pointer",
+                  onClick: function () {
+                    setEditSpesa(true);
+                  }
+                },
+
+                  e("b", {
+                    className: "text-blue-600 text-lg"
+                  }, formatNumber(spesa) + " €"),
+
+                  e("span", {
+                    className: "text-gray-400 text-sm"
+                  }, "✏️")
+                )
+
+                : e("input", {
+                  autoFocus: true,
+                  type: "number",
+                  min: 0,
+                  className: "text-right font-bold text-blue-600 bg-transparent border-b outline-none w-32",
+                  value: spesa,
+
+                  onChange: function (ev) {
+                    setSpesa(+ev.target.value);
+                  },
+
+                  onBlur: function () {
+                    setEditSpesa(false);
+                  },
+
+                  onKeyDown: function (ev) {
+                    if (ev.key === "Enter") {
+                      setEditSpesa(false);
+                    }
+                  }
+                })
             ),
-            e(Slider, { value: spesa, setValue: setSpesa, min: 500, max: 5000, step: 50 })
+
+            e(Slider, {
+              value: spesa,
+              setValue: setSpesa,
+              min: 500,
+              max: 5000,
+              step: 50
+            })
           ),
 
           /* Capitale attuale */
