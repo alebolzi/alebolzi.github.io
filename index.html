@@ -66,10 +66,6 @@
         opacity 0.3s ease;
     }
     
-    .cursor-dot.moving {
-      width: 14px;
-      height: 14px;
-    }
     .cursor-ring {
       position: fixed;
       width: 44px;
@@ -881,6 +877,8 @@
     const cursorRing = document.getElementById('cursorRing');
 
     let dotX = W / 2, dotY = H / 2;
+    let dotSize = 5;
+    let targetDotSize = 5;
     let ringX = W / 2, ringY = H / 2;
     let cursorVisible = false;
     let magOffsetX = 0, magOffsetY = 0;
@@ -896,9 +894,16 @@
 
     let movingTimer;
 
-    document.addEventListener('mousemove', (e) => {
+   document.addEventListener('mousemove', (e) => {
       dotX = e.clientX;
       dotY = e.clientY;
+    
+      // Più movimento = puntino più grande
+      const dx = e.movementX;
+      const dy = e.movementY;
+      const speed = Math.sqrt(dx * dx + dy * dy);
+    
+      targetDotSize = Math.min(18, 5 + speed * 0.7);
     
       if (!cursorVisible) {
         cursorVisible = true;
@@ -910,14 +915,6 @@
         isDocked = false;
         document.body.classList.remove('cursor-docked');
       }
-    
-      // Puntino grande mentre il mouse si muove
-      cursorDot.classList.add('moving');
-    
-      clearTimeout(movingTimer);
-      movingTimer = setTimeout(() => {
-        cursorDot.classList.remove('moving');
-      }, 100);
     });
 
     document.addEventListener('mouseleave', () => { cursorVisible = false; cursorDot.style.opacity = '0'; cursorRing.style.opacity = '0'; isDocked = false; });
@@ -929,6 +926,13 @@
       cursorDot.style.left = dotX + 'px';
       cursorDot.style.top = dotY + 'px';
 
+      // Animazione morbida del puntino
+      targetDotSize = lerp(targetDotSize, 5, 0.08);
+      dotSize = lerp(dotSize, targetDotSize, 0.18);
+    
+      cursorDot.style.width = dotSize + 'px';
+      cursorDot.style.height = dotSize + 'px';
+      
       // Docking dopo 1s di fermata su un elemento
       if (isOverInteractive && hoveredEl && !isDocked && mouseSpeed < 1.5) {
         stopTimer_check += 0.016;
