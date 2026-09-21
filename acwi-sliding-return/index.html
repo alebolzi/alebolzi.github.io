@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ACWI Lab · Rolling Returns</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08080b;--panel:#101015;--panel2:#0b0b10;--line:#24242d;--txt:#f7f5fb;--muted:#888692;--violet:#a77bff;--violet2:#7650d8;--green:#52e3a0;--red:#ff7180}
+*{box-sizing:border-box}body{margin:0;color:var(--txt);background:radial-gradient(900px 500px at 50% -150px,#2b1747 0,transparent 65%),radial-gradient(500px 300px at 100% 55%,#171027 0,transparent 65%),var(--bg);font-family:Inter,system-ui,sans-serif}.wrap{max-width:1180px;margin:auto;padding:34px 18px 60px}.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:24px}.eyebrow{font:700 10px 'JetBrains Mono';letter-spacing:.2em;color:var(--violet)}h1{font:700 clamp(45px,7vw,78px)/.86 'Space Grotesk';letter-spacing:-.07em;margin:10px 0 15px}.sub{max-width:680px;color:var(--muted);font-size:13px;line-height:1.55}.sub b{color:#ddd}.actions{display:flex;gap:8px;align-items:center}.btn{border:1px solid var(--line);background:#15151b;color:#ddd;border-radius:11px;padding:10px 13px;font-weight:800;font-size:11px;cursor:pointer}.btn.primary{background:#fff;color:#08080b;border-color:#fff}.file{display:none}.panel{margin-top:25px;background:#101015eF;border:1px solid var(--line);border-radius:24px;padding:15px;box-shadow:0 30px 100px #0009;backdrop-filter:blur(12px)}.controls{display:grid;grid-template-columns:1fr;gap:9px;max-width:600px;margin:0 auto}.control{background:var(--panel2);border:1px solid var(--line);border-radius:15px;padding:18px}.controlhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.ctitle{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:#777581;font-weight:800}.cvalue{font:700 18px 'JetBrains Mono'}.ticks{display:flex;justify-content:space-between;color:#575661;font:500 9px 'JetBrains Mono';margin-top:8px;padding:0 4px}.rangeinfo{display:flex;justify-content:space-between;margin-top:8px;color:#575661;font-size:9px}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0 10px}.stat{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px}.label{font-size:8px;text-transform:uppercase;letter-spacing:.13em;color:#777581;font-weight:800}.val{font:700 21px 'JetBrains Mono';margin-top:5px}.pos{color:var(--green)}.neg{color:var(--red)}.neutral{color:#ddd}.section{margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:17px;padding:14px}.sectionhead{display:flex;justify-content:space-between;align-items:flex-end;margin:0 1px 10px}.sectionhead h2{font:700 14px 'Space Grotesk';margin:0}.sectionhead span{font:500 9px 'JetBrains Mono';color:#686672}.chart{height:410px;position:relative}.chart.small{height:285px}.chart canvas{width:100%;height:100%;display:block;cursor:crosshair}.chart.small canvas{cursor:default}.tooltip{position:absolute;display:none;pointer-events:none;background:#18181fF5;border:1px solid #41414d;border-radius:10px;padding:8px 10px;font-size:10px;line-height:1.5;box-shadow:0 15px 35px #0009;white-space:nowrap;z-index:4;transform:translate(-50%,-120%)}.below{display:grid;grid-template-columns:1.15fr .85fr;gap:9px;margin-top:9px}.box{background:var(--panel2);border:1px solid var(--line);border-radius:15px;padding:14px}.box h3{font-size:8px;text-transform:uppercase;letter-spacing:.14em;color:#777581;margin:0 0 10px}.row{display:flex;justify-content:space-between;gap:15px}.muted{font-size:10px;color:var(--muted)}.big{font:700 24px 'JetBrains Mono';margin-top:4px}.gain{color:var(--green)}.window{font:700 18px 'JetBrains Mono';margin-top:5px}.legend{display:flex;gap:14px;color:#66646f;font-size:9px;margin-top:6px;justify-content:space-between}.legend .hint{color:var(--violet);opacity:.8}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px}.dot.v{background:var(--violet)}.dot.g{background:var(--green)}.dot.r{background:var(--red)}.status{font:500 9px 'JetBrains Mono';color:#696773;margin:10px 2px 0}.error{display:none;margin-top:9px;padding:10px;border-radius:10px;background:#281216;border:1px solid #5a252d;color:#ff9aa4;font-size:10px}.foot{margin:11px 2px 0;color:#5d5b66;font-size:9px;line-height:1.55}.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid #2c2c36;border-radius:99px;padding:6px 9px;color:#9996a2;font:500 9px 'JetBrains Mono';margin-bottom:10px}.badge i{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+
+/* Slider Personalizzati Grandi */
+.slider{-webkit-appearance:none;appearance:none;width:100%;height:8px;background:#1d1d24;border-radius:5px;outline:none;cursor:pointer}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;background:#fff;border:5px solid var(--violet);border-radius:50%;cursor:pointer;box-shadow:0 0 12px rgba(167,123,255,0.5);transition:transform .1s}
+.slider::-webkit-slider-thumb:hover{transform:scale(1.15)}
+.slider::-moz-range-thumb{width:22px;height:22px;background:#fff;border:5px solid var(--violet);border-radius:50%;cursor:pointer;box-shadow:0 0 12px rgba(167,123,255,0.5)}
+
+@media(max-width:760px){.wrap{padding:24px 12px 40px}.hero{display:block}.actions{margin-top:15px}.controls{max-width:100%}.stats{grid-template-columns:repeat(2,1fr)}.stat:last-child{grid-column:span 2}.chart{height:330px}.chart.small{height:250px}.below{grid-template-columns:1fr}.big{font-size:21px}h1{font-size:56px}}
+</style></head>
+<body><div class="wrap">
+<header class="hero"><div><div class="eyebrow">BOLZI LAB · ROLLING RETURNS</div><h1>ACWI<br>SLIDING WINDOW.</h1><div class="sub">Scegli <b>quanto tempo</b> vuoi restare investito. Il primo grafico scorre mese per mese nella storia dell'MSCI ACWI: <b>clicca su un punto</b> per scegliere quando entrare. Il secondo ricostruisce il viaggio di €10.000.</div></div><div class="actions"><label class="btn primary" for="file">📂 Carica data.csv</label><input class="file" id="file" type="file" accept=".csv,text/csv"></div></header>
+<main class="panel"><div class="badge"><i></i><span id="badge">ACWI · dati locali</span></div>
+
+<div class="controls">
+    <div class="control">
+        <div class="controlhead"><span class="ctitle">Durata investimento</span><span class="cvalue" id="yearsValue">10 anni</span></div>
+        <input class="slider" id="years" type="range" min="1" max="20" value="10">
+        <div class="ticks"><span>1Y</span><span>5Y</span><span>10Y</span><span>15Y</span><span>20Y</span></div>
+    </div>
+</div>
+
+<div class="stats"><div class="stat"><div class="label">Migliore</div><div class="val pos" id="best">—</div></div><div class="stat"><div class="label">Peggiore</div><div class="val neg" id="worst">—</div></div><div class="stat"><div class="label">Mediana</div><div class="val neutral" id="median">—</div></div><div class="stat"><div class="label">Ultimo ingresso</div><div class="val neutral" id="latest">—</div></div><div class="stat"><div class="label">Finestre positive</div><div class="val pos" id="positive">—</div></div></div>
+
+<section class="section"><div class="sectionhead"><h2 id="returnTitle">Rendimento a 10 anni</h2><span id="chartCaption">ogni punto = un ingresso mensile</span></div><div class="chart" id="returnChart"><canvas id="canvas"></canvas><div class="tooltip" id="tip"></div></div><div class="legend"><div><span><i class="dot v"></i>rendimento totale</span><span><i class="dot g"></i>positivo</span><span><i class="dot r"></i>negativo</span></div><div class="hint">👆 Clicca sul grafico per scegliere l'ingresso</div></div></section>
+
+<div class="below"><div class="box"><h3>Se fossi entrato qui</h3><div class="row"><div><div class="muted" id="investStart">—</div><div class="big" id="investValue">—</div></div><div style="text-align:right"><div class="muted">Guadagno</div><div class="big gain" id="investGain">—</div></div></div></div><div class="box"><h3>Finestra selezionata</h3><div class="muted">Ingresso → uscita</div><div class="window" id="window">—</div></div></div>
+
+<section class="section"><div class="sectionhead"><h2 id="trajectoryTitle">Se fossi entrato in quella data</h2><span id="trajectoryCaption">€10.000 iniziali</span></div><div class="chart small"><canvas id="trajectoryCanvas"></canvas><div class="tooltip" id="trajectoryTip"></div></div></section>
+
+<div class="status" id="status">Cerco data.csv nella stessa cartella…</div><div class="error" id="error"></div><div class="foot"><b>Come leggerlo:</b> se scegli 10 anni, ogni punto del primo grafico è il rendimento ottenuto entrando in quel mese e uscendo 10 anni dopo. Clicca su un punto per scegliere l'ingresso. Il secondo grafico mostra il capitale mese per mese. Nessuna tassa, commissione o inflazione.</div>
+</main></div>
+<script>
+let data=[],years=10,entry=0,amount=10000,points=[];const $=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d'),tc=$('trajectoryCanvas'),tctx=tc.getContext('2d');
+const mNames=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+const formatMY=ym=>{if(!ym||!ym.includes('-'))return ym||'—';const[y,m]=ym.split('-');return`${mNames[parseInt(m)-1]} ${y}`};
+
+function parseCSV(txt){const lines=txt.replace(/^\uFEFF/,'').trim().split(/\r?\n/).filter(Boolean);if(lines.length<2)throw Error('CSV vuoto');const h=lines[0].split(',').map(x=>x.trim().toLowerCase()),di=h.indexOf('date'),vi=h.indexOf('acwi');if(di<0||vi<0)throw Error('Il CSV deve avere le colonne: date,acwi');let a=[];for(let i=1;i<lines.length;i++){const p=lines[i].split(','),d=(p[di]||'').trim(),v=Number((p[vi]||'').trim());if(/^\d{4}-\d{2}/.test(d)&&Number.isFinite(v)&&v>0)a.push({date:d.slice(0,7),v})}a.sort((a,b)=>a.date.localeCompare(b.date));const u=[];for(const x of a)if(!u.length||u[u.length-1].date!==x.date)u.push(x);return u}
+async function loadText(txt){try{data=parseCSV(txt);if(data.length<25)throw Error('Servono almeno 25 mesi di dati');$('error').style.display='none';$('badge').textContent=`ACWI · ${data.length} mesi`;sync();render();$('status').textContent=`✓ ${data.length} mesi caricati · ${data[0].date} → ${data[data.length-1].date}`; }catch(e){showError(e.message)}}
+async function autoLoad(){try{const r=await fetch('data.csv',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);await loadText(await r.text())}catch(e){$('status').textContent='data.csv non caricabile automaticamente. Se hai aperto l’HTML con doppio click, usa “Carica data.csv”.'}}
+function showError(s){$('error').style.display='block';$('error').textContent='⚠ '+s}
+ $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>loadText(r.result);r.readAsText(f)};
+ $('years').oninput=e=>{years=+e.target.value;$('yearsValue').textContent=years+(years===1?' anno':' anni');sync();render()};
+function sync(){const max=Math.max(0,data.length-years*12-1);entry=Math.min(entry,max)}
+function calc(){const step=years*12,out=[];for(let i=0;i+step<data.length;i++){const a=data[i],b=data[i+step];out.push({i,start:a.date,end:b.date,total:b.v/a.v-1})}return out}
+const pct=v=>(v>=0?'+':'')+(v*100).toFixed(1)+'%';const money=v=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(v);function med(a){const x=[...a].sort((a,b)=>a-b);return x.length%2?x[(x.length-1)/2]:(x[x.length/2-1]+x[x.length/2])/2}
+function render(){if(!data.length)return;points=calc();if(!points.length)return;entry=Math.min(entry,points.length-1);const vals=points.map(p=>p.total);$('returnTitle').textContent=`Rendimento a ${years} ${years===1?'anno':'anni'}`;$('chartCaption').textContent=`${points.length} ingressi mensili · finestra ${years}Y`;$('best').textContent=pct(Math.max(...vals));$('worst').textContent=pct(Math.min(...vals));$('median').textContent=pct(med(vals));$('latest').textContent=pct(vals[vals.length-1]);$('positive').textContent=(vals.filter(v=>v>0).length/vals.length*100).toFixed(0)+'%';drawReturns(vals);updateSelected();drawTrajectory()}
+function setup(c){const d=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*d;c.height=h*d;return [w,h,d]}
+function grid(c,w,h,pad,min,max,isMoney=false){c.strokeStyle='#202028';c.lineWidth=1;c.font='10px Inter';for(let j=0;j<5;j++){const yy=pad.t+j/4*(h-pad.t-pad.b),vv=max-j/4*(max-min);c.beginPath();c.moveTo(pad.l,yy);c.lineTo(w-pad.r,yy);c.stroke();c.fillStyle='#5f5d68';c.textAlign='right';c.fillText(isMoney?money(vv):pct(vv),pad.l-8,yy+3)}}
+function drawReturns(vals){const [w,h,d]=setup(canvas);ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,w,h);const pad={l:55,r:18,t:15,b:31},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;let min=Math.min(...vals,0),max=Math.max(...vals,0),sp=max-min||1;min-=sp*.09;max+=sp*.09;const x=i=>pad.l+i/(vals.length-1)*pw,y=v=>pad.t+(max-v)/(max-min)*ph;grid(ctx,w,h,pad,min,max);const zy=y(0);ctx.setLineDash([5,5]);ctx.strokeStyle='#7c7b86aa';ctx.beginPath();ctx.moveTo(pad.l,zy);ctx.lineTo(w-pad.r,zy);ctx.stroke();ctx.setLineDash([]);ctx.lineWidth=2.7;for(let i=1;i<vals.length;i++){ctx.beginPath();ctx.moveTo(x(i-1),y(vals[i-1]));ctx.lineTo(x(i),y(vals[i]));ctx.strokeStyle=vals[i]>=0&&vals[i-1]>=0?'#a77bff':'#ff7180';ctx.stroke()}ctx.fillStyle='#5f5d68';ctx.font='10px JetBrains Mono';ctx.textAlign='center';const n=Math.min(8,vals.length);for(let j=0;j<n;j++){const i=Math.round(j*(vals.length-1)/(n-1));ctx.fillText(points[i].start.slice(0,4),x(i),h-9)}ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x(entry),y(vals[entry]),6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#a77bff';ctx.beginPath();ctx.arc(x(entry),y(vals[entry]),3.5,0,Math.PI*2);ctx.fill();canvas._g={x,y,pad,pw,vals,ph}}
+function updateSelected(){const p=points[entry],final=amount*(1+p.total);$('window').textContent=`${p.start} → ${p.end}`;$('investStart').textContent=`${money(amount)} · ingresso ${p.start}`;$('investValue').textContent=money(final);$('investGain').textContent=(final>=amount?'+':'')+money(final-amount);$('trajectoryCaption').textContent=`${money(amount)} iniziali`;$('trajectoryTitle').textContent=`Se fossi entrato il ${formatMY(p.start)} e fossi uscito il ${formatMY(p.end)}`}
+function drawTrajectory(){const p=points[entry],start=p.i,step=years*12,end=start+step,vals=data.slice(start,end+1).map(x=>amount*x.v/data[start].v),[w,h,d]=setup(tc);tctx.setTransform(d,0,0,d,0,0);tctx.clearRect(0,0,w,h);const pad={l:62,r:18,t:15,b:30},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b,min=Math.min(...vals),max=Math.max(...vals),sp=max-min||1,lo=min-sp*.08,hi=max+sp*.08,x=i=>pad.l+i/(vals.length-1)*pw,y=v=>pad.t+(hi-v)/(hi-lo)*ph;grid(tctx,w,h,pad,lo,hi,true);tctx.lineWidth=2.7;tctx.strokeStyle='#52e3a0';tctx.beginPath();vals.forEach((v,i)=>i?tctx.lineTo(x(i),y(v)):tctx.moveTo(x(i),y(v)));tctx.stroke();tctx.fillStyle='#52e3a0';tctx.beginPath();tctx.arc(x(vals.length-1),y(vals.at(-1)),4,0,Math.PI*2);tctx.fill();tctx.fillStyle='#5f5d68';tctx.font='10px JetBrains Mono';tctx.textAlign='center';[0,.5,1].forEach(q=>{const i=Math.round(q*(vals.length-1));tctx.fillText(data[start+i].date.slice(0,4),x(i),h-8)});tc._g={x,y,pad,pw,vals,start}}
+
+// Click event on Chart 1
+canvas.onclick = e => {
+    const g = canvas._g;
+    if(!g) return;
+    const r = canvas.getBoundingClientRect();
+    const mx = e.clientX - r.left;
+    if(mx < g.pad.l || mx > r.width - g.pad.r) return;
+    const i = Math.max(0, Math.min(g.vals.length - 1, Math.round((mx - g.pad.l) / g.pw * (g.vals.length - 1))));
+    entry = i;
+    render();
+};
+
+// Hover events
+canvas.onmousemove=e=>hover(canvas,e,$('tip'),false);
+canvas.onmouseleave=()=>{$('tip').style.display='none';drawReturns(points.map(p=>p.total))};
+tc.onmousemove=e=>hover(tc,e,$('trajectoryTip'),true);
+tc.onmouseleave=()=>{$('trajectoryTip').style.display='none';drawTrajectory()};
+
+function hover(c,e,tip,traj){
+    const g=c._g;if(!g)return;
+    const r=c.getBoundingClientRect(),mx=e.clientX-r.left;
+    if(mx<g.pad.l||mx>r.width-g.pad.r){tip.style.display='none';if(!traj)drawReturns(g.vals);return}
+    
+    const i=Math.max(0,Math.min(g.vals.length-1,Math.round((mx-g.pad.l)/g.pw*(g.vals.length-1))));
+    const px=g.x(i), py=g.y(g.vals[i]);
+    
+    // Draw crosshair on hover for Chart 1
+    if(!traj){
+        drawReturns(g.vals); // redraw base
+        ctx.beginPath(); ctx.moveTo(px, g.pad.t); ctx.lineTo(px, g.pad.t+g.ph); ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1; ctx.setLineDash([2,2]); ctx.stroke(); ctx.setLineDash([]);
+        // Draw temporary hover dot
+        ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+    }
+
+    const date=traj?data[g.start+i].date:points[i].start;
+    tip.style.left=(px)+'px';
+    tip.style.top=(py)+'px';
+    tip.style.display='block';
+    tip.innerHTML=traj?`<b>${date}</b><br><span style="color:#52e3a0">${money(g.vals[i])}</span>`:`<b>${points[i].start}</b> → <b>${points[i].end}</b><br><span style="color:${g.vals[i]>=0?'#a77bff':'#ff7180'}">${pct(g.vals[i])}</span>`;
+}
+
+window.onresize=()=>data.length&&render();autoLoad();
+</script></body></html>
