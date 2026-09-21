@@ -45,7 +45,36 @@
         1px 1px 0 #ff006e,
         -1px -1px 0 #00d4ff;
     }
-        
+        body.has-text-selection .cursor-dot {
+      background: var(--accent-yellow);
+      mix-blend-mode: normal;
+    }
+    
+    body.has-text-selection .cursor-ring {
+      border-color: var(--accent-yellow);
+      background: rgba(255, 214, 10, 0.06);
+      animation:
+        ringBreathe 3.5s ease-in-out infinite,
+        graffitiPulse 0.45s ease-out;
+    }
+    
+    @keyframes graffitiPulse {
+      0% {
+        transform: translate(-50%, -50%) scale(0.7) rotate(-8deg);
+        opacity: 0.2;
+      }
+    
+      60% {
+        transform: translate(-50%, -50%) scale(1.2) rotate(5deg);
+        opacity: 1;
+      }
+    
+      100% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+    
     body {
       font-family: 'Inter', sans-serif;
       background-color: var(--bg-primary);
@@ -80,8 +109,6 @@
       transform: translate(-50%, -50%);
       mix-blend-mode: difference;
       transition:
-        width 0.12s ease-out,
-        height 0.12s ease-out,
         background 0.25s ease,
         opacity 0.3s ease;
     }
@@ -912,9 +939,7 @@
       el.addEventListener('mouseleave', () => { hoveredEl = null; isOverInteractive = false; isDocked = false; document.body.classList.remove('cursor-docked'); });
     });
 
-    let movingTimer;
-
-   document.addEventListener('mousemove', (e) => {
+    document.addEventListener('mousemove', (e) => {
       dotX = e.clientX;
       dotY = e.clientY;
     
