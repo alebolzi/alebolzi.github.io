@@ -903,7 +903,7 @@
       const dy = e.movementY;
       const speed = Math.sqrt(dx * dx + dy * dy);
     
-      targetDotSize = Math.min(18, 5 + speed * 0.7);
+      targetDotSize = Math.min(18, 5 + speed * 1.2);
     
       if (!cursorVisible) {
         cursorVisible = true;
@@ -927,7 +927,7 @@
       cursorDot.style.top = dotY + 'px';
 
       // Animazione morbida del puntino
-      targetDotSize = lerp(targetDotSize, 5, 0.08);
+      targetDotSize = lerp(targetDotSize, 5, 0.035);
       dotSize = lerp(dotSize, targetDotSize, 0.18);
     
       cursorDot.style.width = dotSize + 'px';
