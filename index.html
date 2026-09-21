@@ -1064,6 +1064,29 @@
 
     console.log('%c🧪 Bolzi Lab', 'font-size: 24px; font-weight: bold; color: #ff006e;');
     console.log('%cMuovi il mouse e guarda la magia ✨', 'color: #00d4ff;');
+
+  /* ═══════════════════════════════════════════════
+     SELEZIONE TESTO — SCHOOL / GRAFFITI
+     ═══════════════════════════════════════════════ */
+  
+    let selectionTimer = null;
+    
+    document.addEventListener('selectionchange', () => {
+      const selection = window.getSelection();
+    
+      if (!selection || selection.isCollapsed || selection.toString().trim() === '') {
+        document.body.classList.remove('has-text-selection');
+        return;
+      }
+    
+      document.body.classList.add('has-text-selection');
+    
+      clearTimeout(selectionTimer);
+    
+      selectionTimer = setTimeout(() => {
+        document.body.classList.remove('has-text-selection');
+      }, 1800);
+    });
   </script>
 
 <!-- ═══════════════════════════════════════════════
