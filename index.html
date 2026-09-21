@@ -57,9 +57,14 @@
       border-radius: 50%;
       pointer-events: none;
       z-index: 10001;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%) scale(1);
       mix-blend-mode: difference;
-      transition: width 0.25s ease, height 0.25s ease, background 0.25s ease, opacity 0.3s ease;
+      transition:
+        width 0.15s ease,
+        height 0.15s ease,
+        background 0.25s ease,
+        opacity 0.3s ease,
+        transform 0.12s ease;
     }
 
     .cursor-ring {
@@ -768,6 +773,7 @@
 
     let mouseX = W / 2, mouseY = H / 2, mouseActive = false;
     let mouseSpeed = 0, lastMX = 0, lastMY = 0;
+    let dotScale = 1;
     let stopTimer = 0, lastDotTime = 0;
 
     document.addEventListener('mousemove', (e) => {
@@ -786,6 +792,15 @@
 
     function animate() {
       const time = performance.now() / 1000;
+      // Il pallino cresce quando il mouse si muove
+      const targetScale = Math.min(2.8, 1 + mouseSpeed * 0.12);
+      
+      // Crescita/rientro morbido
+      dotScale = lerp(dotScale, targetScale, 0.18);
+      
+      cursorDot.style.transform =
+        `translate(-50%, -50%) scale(${dotScale})`;
+      
       ctx.fillStyle = '#0a0a0b';
       ctx.fillRect(0, 0, W, H);
       ctx.globalCompositeOperation = 'screen';
