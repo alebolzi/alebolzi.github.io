@@ -25,7 +25,27 @@
       --card-border: rgba(255, 255, 255, 0.08);
       --card-hover-bg: rgba(255, 255, 255, 0.06);
     }
-
+    
+    /* ═══════════════════════════════════════════════
+       SELEZIONE TESTO — SCHOOL / GRAFFITI
+       ═══════════════════════════════════════════════ */
+    
+    ::selection {
+      background: #ffd60a;
+      color: #111;
+      text-shadow:
+        1px 1px 0 #ff006e,
+        -1px -1px 0 #00d4ff;
+    }
+    
+    ::-moz-selection {
+      background: #ffd60a;
+      color: #111;
+      text-shadow:
+        1px 1px 0 #ff006e,
+        -1px -1px 0 #00d4ff;
+    }
+        
     body {
       font-family: 'Inter', sans-serif;
       background-color: var(--bg-primary);
