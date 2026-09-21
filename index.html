@@ -59,9 +59,17 @@
       z-index: 10001;
       transform: translate(-50%, -50%);
       mix-blend-mode: difference;
-      transition: width 0.25s ease, height 0.25s ease, background 0.25s ease, opacity 0.3s ease;
+      transition:
+        width 0.12s ease-out,
+        height 0.12s ease-out,
+        background 0.25s ease,
+        opacity 0.3s ease;
     }
-
+    
+    .cursor-dot.moving {
+      width: 14px;
+      height: 14px;
+    }
     .cursor-ring {
       position: fixed;
       width: 44px;
@@ -886,11 +894,30 @@
       el.addEventListener('mouseleave', () => { hoveredEl = null; isOverInteractive = false; isDocked = false; document.body.classList.remove('cursor-docked'); });
     });
 
+    let movingTimer;
+
     document.addEventListener('mousemove', (e) => {
       dotX = e.clientX;
       dotY = e.clientY;
-      if (!cursorVisible) { cursorVisible = true; cursorDot.style.opacity = '1'; cursorRing.style.opacity = '1'; }
-      if (isDocked) { isDocked = false; document.body.classList.remove('cursor-docked'); }
+    
+      if (!cursorVisible) {
+        cursorVisible = true;
+        cursorDot.style.opacity = '1';
+        cursorRing.style.opacity = '1';
+      }
+    
+      if (isDocked) {
+        isDocked = false;
+        document.body.classList.remove('cursor-docked');
+      }
+    
+      // Puntino grande mentre il mouse si muove
+      cursorDot.classList.add('moving');
+    
+      clearTimeout(movingTimer);
+      movingTimer = setTimeout(() => {
+        cursorDot.classList.remove('moving');
+      }, 100);
     });
 
     document.addEventListener('mouseleave', () => { cursorVisible = false; cursorDot.style.opacity = '0'; cursorRing.style.opacity = '0'; isDocked = false; });
