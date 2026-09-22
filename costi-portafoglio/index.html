@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="it" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Cost Analyzer Pro 💸</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    background: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #090d16 55%, #05070c 100%);
+    color: #f3f4f6;
+    min-height: 100vh;
+  }
+  
+  .glass-card {
+    background: rgba(17, 24, 39, 0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .tier-badge {
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Themes per i Tier */
+  .theme-GOAT {
+    background: radial-gradient(circle at top, rgba(245, 158, 11, 0.35), rgba(17, 24, 39, 0.95));
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow: 0 0 35px rgba(245, 158, 11, 0.25);
+  }
+  .theme-GOAT .tier-text { color: #fbbf24; text-shadow: 0 0 16px rgba(251, 191, 36, 0.6); }
+
+  .theme-S {
+    background: radial-gradient(circle at top, rgba(6, 182, 212, 0.28), rgba(17, 24, 39, 0.95));
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.2);
+  }
+  .theme-S .tier-text { color: #22d3ee; text-shadow: 0 0 12px rgba(34, 211, 238, 0.5); }
+
+  .theme-A {
+    background: radial-gradient(circle at top, rgba(16, 185, 129, 0.25), rgba(17, 24, 39, 0.95));
+    border-color: rgba(16, 185, 129, 0.5);
+  }
+  .theme-A .tier-text { color: #34d399; }
+
+  .theme-B {
+    background: radial-gradient(circle at top, rgba(59, 130, 246, 0.25), rgba(17, 24, 39, 0.95));
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  .theme-B .tier-text { color: #60a5fa; }
+
+  .theme-C {
+    background: radial-gradient(circle at top, rgba(234, 179, 8, 0.22), rgba(17, 24, 39, 0.95));
+    border-color: rgba(234, 179, 8, 0.45);
+  }
+  .theme-C .tier-text { color: #facc15; }
+
+  .theme-D {
+    background: radial-gradient(circle at top, rgba(249, 115, 22, 0.25), rgba(17, 24, 39, 0.95));
+    border-color: rgba(249, 115, 22, 0.5);
+  }
+  .theme-D .tier-text { color: #fb923c; }
+
+  .theme-E {
+    background: radial-gradient(circle at top, rgba(239, 68, 68, 0.25), rgba(17, 24, 39, 0.95));
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+  .theme-E .tier-text { color: #f87171; }
+
+  .theme-F {
+    background: radial-gradient(circle at top, rgba(153, 27, 27, 0.45), rgba(17, 24, 39, 0.98));
+    border-color: rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+  }
+  .theme-F .tier-text { color: #ef4444; text-shadow: 0 0 12px rgba(239, 68, 68, 0.6); }
+
+  /* Input styling */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  
+  .input-field {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+  }
+  .input-field:focus-within {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+  }
+</style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8">
+
+<div class="max-w-7xl mx-auto space-y-6">
+  
+  <!-- Header -->
+  <header class="text-center space-y-2">
+    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white">
+      Portfolio Cost <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">Analyzer Pro</span> 🔥
+    </h1>
+    <p class="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
+      Calcola con precisione millimetrica l'erosione da commissioni, TER ponderato, spread, FX, bollo e consulenza.
+    </p>
+  </header>
+
+  <!-- Control Bar (Preset selector) -->
+  <div class="glass-card rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+    <div class="text-xs sm:text-sm font-semibold text-slate-300 flex items-center gap-2">
+      <span class="text-purple-400 text-lg">⚡</span> Seleziona una configurazione preimpostata:
+    </div>
+
+    <div class="w-full md:w-96">
+      <select id="presetSelect" onchange="applyPreset()" class="w-full bg-slate-900/90 border border-white/10 text-slate-200 text-xs sm:text-sm rounded-xl px-4 py-2.5 outline-none focus:border-purple-500 font-medium cursor-pointer">
+        <option value="custom">⚙️ -- Seleziona un Preset --</option>
+        
+        <optgroup label="🐐 SETUP LEGGENDA & HIGH EFFICIENCY">
+          <option value="goated_setup">🐐 GOATED: Core S&P 500 / US Ultra-Cheap (0.03% TER)</option>
+          <option value="tier_s_setup">⚡ TIER S: All-World ETF Ultracost (0.12% TER)</option>
+          <option value="btp_only">🇮🇹 Portafoglio Solo BTP / Titoli di Stato (0% TER)</option>
+        </optgroup>
+
+        <optgroup label="📱 Neo-Broker Low-Cost">
+          <option value="directa">Directa (PAC ETF Gratuito)</option>
+          <option value="traderepublic_eu">Trade Republic (PAC ETF EUR - 0 Fee)</option>
+          <option value="traderepublic_us">Trade Republic (Asset USD - 0.15% FX)</option>
+          <option value="scalable_free">Scalable Capital Free (PAC Gratuito)</option>
+          <option value="scalable_prime">Scalable Capital Prime+ (€4.99/m Flat Rate)</option>
+          <option value="ibkr_tiered">Interactive Brokers (Pro Tiered + FX Minimal)</option>
+          <option value="xtb_eur">XTB (0% commissioni su ETF EUR)</option>
+          <option value="degiro_core">DEGIRO (Selezione Core ETF - €1)</option>
+          <option value="bgsaxo">BG Saxo (PAC ETF / Azioni Italia)</option>
+        </optgroup>
+
+        <optgroup label="🏦 Banche Tradizionali & Broker Italiani">
+          <option value="fineco_under30">Fineco Under 30 / Piano Replay PAC</option>
+          <option value="fineco_standard">Fineco Standard (€19/ordine + Canone €3.95/m)</option>
+          <option value="webank">Webank (€12/ordine fisso)</option>
+          <option value="widiba">Widiba (€9/ordine + Canone)</option>
+          <option value="poste">Poste Italiane (Deposito Titoli €30/anno + Comm. €6)</option>
+          <option value="banca_intesa">Intesa Sanpaolo / Unicredit Fai-da-te (Ordini €12 + Deposito)</option>
+        </optgroup>
+
+        <optgroup label="💼 Consulenza, Fondi Pensione & Robo-Advisor">
+          <option value="indipendente">ETF World + Consulente Autonomo Fee-Only (0.8%)</option>
+          <option value="roboadvisor">Robo-Advisor Standard (Fee 0.75% + TER ETF 0.25%)</option>
+          <option value="fondo_pensione_cometa">Fondo Pensione Negoziale / Chiuso (TER ~0.20%)</option>
+          <option value="fondo_pensione_pip">Fondo Pensione Aperto / PIP Bancario (TER ~2.10%)</option>
+          <option value="banca_consulenza">Banca Tradizionale (Fondi Comuni Attivi TER 1.8%)</option>
+          <option value="banca_pessima">Banca con Polizza Unit-Linked / Costi Massimi (TER 2.8%+)</option>
+        </optgroup>
+
+        <optgroup label="🪙 Crypto & Asset Alternativi">
+          <option value="crypto_etf">Crypto ETF / ETP su Broker (TER ~0.35%)</option>
+          <option value="crypto_exchange">Crypto Exchange Spot (0.25% Fee + Spread)</option>
+        </optgroup>
+      </select>
+    </div>
+  </div>
+
+  <!-- Main Grid Layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Input Form (Left Side) -->
+    <div class="lg:col-span-7 space-y-6">
+      
+      <!-- Section: Multi-ETF Portfolio Allocator (Weighted TER) -->
+      <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-white/5 pb-3">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+            📊 Composizione Portafoglio & TER Ponderato
+          </h2>
+          <span id="allocationWarning" class="text-[11px] font-semibold text-emerald-400">Peso: 100%</span>
+        </div>
+
+        <div id="etfList" class="space-y-3">
+          <!-- ETF Rows will be dynamically rendered here -->
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <button type="button" onclick="addEtfRow()" class="px-3 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/40 text-purple-300 text-xs font-semibold flex items-center gap-1.5 transition">
+            <span>+</span> Aggiungi ETF / Asset
+          </button>
+          
+          <div class="text-right">
+            <span class="text-xs text-slate-400 font-medium">TER Ponderato Calcolato:</span>
+            <span id="calculatedTerDisplay" class="text-sm font-bold text-slate-100 ml-1.5">0.07%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Capitale e Piano Accumulo -->
+      <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+          💰 Capitale e Piano Accumulo
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Patrimonio Attuale</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="capital" type="number" value="50000" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">€</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">PAC Mensile</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="pac" type="number" value="400" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">€</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Costi PAC & Operativi -->
+      <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+          🏦 Costi PAC & Acquisto/Vendita
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- PAC -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Costo PAC Singola Op. (€)</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="pacFee" type="number" value="0" step="0.1" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">€</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Costo PAC %</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="pacFeePct" type="number" value="0" step="0.01" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+            </div>
+          </div>
+
+          <!-- Acquisto -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Comm. Acquisto Fissa (€)</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="buyFee" type="number" value="0" step="0.1" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">€</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Comm. Acquisto %</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="buyFeePct" type="number" value="0" step="0.01" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+            </div>
+          </div>
+
+          <!-- Vendita -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Comm. Vendita Fissa (€)</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="sellFee" type="number" value="0" step="0.1" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">€</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Comm. Vendita %</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="sellFeePct" type="number" value="0" step="0.01" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+            </div>
+          </div>
+
+          <!-- Altro -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">N° Acquisti Extra / Anno</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="numBuys" type="number" value="0" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">n°</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">N° Vendite / Anno</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="numSells" type="number" value="0" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">n°</span>
+            </div>
+          </div>
+          <div class="sm:col-span-2 lg:col-span-4">
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Valore Medio Ordine Extra (€)</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="avgTradeSize" type="number" value="1000" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">€</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Parametri Proiezione -->
+      <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+          🔮 Parametri Proiezione
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Rendimento Lordo Atteso</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="returnRate" type="number" value="7" step="0.1" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Orizzonte Temporale</label>
+            <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+              <input id="years" type="number" value="20" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+              <span class="text-xs font-bold text-slate-500 ml-2">anni</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collapsible Advanced Costs Accordion -->
+      <div class="glass-card rounded-2xl p-4">
+        <button id="toggleAdvancedBtn" onclick="toggleAdvanced()" type="button" class="w-full py-2.5 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-slate-300 text-xs font-bold flex items-center justify-between transition">
+          <span class="flex items-center gap-2">
+            <span>⚙️</span> Mostra Costi Avanzati (Bollo, TER Extra, Consulenza, FX)
+          </span>
+          <span id="advancedArrow" class="text-purple-400 font-bold transition-transform duration-300">▼</span>
+        </button>
+
+        <div id="advancedPanel" class="hidden mt-4 p-4 rounded-xl bg-slate-950/60 border border-white/5 space-y-4">
+          
+          <!-- Costi Annui, Bollo & Consulenza -->
+          <div class="text-[11px] font-bold uppercase tracking-wider text-purple-400">
+            ⚙️ Costi Annui, Bollo & Consulenza
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">TER Annuale % (Extra/Fondi)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="extraTer" type="number" value="0" step="0.01" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Commissioni Annuali Fisse (€)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="accountFee" type="number" value="0" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">€</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Commissioni Annuali %</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="annualCommPct" type="number" value="0" step="0.1" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Bollo / Imposta (0.2%)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="bolloTax" type="number" value="0.2" step="0.01" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Consulenza Fissa (€/anno)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="adviceFixed" type="number" value="0" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">€</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Consulenza (%/anno)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="advicePct" type="number" value="0" step="0.1" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Custodia / Amministrazione (€)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="custodyFee" type="number" value="0" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">€</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Performance Fee (%)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="perfFee" type="number" value="0" step="0.1" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Altri Costi Fissi Anno (€)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="otherCosts" type="number" value="0" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">€</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Costi Trading Avanzati -->
+          <div class="text-[11px] font-bold uppercase tracking-wider text-purple-400 pt-2 border-t border-white/5">
+            ⚙️ Spread & Costi di Cambio (FX)
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Spread Acquisto (%)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="buySpread" type="number" value="0" step="0.01" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Spread Vendita (%)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="sellSpread" type="number" value="0" step="0.01" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Commissione Cambio FX (%)</label>
+              <div class="input-field rounded-xl px-3.5 py-2.5 flex items-center">
+                <input id="fx" type="number" value="0" step="0.01" class="bg-transparent w-full text-slate-100 text-sm font-semibold outline-none">
+                <span class="text-xs font-bold text-slate-500 ml-2">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Results Dashboard (Right Side) -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <!-- Big Efficiency Tier Card -->
+      <div id="scoreCard" class="tier-badge rounded-2xl p-6 text-center border relative overflow-hidden theme-A">
+        <div id="scoreLabel" class="text-xs font-bold uppercase tracking-widest text-slate-300 mb-1">
+          Efficienza Eccellente
+        </div>
+        <div id="scoreLetter" class="tier-text text-5xl sm:text-6xl font-black tracking-tight my-2">
+          TIER A
+        </div>
+        <div id="scoreSub" class="text-xs text-slate-300 font-medium max-w-xs mx-auto">
+          Portafoglio ad altissima efficienza
+        </div>
+      </div>
+
+      <!-- Essential Metrics Summary Card -->
+      <div class="glass-card rounded-2xl p-5 space-y-4">
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3 bg-slate-900/80 rounded-xl border border-white/5">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Costo Annuo Totale</div>
+            <div id="annualCost" class="text-xl font-black text-slate-100 mt-0.5">€0</div>
+            <div id="monthlyCost" class="text-[11px] text-slate-400 mt-0.5">€0 / mese</div>
+          </div>
+
+          <div class="p-3 bg-slate-900/80 rounded-xl border border-white/5">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Incidenza Patrimonio</div>
+            <div id="effectiveRate" class="text-xl font-black text-purple-400 mt-0.5">0.00%</div>
+            <div id="costPer100k" class="text-[11px] text-slate-400 mt-0.5">€0 / €100k</div>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between text-xs text-slate-400 font-semibold">
+            <span>Livello Incidenza (%)</span>
+            <span id="barPct">0.00%</span>
+          </div>
+          <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden p-0.5 border border-white/5">
+            <div id="barFill" class="h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Detailed Breakdown -->
+        <div class="space-y-2 pt-2 border-t border-white/5 text-xs">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-purple-400 mb-1">Dettaglio Spese Annue</div>
+          <div class="flex justify-between text-slate-300 py-1 border-b border-white/5">
+            <span>TER, Bollo & Comm. Annuali %</span>
+            <strong id="terCost" class="font-bold text-slate-100">€0</strong>
+          </div>
+          <div class="flex justify-between text-slate-300 py-1 border-b border-white/5">
+            <span>Commissioni Fisse (Broker & PAC)</span>
+            <strong id="brokerCost" class="font-bold text-slate-100">€0</strong>
+          </div>
+          <div class="flex justify-between text-slate-300 py-1 border-b border-white/5">
+            <span>Costi % Operativi (Buy/Sell/FX)</span>
+            <strong id="tradingCost" class="font-bold text-slate-100">€0</strong>
+          </div>
+          <div class="flex justify-between text-slate-300 py-1">
+            <span>Consulenza & Altri Costi Fissi</span>
+            <strong id="adviceCost" class="font-bold text-slate-100">€0</strong>
+          </div>
+        </div>
+
+        <!-- Multi-Horizon Cumulative Loss -->
+        <div class="pt-3 border-t border-white/5 space-y-2">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-purple-400">
+            📊 Cumulativo Costi Persi per Orizzonte
+          </div>
+          <div class="grid grid-cols-4 gap-2 text-center text-xs">
+            <div class="p-2 bg-slate-900/60 rounded-lg border border-white/5">
+              <div class="text-[10px] text-slate-400">5 Anni</div>
+              <div id="cumLoss5" class="font-bold text-red-400 mt-0.5">€0</div>
+            </div>
+            <div class="p-2 bg-slate-900/60 rounded-lg border border-white/5">
+              <div class="text-[10px] text-slate-400">10 Anni</div>
+              <div id="cumLoss10" class="font-bold text-red-400 mt-0.5">€0</div>
+            </div>
+            <div class="p-2 bg-slate-900/60 rounded-lg border border-white/5">
+              <div class="text-[10px] text-slate-400">20 Anni</div>
+              <div id="cumLoss20" class="font-bold text-red-400 mt-0.5">€0</div>
+            </div>
+            <div class="p-2 bg-slate-900/60 rounded-lg border border-white/5">
+              <div class="text-[10px] text-slate-400">30 Anni</div>
+              <div id="cumLoss30" class="font-bold text-red-400 mt-0.5">€0</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Chart Card -->
+      <div class="glass-card rounded-2xl p-5 space-y-3">
+        <div class="text-xs font-bold uppercase tracking-wider text-purple-400">
+          📈 Grafico dell'Erosione Composta
+        </div>
+        <div class="w-full h-52 relative">
+          <canvas id="erosionChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Tier Legend Note -->
+      <div class="glass-card rounded-xl p-4 text-[11px] text-slate-400 space-y-1.5 leading-relaxed">
+        <div class="font-bold text-slate-300 uppercase text-[10px]">📊 Scala Ufficiale di Efficienza:</div>
+        <div class="grid grid-cols-2 gap-x-2 gap-y-1">
+          <div><span class="text-amber-400 font-bold">GOATED 🐐</span>: &lt; 0.10%</div>
+          <div><span class="text-cyan-400 font-bold">TIER S ⚡</span>: 0.10% - 0.20%</div>
+          <div><span class="text-emerald-400 font-bold">TIER A 🟢</span>: 0.20% - 0.35%</div>
+          <div><span class="text-blue-400 font-bold">TIER B 🔵</span>: 0.35% - 0.55%</div>
+          <div><span class="text-yellow-400 font-bold">TIER C 🟡</span>: 0.55% - 0.80%</div>
+          <div><span class="text-orange-400 font-bold">TIER D 🟠</span>: 0.80% - 1.00%</div>
+          <div class="col-span-2"><span class="text-red-500 font-bold">TIER F 💀</span>: &ge; 1.00%</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Array dinamico ETF iniziale
+let etfData = [
+  { name: 'iShares Core MSCI World (WEBN)', weight: 70, ter: 0.07 },
+  { name: 'Nasdaq-100 ETF', weight: 20, ter: 0.20 },
+  { name: 'Physical Gold ETC', weight: 10, ter: 0.35 }
+];
+
+// Preset Data
+const presets = {
+  goated_setup: { ter: 0.03, buyFee: 0, sellFee: 0, pacFee: 0, numBuys: 0, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0 },
+  tier_s_setup: { ter: 0.12, buyFee: 0, sellFee: 0, pacFee: 0, numBuys: 0, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0 },
+  btp_only: { ter: 0.00, buyFee: 0, sellFee: 0, pacFee: 0, numBuys: 0, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0.2 },
+  
+  directa: { ter: 0.20, buyFee: 5, sellFee: 5, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0.2 },
+  traderepublic_eu: { ter: 0.20, buyFee: 1, sellFee: 1, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0 },
+  traderepublic_us: { ter: 0.20, buyFee: 1, sellFee: 1, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0.15, advicePct: 0, bolloTax: 0 },
+  scalable_free: { ter: 0.20, buyFee: 0.99, sellFee: 0.99, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0.15, advicePct: 0, bolloTax: 0 },
+  scalable_prime: { ter: 0.20, buyFee: 0, sellFee: 0, pacFee: 0, numBuys: 0, numSells: 0, custodyFee: 0, accountFee: 59.88, fx: 0.15, advicePct: 0, bolloTax: 0 },
+  ibkr_tiered: { ter: 0.15, buyFee: 1.25, sellFee: 1.25, pacFee: 0, numBuys: 4, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0.03, advicePct: 0, bolloTax: 0 },
+  xtb_eur: { ter: 0.20, buyFee: 0, sellFee: 0, pacFee: 0, numBuys: 0, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0 },
+  degiro_core: { ter: 0.20, buyFee: 1, sellFee: 1, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 2.5, accountFee: 0, fx: 0.25, advicePct: 0, bolloTax: 0 },
+  bgsaxo: { ter: 0.20, buyFee: 3, sellFee: 3, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0.2 },
+
+  fineco_under30: { ter: 0.20, buyFee: 2.95, sellFee: 2.95, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0.2 },
+  fineco_standard: { ter: 0.20, buyFee: 19, sellFee: 19, pacFee: 2.95, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 47.4, fx: 0, advicePct: 0, bolloTax: 0.2 },
+  webank: { ter: 0.20, buyFee: 12, sellFee: 12, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0.2 },
+  widiba: { ter: 0.20, buyFee: 9, sellFee: 9, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 32, fx: 0, advicePct: 0, bolloTax: 0.2 },
+  poste: { ter: 0.20, buyFee: 6, sellFee: 6, pacFee: 3, numBuys: 2, numSells: 0, custodyFee: 30, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0.2 },
+  banca_intesa: { ter: 0.20, buyFee: 12, sellFee: 12, pacFee: 3.5, numBuys: 2, numSells: 0, custodyFee: 60, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0.2 },
+
+  indipendente: { ter: 0.20, buyFee: 5, sellFee: 5, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0.8, bolloTax: 0 },
+  roboadvisor: { ter: 0.25, buyFee: 0, sellFee: 0, pacFee: 0, numBuys: 0, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0.75, bolloTax: 0 },
+  fondo_pensione_cometa: { ter: 0.20, buyFee: 0, sellFee: 0, pacFee: 0, numBuys: 0, numSells: 0, custodyFee: 12, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0 },
+  fondo_pensione_pip: { ter: 2.10, buyFee: 0, sellFee: 0, pacFee: 2, numBuys: 0, numSells: 0, custodyFee: 30, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0 },
+  banca_consulenza: { ter: 1.80, buyFee: 12, sellFee: 12, pacFee: 2.5, numBuys: 2, numSells: 0, custodyFee: 60, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0.2 },
+  banca_pessima: { ter: 2.80, buyFee: 15, sellFee: 15, pacFee: 5, numBuys: 4, numSells: 2, custodyFee: 120, accountFee: 0, fx: 0.15, advicePct: 1.0, bolloTax: 0.2 },
+
+  crypto_etf: { ter: 0.35, buyFee: 2, sellFee: 2, pacFee: 0, numBuys: 2, numSells: 0, custodyFee: 0, accountFee: 0, fx: 0, advicePct: 0, bolloTax: 0 },
+  crypto_exchange: { ter: 0.00, buyFee: 1.5, sellFee: 1.5, pacFee: 0, numBuys: 4, numSells: 2, custodyFee: 0, accountFee: 0, fx: 0.25, advicePct: 0, bolloTax: 0 }
+};
+
+let erosionChart = null;
+
+function renderEtfRows() {
+  const container = document.getElementById('etfList');
+  container.innerHTML = '';
+
+  let totalWeight = 0;
+  let weightedTer = 0;
+
+  etfData.forEach((item, index) => {
+    totalWeight += item.weight;
+    weightedTer += (item.weight / 100) * item.ter;
+
+    const row = document.createElement('div');
+    row.className = 'grid grid-cols-12 gap-2 items-center text-xs';
+    row.innerHTML = `
+      <div class="col-span-5 sm:col-span-6">
+        <input type="text" value="${item.name}" onchange="updateEtf(${index}, 'name', this.value)" class="w-full bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-slate-200 outline-none focus:border-purple-500 font-medium">
+      </div>
+      <div class="col-span-3 sm:col-span-2">
+        <div class="flex items-center bg-slate-900 border border-white/10 rounded-lg px-2 py-1.5">
+          <input type="number" value="${item.weight}" step="1" oninput="updateEtf(${index}, 'weight', parseFloat(this.value) || 0)" class="w-full bg-transparent text-slate-100 font-semibold outline-none text-right">
+          <span class="text-slate-500 ml-1 font-bold">%</span>
+        </div>
+      </div>
+      <div class="col-span-3 sm:col-span-3">
+        <div class="flex items-center bg-slate-900 border border-white/10 rounded-lg px-2 py-1.5">
+          <input type="number" value="${item.ter}" step="0.01" oninput="updateEtf(${index}, 'ter', parseFloat(this.value) || 0)" class="w-full bg-transparent text-slate-100 font-semibold outline-none text-right">
+          <span class="text-slate-500 ml-1 font-bold">% TER</span>
+        </div>
+      </div>
+      <div class="col-span-1 text-center">
+        ${etfData.length > 1 ? `<button type="button" onclick="removeEtfRow(${index})" class="text-slate-500 hover:text-red-400 font-bold transition">✕</button>` : ''}
+      </div>
+    `;
+    container.appendChild(row);
+  });
+
+  const warnEl = document.getElementById('allocationWarning');
+  if (Math.abs(totalWeight - 100) > 0.01) {
+    warnEl.textContent = `Attenzione: Somma pesi ${totalWeight.toFixed(0)}% ≠ 100%`;
+    warnEl.className = 'text-[11px] font-semibold text-amber-400';
+  } else {
+    warnEl.textContent = 'Peso Totale: 100%';
+    warnEl.className = 'text-[11px] font-semibold text-emerald-400';
+  }
+
+  document.getElementById('calculatedTerDisplay').textContent = (totalWeight > 0 ? (weightedTer * (100 / (totalWeight || 1))).toFixed(2) : '0.00') + '%';
+  calculate();
+}
+
+function updateEtf(index, field, value) {
+  etfData[index][field] = value;
+  renderEtfRows();
+}
+
+function addEtfRow() {
+  etfData.push({ name: 'Nuovo ETF', weight: 0, ter: 0.20 });
+  renderEtfRows();
+}
+
+function removeEtfRow(index) {
+  if (etfData.length > 1) {
+    etfData.splice(index, 1);
+    renderEtfRows();
+  }
+}
+
+function toggleAdvanced() {
+  const panel = document.getElementById('advancedPanel');
+  const arrow = document.getElementById('advancedArrow');
+
+  if (panel.classList.contains('hidden')) {
+    panel.classList.remove('hidden');
+    arrow.style.transform = 'rotate(180deg)';
+  } else {
+    panel.classList.add('hidden');
+    arrow.style.transform = 'rotate(0deg)';
+  }
+}
+
+function applyPreset() {
+  const val = document.getElementById('presetSelect').value;
+  if (presets[val]) {
+    // Merge with defaults for new fields to prevent undefined values in inputs
+    const defaults = { pacFeePct: 0, buyFeePct: 0, sellFeePct: 0, extraTer: 0, annualCommPct: 0, bolloTax: 0.2, adviceFixed: 0, perfFee: 0, otherCosts: 0, buySpread: 0, sellSpread: 0 };
+    const p = { ...defaults, ...presets[val] };
+    
+    // Update main ETF table with preset single TER
+    etfData = [{ name: 'Portafoglio Preset', weight: 100, ter: p.ter }];
+    
+    document.getElementById('pacFee').value = p.pacFee;
+    document.getElementById('pacFeePct').value = p.pacFeePct;
+    
+    document.getElementById('buyFee').value = p.buyFee;
+    document.getElementById('buyFeePct').value = p.buyFeePct;
+    document.getElementById('sellFee').value = p.sellFee;
+    document.getElementById('sellFeePct').value = p.sellFeePct;
+    
+    document.getElementById('numBuys').value = p.numBuys;
+    document.getElementById('numSells').value = p.numSells;
+    
+    document.getElementById('custodyFee').value = p.custodyFee;
+    document.getElementById('accountFee').value = p.accountFee;
+    document.getElementById('extraTer').value = p.extraTer;
+    document.getElementById('annualCommPct').value = p.annualCommPct;
+    document.getElementById('bolloTax').value = p.bolloTax;
+    
+    document.getElementById('buySpread').value = p.buySpread;
+    document.getElementById('sellSpread').value = p.sellSpread;
+    document.getElementById('fx').value = p.fx;
+    
+    document.getElementById('advicePct').value = p.advicePct;
+    document.getElementById('adviceFixed').value = p.adviceFixed;
+    document.getElementById('perfFee').value = p.perfFee;
+    document.getElementById('otherCosts').value = p.otherCosts;
+
+    renderEtfRows();
+  }
+}
+
+const n = id => Math.max(0, parseFloat(document.getElementById(id).value) || 0);
+const fmt = v => v.toLocaleString('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+
+function getWeightedTer() {
+  let totalW = 0;
+  let weightedTer = 0;
+  etfData.forEach(item => {
+    totalW += item.weight;
+    weightedTer += (item.weight / 100) * item.ter;
+  });
+  return totalW > 0 ? (weightedTer * (100 / totalW)) / 100 : 0;
+}
+
+function calculateCompoundLoss(capital, pac, returnRate, totalAnnualCost, years) {
+  const monthlyR = (returnRate / 100) / 12;
+  const monthlyCost = totalAnnualCost / 12;
+
+  let gross = capital;
+  let net = capital;
+
+  for (let m = 0; m < years * 12; m++) {
+    gross = gross * (1 + monthlyR) + pac;
+    net = net * (1 + monthlyR) + pac - monthlyCost;
+  }
+
+  return Math.max(0, gross - net);
+}
+
+function calculate() {
+  const capital = n('capital');
+  const pac = n('pac');
+  const years = n('years');
+  const returnRate = n('returnRate');
+
+  // Multi-ETF TER & Annual Extras
+  const ter = getWeightedTer();
+  const extraTer = n('extraTer') / 100;
+  const annualCommPct = n('annualCommPct') / 100;
+  const bolloTax = n('bolloTax') / 100;
+  const perfFee = n('perfFee') / 100;
+
+  // PAC & Trading Fissi
+  const pacFee = n('pacFee');
+  const pacFeePct = n('pacFeePct') / 100;
+  const buyFee = n('buyFee');
+  const buyFeePct = n('buyFeePct') / 100;
+  const sellFee = n('sellFee');
+  const sellFeePct = n('sellFeePct') / 100;
+  const numBuys = n('numBuys');
+  const numSells = n('numSells');
+  const avgTradeSize = n('avgTradeSize');
+
+  // Advanced Trading
+  const buySpread = n('buySpread') / 100;
+  const sellSpread = n('sellSpread') / 100;
+  const fx = n('fx') / 100;
+
+  // Fixed & Advice
+  const custodyFee = n('custodyFee');
+  const accountFee = n('accountFee');
+  const advicePct = n('advicePct') / 100;
+  const adviceFixed = n('adviceFixed');
+  const otherCosts = n('otherCosts');
+
+  // Calcolo Patrimonio Medio Stimato nel primo anno
+  const avgPortfolioValue = capital + (pac * 6);
+
+  // Volume Operativo Annuo
+  const pacBuyVolume = pac * 12;
+  const extraBuyVolume = numBuys * avgTradeSize;
+  const sellVolume = numSells * avgTradeSize;
+  const totalTradingVolume = pacBuyVolume + extraBuyVolume + sellVolume;
+
+  // Spese Disaggregate
+  const annualTER = avgPortfolioValue * (ter + extraTer + perfFee + annualCommPct + bolloTax);
+  const annualBroker = (pacFee * 12) + (numBuys * buyFee) + (numSells * sellFee) + custodyFee + accountFee;
+  const annualTrading = (pacBuyVolume * pacFeePct) + (extraBuyVolume * buyFeePct) + (sellVolume * sellFeePct) + (extraBuyVolume * buySpread) + (sellVolume * sellSpread) + (totalTradingVolume * fx);
+  const annualAdvice = (avgPortfolioValue * advicePct) + adviceFixed + otherCosts;
+
+  const totalAnnualCost = annualTER + annualBroker + annualTrading + annualAdvice;
+  const effectiveRate = avgPortfolioValue > 0 ? (totalAnnualCost / avgPortfolioValue) * 100 : 0;
+  const monthlyCost = totalAnnualCost / 12;
+  const costPer100k = (effectiveRate / 100) * 100000;
+
+  // Display Output Dashboard
+  document.getElementById('annualCost').textContent = fmt(totalAnnualCost);
+  document.getElementById('monthlyCost').textContent = fmt(monthlyCost) + ' / mese';
+  document.getElementById('effectiveRate').textContent = effectiveRate.toFixed(2) + '%';
+  document.getElementById('costPer100k').textContent = fmt(costPer100k) + ' / €100k';
+
+  document.getElementById('terCost').textContent = fmt(annualTER);
+  document.getElementById('brokerCost').textContent = fmt(annualBroker);
+  document.getElementById('tradingCost').textContent = fmt(annualTrading);
+  document.getElementById('adviceCost').textContent = fmt(annualAdvice);
+
+  // LOGICA SOGLIE TIER RIGIDA (TIER F a partire da >= 1.00%)
+  const scoreCard = document.getElementById('scoreCard');
+  const scoreLetter = document.getElementById('scoreLetter');
+  const scoreLabel = document.getElementById('scoreLabel');
+  const scoreSub = document.getElementById('scoreSub');
+
+  if (effectiveRate < 0.10) {
+    scoreCard.className = 'tier-badge rounded-2xl p-6 text-center border relative overflow-hidden theme-GOAT';
+    scoreLetter.textContent = 'GOATED 🐐';
+    scoreLabel.textContent = 'Setup Leggendario';
+    scoreSub.textContent = 'Portafoglio imbattibile. Costi praticamente azzerati!';
+  } else if (effectiveRate < 0.20) {
+    scoreCard.className = 'tier-badge rounded-2xl p-6 text-center border relative overflow-hidden theme-S';
+    scoreLetter.textContent = 'TIER S ⚡';
+    scoreLabel.textContent = 'Efficienza Estrema';
+    scoreSub.textContent = 'Livello pro degli investimenti ultra-efficienti.';
+  } else if (effectiveRate < 0.35) {
+    scoreCard.className = 'tier-badge rounded-2xl p-6 text-center border relative overflow-hidden theme-A';
+    scoreLetter.textContent = 'TIER A 🟢';
+    scoreLabel.textContent = 'Efficienza Eccellente';
+    scoreSub.textContent = 'Benchmark perfetto per ETF World standard.';
+  } else if (effectiveRate < 0.55) {
+    scoreCard.className = 'tier-badge rounded-2xl p-6 text-center border relative overflow-hidden theme-B';
+    scoreLetter.textContent = 'TIER B 🔵';
+    scoreLabel.textContent = 'Buona Efficienza';
+    scoreSub.textContent = 'Costi contenuti e molto sostenibili.';
+  } else if (effectiveRate < 0.80) {
+    scoreCard.className = 'tier-badge rounded-2xl p-6 text-center border relative overflow-hidden theme-C';
+    scoreLetter.textContent = 'TIER C 🟡';
+    scoreLabel.textContent = 'Efficienza Media';
+    scoreSub.textContent = 'Accettabile ma con margine di ottimizzazione.';
+  } else if (effectiveRate < 1.00) {
+    scoreCard.className = 'tier-badge rounded-2xl p-6 text-center border relative overflow-hidden theme-D';
+    scoreLetter.textContent = 'TIER D 🟠';
+    scoreLabel.textContent = 'Sotto la Media';
+    scoreSub.textContent = 'Commissioni e TER iniziano a farsi sentire.';
+  } else {
+    // RIGIDO: >= 1.00%
+    scoreCard.className = 'tier-badge rounded-2xl p-6 text-center border relative overflow-hidden theme-F';
+    scoreLetter.textContent = 'TIER F 💀';
+    scoreLabel.textContent = 'Pessimo / Inefficiente';
+    scoreSub.textContent = 'Fondi attivi, polizze o consulenza bancaria con costi eccessivi.';
+  }
+
+  // Barra Progresso
+  const barPct = Math.min((effectiveRate / 1.5) * 100, 100);
+  document.getElementById('barFill').style.width = barPct + '%';
+  document.getElementById('barPct').textContent = effectiveRate.toFixed(2) + '%';
+
+  // Cumulativi Orizzonti
+  document.getElementById('cumLoss5').textContent = fmt(calculateCompoundLoss(capital, pac, returnRate, totalAnnualCost, 5));
+  document.getElementById('cumLoss10').textContent = fmt(calculateCompoundLoss(capital, pac, returnRate, totalAnnualCost, 10));
+  document.getElementById('cumLoss20').textContent = fmt(calculateCompoundLoss(capital, pac, returnRate, totalAnnualCost, 20));
+  document.getElementById('cumLoss30').textContent = fmt(calculateCompoundLoss(capital, pac, returnRate, totalAnnualCost, 30));
+
+  updateChart(capital, pac, returnRate, totalAnnualCost, Math.max(5, years));
+}
+
+function updateChart(capital, pac, returnRate, totalAnnualCost, years) {
+  const labels = [];
+  const grossData = [];
+  const netData = [];
+
+  const monthlyR = (returnRate / 100) / 12;
+  const monthlyCost = totalAnnualCost / 12;
+
+  let gross = capital;
+  let net = capital;
+
+  for (let y = 0; y <= years; y++) {
+    labels.push(`Anno ${y}`);
+    grossData.push(Math.round(gross));
+    netData.push(Math.round(net));
+
+    for (let m = 0; m < 12; m++) {
+      gross = gross * (1 + monthlyR) + pac;
+      net = net * (1 + monthlyR) + pac - monthlyCost;
+    }
+  }
+
+  const ctx = document.getElementById('erosionChart').getContext('2d');
+
+  if (erosionChart) {
+    erosionChart.destroy();
+  }
+
+  erosionChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Teorico (Zero Costi)',
+          data: grossData,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.08)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2
+        },
+        {
+          label: 'Reale (Netto Costi)',
+          data: netData,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.15)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: '#94a3b8', font: { size: 10, weight: '600' } }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: { color: '#64748b', font: { size: 9 } }
+        },
+        y: {
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: {
+            color: '#64748b',
+            font: { size: 9 },
+            callback: value => '€' + (value / 1000).toFixed(0) + 'k'
+          }
+        }
+      }
+    }
+  });
+}
+
+// Attach event listeners
+document.querySelectorAll('input').forEach(i => i.addEventListener('input', calculate));
+
+// Initial Render
+renderEtfRows();
+</script>
+</body>
+</html>
