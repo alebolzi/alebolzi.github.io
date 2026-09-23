@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CHRONOSPACE ARCHITECTURE :: INTERIOR</title>
+    <style>
+        :root {
+            --void-core: #050507;
+            --void-deep: #08080D;
+            --void-edge: #0E0E16;
+            --radiance-low: #1A2A3A;
+            --radiance-mid: #00FFFF;
+            --radiance-high: #FFFFFF;
+            --meta-warning: #FF003C;
+            --meta-glow: #9D00FF;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: auto;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--void-core);
+            color: var(--radiance-high);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #app {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!reduceMotion) {
+            // Range di zoom esteso per partire da un puntino lontanissimo
+            const MAX_Z = 200.0; 
+            const state = {
+                mouse3D: new THREE.Vector3(0, 0, 0),
+                cameraTargetZ: MAX_Z, // Inizia microscopico
+                cameraZ: MAX_Z,
+                isMobile: window.innerWidth < 768,
+                scrollMomentum: 0,
+                cameraVelocityZ: 0,
+            };
+
+            const scene = new THREE.Scene();
+            // Nebbia molto tenue per poter scorgere il puntino in lontananza
+            scene.fog = new THREE.FogExp2(0x050507, 0.005); 
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            document.getElementById('app').appendChild(renderer.domElement);
+
+            const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
+            camera.position.set(0, 0, MAX_Z);
+
+            const glslNoise = `
+                vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+                vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+                float snoise(vec3 v) {
+                    const vec2 C = vec2(1.0/6.0, 1.0/3.0); const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                    vec3 i  = floor(v + dot(v, C.yyy)); vec3 x0 = v - i + dot(i, C.xxx);
+                    vec3 g = step(x0.yzx, x0.xyz); vec3 l = 1.0 - g;
+                    vec3 i1 = min(g.xyz, l.zxy); vec3 i2 = max(g.xyz, l.zxy);
+                    vec3 x1 = x0 - i1 + C.xxx; vec3 x2 = x0 - i2 + C.yyy; vec3 x3 = x0 - D.yyy;
+                    i = mod289(i);
+                    vec4 p = permute( permute( permute(
+                             i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                           + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                           + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+                    float n_ = 0.142857142857; vec3 ns = n_ * D.wyz - D.xzx;
+                    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                    vec4 x_ = floor(j * ns.z); vec4 y_ = floor(j - 7.0 * x_);
+                    vec4 x = x_ *ns.x + ns.yyyy; vec4 y = y_ *ns.x + ns.yyyy;
+                    vec4 h = 1.0 - abs(x) - abs(y);
+                    vec4 b0 = vec4( x.xy, y.xy ); vec4 b1 = vec4( x.zw, y.zw );
+                    vec4 s0 = floor(b0)*2.0 + 1.0; vec4 s1 = floor(b1)*2.0 + 1.0; vec4 sh = -step(h, vec4(0.0));
+                    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ; vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+                    vec3 p0 = vec3(a0.xy, h.x); vec3 p1 = vec3(a0.zw, h.y); vec3 p2 = vec3(a1.xy, h.z); vec3 p3 = vec3(a1.zw, h.w);
+                    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+                    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+                    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0); m = m * m;
+                    return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
+                }
+            `;
+
+            // 1. VOLUMETRIC VOID
+            const voidMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 }, uColorFog: { value: new THREE.Color(0x050507) },
+                    uMouse3D: { value: new THREE.Vector3() }
+                },
+                vertexShader: `varying vec3 vWorldPos; void main() { vec4 wp = modelMatrix * vec4(position, 1.0); vWorldPos = wp.xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `uniform float uTime; uniform vec3 uColorFog; uniform vec3 uMouse3D; varying vec3 vWorldPos; ${glslNoise}
+                    void main() {
+                        vec3 p = vWorldPos * 0.05; p.y -= uTime * 0.01; p.x += uMouse3D.x * 0.1; p.y += uMouse3D.y * 0.1;
+                        float density = snoise(p) * 0.5 + 0.5; density = pow(density, 3.0);
+                        vec3 col = mix(uColorFog, vec3(0.0, 0.05, 0.1), density * 0.5);
+                        col += vec3(0.02, 0.0, 0.05) * (1.0 - min(length(vWorldPos) * 0.1, 1.0));
+                        gl_FragColor = vec4(col, 1.0);
+                    }`,
+                side: THREE.BackSide, depthWrite: false
+            });
+            const voidMesh = new THREE.Mesh(new THREE.SphereGeometry(80, 32, 32), voidMaterial);
+            voidMesh.frustumCulled = false; scene.add(voidMesh);
+
+            // 2. THE MONOLITH (Outer Shell)
+            const monolithMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 }, uMouse3D: { value: new THREE.Vector3() },
+                    uMorphFactor: { value: 0.2 }, uCameraZ: { value: 0 }, uOpacity: { value: 0.8 }
+                },
+                vertexShader: `uniform float uTime; uniform vec3 uMouse3D; uniform float uMorphFactor; varying vec3 vNormal; varying vec3 vWorldPos; varying float vDistort; varying float vMouseGlow; ${glslNoise}
+                    void main() {
+                        vec3 pos = position;
+                        vec3 mouseInfluence = uMouse3D - (modelMatrix * vec4(pos, 1.0)).xyz;
+                        float dist = length(mouseInfluence);
+                        float mouseForce = smoothstep(2.5, 0.0, dist) * 2.0; 
+                        vMouseGlow = mouseForce;
+                        float noiseTime = uTime * 0.2;
+                        float n1 = snoise(pos * 1.5 + vec3(noiseTime)) * 0.3 * uMorphFactor;
+                        float n2 = snoise(pos * 4.0 + vec3(noiseTime * 2.0)) * 0.15 * uMorphFactor;
+                        float distort = n1 + n2 + mouseForce * 1.5; 
+                        pos += normal * distort;
+                        vec4 wp = modelMatrix * vec4(pos, 1.0);
+                        vWorldPos = wp.xyz; vNormal = normalize(normalMatrix * normal); vDistort = distort;
+                        gl_Position = projectionMatrix * viewMatrix * wp;
+                    }`,
+                fragmentShader: `uniform float uTime; uniform float uCameraZ; uniform float uOpacity; varying vec3 vNormal; varying vec3 vWorldPos; varying float vDistort; varying float vMouseGlow;
+                    void main() {
+                        vec3 viewDir = normalize(cameraPosition - vWorldPos);
+                        float fresnel = pow(1.0 - abs(dot(viewDir, vNormal)), 3.0);
+                        vec3 baseColor = mix(vec3(0.02, 0.02, 0.05), vec3(0.0, 0.2, 0.3), fresnel);
+                        vec3 glowColor = vec3(0.0, 0.8, 0.8);
+                        float energy = abs(vDistort) * 5.0;
+                        vec3 finalColor = mix(baseColor, glowColor, energy) * 0.6; 
+                        finalColor += glowColor * vMouseGlow * 2.0; 
+                        gl_FragColor = vec4(finalColor, uOpacity);
+                    }`,
+                transparent: true, side: THREE.DoubleSide, depthWrite: false
+            });
+            const monolith = new THREE.Mesh(new THREE.IcosahedronGeometry(2.5, 40), monolithMaterial);
+            scene.add(monolith);
+
+            // 3. INNER CORE CLUSTER
+            const coreGroup = new THREE.Group();
+            scene.add(coreGroup);
+
+            const core1Mat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending });
+            const core1 = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 1), core1Mat);
+            coreGroup.add(core1);
+
+            const core2Mat = new THREE.MeshBasicMaterial({ color: 0x9D00FF, wireframe: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+            const core2 = new THREE.Mesh(new THREE.IcosahedronGeometry(1.0, 0), core2Mat);
+            core2.rotation.x = Math.PI / 3;
+            coreGroup.add(core2);
+
+            const core3Mat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, wireframe: true, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending });
+            const core3 = new THREE.Mesh(new THREE.IcosahedronGeometry(2.0, 0), core3Mat);
+            coreGroup.add(core3);
+            
+            const core4Mat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending });
+            const core4 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5, 2), core4Mat);
+            coreGroup.add(core4);
+
+            // 4. PARTICLE SYSTEM
+            const particleCount = state.isMobile ? 5000 : 50000;
+            const positions = new Float32Array(particleCount * 3);
+            const velocities = new Float32Array(particleCount * 3);
+            const bounds = { x: 30, y: 30, z: 40 };
+
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * bounds.x * 2;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * bounds.y * 2;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * bounds.z * 2;
+                velocities[i * 3] = (Math.random() - 0.5) * 0.01;
+                velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.01;
+                velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.01;
+            }
+
+            const particleGeo = new THREE.BufferGeometry();
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.05, color: 0x00ffff, transparent: true, opacity: 0.6,
+                blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+            });
+
+            const particles = new THREE.Points(particleGeo, particleMat);
+            particles.frustumCulled = false;
+            scene.add(particles);
+
+            // 5. POST-PROCESSING
+            const composer = new EffectComposer(renderer);
+            composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            composer.setSize(window.innerWidth, window.innerHeight);
+
+            composer.addPass(new RenderPass(scene, camera));
+            composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.4, 0.1));
+
+            const CustomShaderPass = {
+                uniforms: {
+                    tDiffuse: { value: null }, uTime: { value: 0 },
+                    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+                },
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform vec2 uResolution; varying vec2 vUv;
+                    float random(vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123); }
+                    void main() {
+                        vec2 uv = vUv; vec2 dir = uv - 0.5; float dist = length(dir);
+                        float offset = 0.003 * dist;
+                        vec4 r = texture2D(tDiffuse, uv + dir * offset);
+                        vec4 g = texture2D(tDiffuse, uv);
+                        vec4 b = texture2D(tDiffuse, uv - dir * offset);
+                        vec4 color = vec4(r.r, g.g, b.b, 1.0);
+                        float vig = smoothstep(0.9, 0.2, dist);
+                        color.rgb *= vig;
+                        float n = random(uv + uTime) * 0.04;
+                        color.rgb += n - 0.02;
+                        gl_FragColor = color;
+                    }
+                `
+            };
+            const customPass = new ShaderPass(CustomShaderPass);
+            composer.addPass(customPass);
+            composer.addPass(new OutputPass());
+
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            const intersectPoint = new THREE.Vector3();
+
+            function updateMouse3D() {
+                raycaster.setFromCamera(mouse, camera);
+                const planeZ = 0; // Le sfere sono a Z=0
+                const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -planeZ); 
+                raycaster.ray.intersectPlane(plane, intersectPoint);
+                state.mouse3D.copy(intersectPoint);
+            }
+
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                updateMouse3D();
+            });
+
+            // ZOOM MOLTO LENTO E PROGRESSIVAMENTE RIDOTTO
+            window.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                // La forza dello zoom dipende dalla distanza attuale. Più ci si avvicina, meno zoom viene applicato.
+                let zoomForce = e.deltaY * 0.08 * (state.cameraTargetZ / MAX_Z); 
+                // Aggiungiamo un minimo vitale per non bloccarsi mai del tutto prima di 0
+                zoomForce += e.deltaY * 0.0001; 
+                state.cameraTargetZ -= zoomForce;
+            }, { passive: false });
+
+            let touchStartY = 0;
+            window.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, { passive: false });
+            window.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                let zoomForce = (touchStartY - e.touches[0].clientY) * 0.002 * (state.cameraTargetZ / MAX_Z);
+                zoomForce += (touchStartY - e.touches[0].clientY) * 0.00005;
+                state.cameraTargetZ -= zoomForce * (state.isMobile ? 1.5 : 1);
+                touchStartY = e.touches[0].clientY;
+                mouse.x = 0; mouse.y = 0;
+                updateMouse3D();
+            }, { passive: false });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                composer.setSize(window.innerWidth, window.innerHeight);
+                customPass.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+            });
+
+            const clock = new THREE.Clock();
+            let lerpColor = new THREE.Color(0x050507);
+            let currentMorph = 0.2;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                const delta = Math.min(clock.getDelta(), 0.1);
+                const elapsed = clock.getElapsedTime();
+
+                // 1. FISICA DELLA NAVIGAZIONE (Spring Critica ultra lenta)
+                // Drift automatico che rallenta vicino al centro
+                state.cameraTargetZ -= 0.0005 * (state.cameraTargetZ / MAX_Z); 
+                
+                // BLOCCO: Da 150 (lontanissimo) a 0.0 (centro esatto)
+                state.cameraTargetZ = Math.max(0.0, Math.min(MAX_Z, state.cameraTargetZ));
+                
+                // Spring Physics molto pesante
+                let cameraForce = (state.cameraTargetZ - state.cameraZ) * 0.02; // Molto lento
+                state.cameraVelocityZ += cameraForce;
+                state.cameraVelocityZ *= 0.9; // Smorzamento alto
+                state.cameraZ += state.cameraVelocityZ;
+
+                // Hard stop per evitare rimbalzi
+                if (state.cameraZ < 0.0) {
+                    state.cameraZ = 0.0;
+                    state.cameraVelocityZ = 0;
+                } else if (state.cameraZ > MAX_Z) {
+                    state.cameraZ = MAX_Z;
+                    state.cameraVelocityZ = 0;
+                }
+
+                // Camera guarda sempre il centro
+                camera.position.z = state.cameraZ;
+                camera.position.x = 0;
+                camera.position.y = 0;
+                camera.lookAt(0, 0, 0);
+
+                // 2. CALCOLO OPACITÀ GERARCHICA
+                let distZ = state.cameraZ;
+                
+                // Opacità basata sulla distanza. clamp assicura che sia visibile da lontano e sparisca al centro.
+                let monoOpacity = THREE.MathUtils.clamp(distZ / 2.5, 0.0, 0.8);
+                monolithMaterial.uniforms.uOpacity.value = THREE.MathUtils.damp(monolithMaterial.uniforms.uOpacity.value, monoOpacity, 0.1, delta);
+                
+                core1Mat.opacity = THREE.MathUtils.clamp(distZ / 1.5, 0.0, 1.0);
+                core2Mat.opacity = THREE.MathUtils.clamp(distZ / 1.0, 0.0, 0.8);
+                core3Mat.opacity = THREE.MathUtils.clamp(distZ / 2.0, 0.0, 0.5);
+                core4Mat.opacity = 1.0; // Sempre visibile
+
+                // 3. AGGIORNAMENTO ANIMAZIONI
+                coreGroup.rotation.y += delta * 0.05;
+                core1.rotation.y -= delta * 0.4;
+                core1.rotation.z += delta * 0.15;
+                core2.rotation.x += delta * 0.6;
+                core2.rotation.y -= delta * 0.2;
+                core3.rotation.z -= delta * 0.2;
+                core3.rotation.x += delta * 0.1;
+                core4.rotation.y += delta * 0.8;
+                core4.rotation.x -= delta * 0.5;
+
+                updateMouse3D();
+
+                // Shader Updates
+                voidMaterial.uniforms.uTime.value = elapsed;
+                voidMaterial.uniforms.uMouse3D.value.copy(state.mouse3D);
+
+                monolithMaterial.uniforms.uTime.value = elapsed;
+                monolithMaterial.uniforms.uMouse3D.value.copy(state.mouse3D);
+                monolithMaterial.uniforms.uCameraZ.value = camera.position.z;
+                
+                currentMorph = THREE.MathUtils.damp(currentMorph, distZ < 2.5 ? 1.0 : 0.4, 0.05, delta);
+                monolithMaterial.uniforms.uMorphFactor.value = currentMorph;
+
+                // 4. LOGICA PARTICELLARE
+                const positions = particleGeo.attributes.position.array;
+                const targetZ = camera.position.z;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    let ix = i * 3;
+                    let iy = i * 3 + 1;
+                    let iz = i * 3 + 2;
+                    
+                    let relZ = positions[iz] - targetZ;
+                    relZ = ((relZ % (bounds.z * 2)) + (bounds.z * 2)) % (bounds.z * 2);
+                    if (relZ > bounds.z) relZ -= bounds.z * 2;
+                    positions[iz] = targetZ + relZ;
+                    
+                    let dx = state.mouse3D.x - positions[ix];
+                    let dy = state.mouse3D.y - positions[iy];
+                    let dz = state.mouse3D.z - positions[iz];
+                    let distSq = dx*dx + dy*dy + dz*dz;
+                    
+                    if (distSq < 1.0 && distSq > 0.01) {
+                        positions[ix] = (Math.random() - 0.5) * bounds.x * 2;
+                        positions[iy] = (Math.random() - 0.5) * bounds.y * 2;
+                        positions[iz] = targetZ - 20 - Math.random() * 20;
+                    } else if (distSq < 64.0) {
+                        let dist = Math.sqrt(distSq);
+                        let force = (1.0 - dist / 8.0) * 0.08;
+                        positions[ix] += (dx/dist) * force;
+                        positions[iy] += (dy/dist) * force;
+                        positions[iz] += (dz/dist) * force;
+                    } else {
+                        positions[ix] += velocities[ix];
+                        positions[iy] += velocities[iy];
+                        positions[iz] += velocities[iz];
+                    }
+                }
+                particleGeo.attributes.position.needsUpdate = true;
+
+                // 5. POST-PROCESSING
+                customPass.uniforms.uTime.value = elapsed;
+
+                composer.render();
+            }
+
+            animate();
+        }
+    </script>
+</body>
+</html>
