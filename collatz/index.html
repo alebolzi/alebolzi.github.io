@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Does It Always Go Down? — Collatz Lab</title>
+<style>
+  :root {
+    --bg: #0a0b0e;
+    --bg-2: #0e1015;
+    --bg-3: #111318;
+    --fg: #e8e6df;
+    --fg-dim: #9c9a90;
+    --fg-mute: #5e5c54;
+    --accent: #d9a45b;
+    --accent-soft: #b88947;
+    --accent-glow: rgba(217, 164, 91, 0.4);
+    --line: rgba(255, 255, 255, 0.06);
+    --line-strong: rgba(255, 255, 255, 0.14);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(217, 164, 91, 0.07), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 80% 100%, rgba(80, 60, 40, 0.05), transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, var(--line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, black 30%, transparent 80%);
+  }
+
+  .frame {
+    position: relative;
+    z-index: 1;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 40px 24px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 56px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent-glow);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 72px;
+    animation: fadeUp 0.9s ease-out 0.05s both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(44px, 8.5vw, 104px);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    color: var(--fg);
+  }
+
+  .title em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  .subtitle {
+    margin: 24px auto 0;
+    max-width: 560px;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--fg-dim);
+  }
+
+  .subtitle code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
+    color: var(--accent);
+    background: rgba(217, 164, 91, 0.08);
+    padding: 1px 6px;
+    border-radius: 2px;
+    border: 1px solid rgba(217, 164, 91, 0.15);
+  }
+
+  .experiment {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: fadeUp 0.9s ease-out 0.18s both;
+    align-items: start;
+  }
+
+  .stat {
+    padding: 22px 26px;
+    background: rgba(0, 0, 0, 0.42);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    min-height: 84px;
+  }
+
+  .stat::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px; height: 14px;
+    background: var(--accent);
+    opacity: 0.6;
+  }
+
+  .stat-start { grid-column: 1 / -1; }
+  .stat-start::before { opacity: 1; height: 18px; }
+
+  .stat-label {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+  }
+
+  .stat-value {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 24px;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+    transition: color 0.4s ease;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .stat-value::-webkit-scrollbar { width: 6px; }
+  .stat-value::-webkit-scrollbar-track { background: transparent; }
+  .stat-value::-webkit-scrollbar-thumb { background: rgba(217,164,91,0.25); border-radius: 3px; }
+  .stat-value.flash { color: var(--accent); }
+
+  .stat-current .stat-label::after {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-left: 8px;
+    vertical-align: middle;
+    animation: pulse 1s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+
+  .stat-current.idle .stat-label::after {
+    animation: none;
+    opacity: 0.3;
+  }
+
+  .stat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .dice {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 4px;
+    color: var(--fg-mute);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    line-height: 0;
+    transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.1s;
+    flex-shrink: 0;
+  }
+
+  .dice:hover:not(:disabled) {
+    color: var(--accent);
+    border-color: rgba(217, 164, 91, 0.3);
+    background: rgba(217, 164, 91, 0.06);
+  }
+
+  .dice:active:not(:disabled) { transform: scale(0.92); }
+  .dice:disabled { opacity: 0.3; cursor: not-allowed; }
+  .dice-svg { display: block; }
+  .dice.rolling .dice-svg { animation: diceRoll 0.7s ease-out; }
+
+  @keyframes diceRoll {
+    0%   { transform: rotate(0deg) scale(1); }
+    25%  { transform: rotate(120deg) scale(1.22); }
+    50%  { transform: rotate(220deg) scale(1.05); }
+    75%  { transform: rotate(310deg) scale(1.15); }
+    100% { transform: rotate(380deg) scale(1); }
+  }
+
+  .stat-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font: inherit;
+    color: var(--fg);
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 24px;
+    font-variant-numeric: tabular-nums;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+    cursor: text;
+    caret-color: var(--accent);
+    transition: color 0.3s ease;
+    resize: none;
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    height: auto;
+    min-height: 1.2em;
+  }
+
+  .stat-input::-webkit-outer-spin-button,
+  .stat-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .stat-input::placeholder { color: var(--fg-mute); opacity: 1; }
+  .stat-input:focus { color: var(--accent); }
+  .stat-input:disabled { cursor: default; opacity: 0.85; }
+  .stat-input.shake { animation: shakeInput 0.42s; }
+
+  @keyframes shakeInput {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(2px); }
+  }
+
+  .canvas-wrap {
+    position: relative;
+    height: 440px;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.15)),
+      var(--bg-3);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: fadeUp 0.9s ease-out 0.28s both;
+  }
+
+  .canvas-wrap::before,
+  .canvas-wrap::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .canvas-wrap::before {
+    top: 8px; left: 8px;
+    border-top: 1px solid var(--line-strong);
+    border-left: 1px solid var(--line-strong);
+  }
+  .canvas-wrap::after {
+    bottom: 8px; right: 8px;
+    border-bottom: 1px solid var(--line-strong);
+    border-right: 1px solid var(--line-strong);
+  }
+
+  #trail {
+    width: 100%;
+    height: 100%;
+    display: block;
+    transition: opacity 0.22s ease;
+    cursor: crosshair;
+  }
+
+  .canvas-axis {
+    position: absolute;
+    bottom: 6px;
+    right: 12px;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--fg-mute);
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .tooltip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: rgba(10, 11, 14, 0.94);
+    border: 1px solid rgba(217, 164, 91, 0.4);
+    border-radius: 3px;
+    padding: 10px 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    pointer-events: none;
+    z-index: 10;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    max-width: 360px;
+    will-change: transform, opacity;
+  }
+
+  .tooltip.visible { opacity: 1; }
+
+  .tt-step {
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .tt-step .tt-total { color: var(--fg-mute); margin-left: 4px; }
+
+  .tt-formula {
+    color: var(--fg);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    max-width: 320px;
+    overflow-wrap: anywhere;
+  }
+
+  .tt-formula .op { color: var(--accent); margin: 0 4px; }
+  .tt-formula .eq { color: var(--fg-mute); margin: 0 6px; }
+  .tt-formula .res { color: var(--accent); }
+
+  .tt-meta {
+    color: var(--fg-mute);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: block;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 0 4px;
+    animation: fadeUp 0.9s ease-out 0.4s both;
+  }
+
+  .btn {
+    position: relative;
+    padding: 15px 42px;
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, transform 0.1s ease;
+  }
+
+  .btn:hover:not(:disabled) {
+    background: var(--accent);
+    color: #0a0b0e;
+    box-shadow: 0 0 36px rgba(217, 164, 91, 0.32), inset 0 0 0 1px rgba(255,255,255,0.1);
+  }
+
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .hint {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--fg-mute);
+    text-transform: lowercase;
+    height: 14px;
+    transition: color 0.3s ease;
+    text-align: center;
+  }
+
+  .hint.active { color: var(--accent); }
+  .hint.idle::before { content: '— '; }
+  .hint.idle::after { content: ' —'; }
+
+  footer {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--fg-mute);
+    line-height: 1.6;
+  }
+
+  footer .em { color: var(--fg-dim); }
+
+  @media (max-width: 720px) {
+    .frame { padding: 20px 18px; }
+    header { margin-bottom: 40px; padding-bottom: 18px; }
+    .hero { margin-bottom: 44px; }
+    .stats { grid-template-columns: 1fr; }
+    .stat { padding: 18px 20px; }
+    .stat-value, .stat-input { font-size: 19px; }
+    .canvas-wrap { height: 340px; }
+    .btn { padding: 13px 32px; letter-spacing: 0.18em; }
+    .subtitle { font-size: 13.5px; }
+    .tt-formula { font-size: 12px; }
+    .hint { font-size: 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <header>
+    <div class="brand">
+      <span class="dot"></span>
+      <span>Collatz Lab</span>
+    </div>
+    <div class="meta">
+      <span class="badge" id="experimentId">EXP —</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1 class="title">Does It Always <em>Go Down</em>?</h1>
+      <p class="subtitle">
+        Pick any positive integer. If it's even, halve it. If it's odd, triple it and add one.
+        The conjecture says every path eventually reaches <code>1</code>. No counter-example has been found.
+      </p>
+    </section>
+
+    <section class="experiment">
+      <div class="stats">
+        <div class="stat stat-start">
+          <div class="stat-head">
+            <span class="stat-label">Starting Number</span>
+            <button class="dice" id="diceBtn" type="button" aria-label="Roll a random starting number" title="Roll random">
+              <svg class="dice-svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <rect x="2.5" y="2.5" width="19" height="19" rx="4" ry="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
+                <g class="dice-pips" fill="currentColor"></g>
+              </svg>
+            </button>
+          </div>
+          <textarea class="stat-value stat-input" id="startInput" rows="1" placeholder="—" inputmode="numeric" aria-label="Starting number — press Enter to run" autocomplete="off" spellcheck="false" wrap="soft"></textarea>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Steps</div>
+          <div class="stat-value" id="stepsValue">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Peak</div>
+          <div class="stat-value" id="peakValue">—</div>
+        </div>
+        <div class="stat stat-current idle" id="currentStat">
+          <div class="stat-label">Current</div>
+          <div class="stat-value" id="currentValue">—</div>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="trail"></canvas>
+        <span class="canvas-axis">y = log₁₀(n) · x = step</span>
+
+        <div class="tooltip" id="tooltip" aria-hidden="true">
+          <span class="tt-step">Step <span id="ttStep">0</span><span class="tt-total" id="ttTotal"></span></span>
+          <div class="tt-formula" id="ttFormula">starting number</div>
+          <span class="tt-meta" id="ttMeta">no operation applied</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="tryAnother" class="btn" type="button">Try another</button>
+        <div class="hint idle" id="hint">awaiting input · type any number of digits</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span class="em">3n + 1 conjecture</span> · Lothar Collatz, 1937 · Verified for all n &lt; 2⁶⁸ · Still unproven in general.
+  </footer>
+
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ===== DOM refs ===== */
+  const canvas      = document.getElementById('trail');
+  const ctx         = canvas.getContext('2d');
+  const startEl     = document.getElementById('startInput');
+  const stepsEl     = document.getElementById('stepsValue');
+  const peakEl      = document.getElementById('peakValue');
+  const currentEl   = document.getElementById('currentValue');
+  const currentStat = document.getElementById('currentStat');
+  const btn         = document.getElementById('tryAnother');
+  const hintEl      = document.getElementById('hint');
+  const expIdEl     = document.getElementById('experimentId');
+  const tooltip     = document.getElementById('tooltip');
+  const ttStep      = document.getElementById('ttStep');
+  const ttTotal     = document.getElementById('ttTotal');
+  const ttFormula   = document.getElementById('ttFormula');
+  const ttMeta      = document.getElementById('ttMeta');
+  const diceBtn     = document.getElementById('diceBtn');
+  const dicePips    = document.querySelector('.dice-pips');
+
+  /* ===== Config ===== */
+  const ACCENT_RGB = '217, 164, 91';
+  const PADDING    = 30;
+  const MAX_STEPS  = 100000;
+  const MAX_SPF    = 5000;
+  const SPF_GROWTH = 1.08;
+  const SPF_DECAY  = 0.6;
+  const FRAME_BUDGET_MS = 10;
+
+  /* ===== Dice faces ===== */
+  const DICE_FACES = [
+    [{x:12,y:12}],
+    [{x:8,y:8},{x:16,y:16}],
+    [{x:7,y:7},{x:12,y:12},{x:17,y:17}],
+    [{x:8,y:8},{x:16,y:8},{x:8,y:16},{x:16,y:16}],
+    [{x:8,y:8},{x:16,y:8},{x:12,y:12},{x:8,y:16},{x:16,y:16}],
+    [{x:8,y:7},{x:16,y:7},{x:8,y:12},{x:16,y:12},{x:8,y:17},{x:16,y:17}]
+  ];
+
+  function setDiceFace(n) {
+    if (!dicePips) return;
+    const face = DICE_FACES[((n % 6) + 6) % 6] || DICE_FACES[0];
+    dicePips.innerHTML = face.map(p =>
+      `<circle cx="${p.x}" cy="${p.y}" r="1.5"/>`
+    ).join('');
+  }
+
+  /* ===== State ===== */
+  let dpr = window.devicePixelRatio || 1;
+  let W = 0, H = 0;
+  let coords = [];
+  let animationId = null;
+  let isAnimating = false;
+  let isRolling = false;
+  let experimentCount = 0;
+  let hoverIdx = -1;
+
+  // Mouse tracking — persists between frames so we can update hover during animation
+  let lastMouseX = -1;
+  let lastMouseY = -1;
+  let mouseInCanvas = false;
+  let lastTooltipIdx = -2;
+  let tooltipW = 200;
+  let tooltipH = 80;
+
+  const collatz = {
+    current: 0n,
+    sequence: [],
+    logs: [],
+    peak: 0n,
+    maxLog: 0.001,
+    steps: 0,
+    done: false
+  };
+
+  /* ===== Textarea auto-resize ===== */
+  function autoResize() {
+    if (!startEl) return;
+    startEl.style.height = 'auto';
+    startEl.style.height = startEl.scrollHeight + 'px';
+  }
+
+  /* ===== Canvas sizing ===== */
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    W = Math.max(1, rect.width);
+    H = Math.max(1, rect.height);
+    canvas.width  = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    if (collatz.sequence.length > 0) {
+      updateCoords();
+      draw();
+    } else {
+      drawEmptyState();
+    }
+    autoResize();
+  }
+
+  /* ===== Random starting integer ===== */
+  function randomStart() {
+    const numDigits = 4 + Math.floor(Math.random() * 6);
+    let s = (1 + Math.floor(Math.random() * 9)).toString();
+    for (let i = 1; i < numDigits; i++) {
+      s += Math.floor(Math.random() * 10).toString();
+    }
+    return BigInt(s);
+  }
+
+  /* ===== log10 for BigInt ===== */
+  function bigToLog(n) {
+    if (n < 1n) return 0;
+    const s = n.toString();
+    if (s.length <= 15) return Math.log10(Number(s) + 1);
+    const k = s.length - 1;
+    const mantStr = s.slice(0, 15);
+    const mantissa = Number(mantStr) / Math.pow(10, mantStr.length - 1);
+    return Math.log10(mantissa) + k;
+  }
+
+  /* ===== Collatz state management ===== */
+  function initCollatz(start) {
+    collatz.current = start;
+    collatz.sequence = [start];
+    const startLog = bigToLog(start);
+    collatz.logs = [startLog];
+    collatz.peak = start;
+    collatz.maxLog = Math.max(0.001, startLog);
+    collatz.steps = 0;
+    collatz.done = (start === 1n);
+    coords = [];
+  }
+
+  function stepCollatz() {
+    if (collatz.done) return false;
+    if (collatz.current === 1n) {
+      collatz.done = true;
+      return false;
+    }
+    if (collatz.steps >= MAX_STEPS) {
+      collatz.done = true;
+      return false;
+    }
+    const next = (collatz.current % 2n === 0n)
+      ? collatz.current / 2n
+      : collatz.current * 3n + 1n;
+    collatz.current = next;
+    collatz.sequence.push(next);
+    const log = bigToLog(next);
+    collatz.logs.push(log);
+    if (next > collatz.peak) collatz.peak = next;
+    if (log > collatz.maxLog) collatz.maxLog = log;
+    collatz.steps++;
+    if (next === 1n) {
+      collatz.done = true;
+      return false;
+    }
+    return true;
+  }
+
+  function updateCoords() {
+    const N = collatz.sequence.length;
+    if (N === 0) { coords.length = 0; return; }
+
+    const drawW = Math.max(1, W - 2 * PADDING);
+    const drawH = Math.max(1, H - 2 * PADDING);
+    const denom = N > 1 ? N - 1 : 1;
+    const maxLogVal = collatz.maxLog;
+
+    if (coords.length < N) {
+      for (let i = coords.length; i < N; i++) {
+        coords[i] = { x: 0, y: 0, val: 0n };
+      }
+    } else if (coords.length > N) {
+      coords.length = N;
+    }
+
+    for (let i = 0; i < N; i++) {
+      const c = coords[i];
+      c.x = PADDING + (i / denom) * drawW;
+      c.y = H - PADDING - (collatz.logs[i] / maxLogVal) * drawH;
+      c.val = collatz.sequence[i];
+    }
+  }
+
+  /* ===== Grid + baseline ===== */
+  function drawGrid() {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+    ctx.lineWidth = 1;
+    const gridLines = 6;
+    const drawH = H - 2 * PADDING;
+    for (let i = 0; i <= gridLines; i++) {
+      const y = PADDING + (drawH / gridLines) * i;
+      ctx.beginPath();
+      ctx.moveTo(PADDING, y);
+      ctx.lineTo(W - PADDING, y);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(PADDING, H - PADDING);
+    ctx.lineTo(W - PADDING, H - PADDING);
+    ctx.stroke();
+  }
+
+  /* ===== Tracer ===== */
+  function drawTracer(p) {
+    if (!p) return;
+    const glowR = 38;
+    const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
+    glow.addColorStop(0, `rgba(${ACCENT_RGB}, 0.5)`);
+    glow.addColorStop(0.45, `rgba(${ACCENT_RGB}, 0.15)`);
+    glow.addColorStop(1, `rgba(${ACCENT_RGB}, 0)`);
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = `rgba(${ACCENT_RGB}, 0.18)`;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x, H - PADDING);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = `rgba(${ACCENT_RGB}, 0.7)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = `rgb(${ACCENT_RGB})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* ===== Main render ===== */
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    drawGrid();
+
+    const N = coords.length;
+
+    if (N === 0) {
+      if (collatz.sequence.length === 0) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+        ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('awaiting input', W / 2, H / 2);
+      }
+      return;
+    }
+
+    if (N === 1) {
+      drawTracer(coords[0]);
+      return;
+    }
+
+    // Fill area
+    const grad = ctx.createLinearGradient(0, PADDING, 0, H - PADDING);
+    grad.addColorStop(0, `rgba(${ACCENT_RGB}, 0.18)`);
+    grad.addColorStop(1, `rgba(${ACCENT_RGB}, 0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(coords[0].x, H - PADDING);
+    for (let i = 0; i < N; i++) {
+      ctx.lineTo(coords[i].x, coords[i].y);
+    }
+    ctx.lineTo(coords[N - 1].x, H - PADDING);
+    ctx.closePath();
+    ctx.fill();
+
+    // Main path
+    ctx.strokeStyle = `rgb(${ACCENT_RGB})`;
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(coords[0].x, coords[0].y);
+    for (let i = 1; i < N; i++) {
+      ctx.lineTo(coords[i].x, coords[i].y);
+    }
+    ctx.stroke();
+
+    // Hover highlight — works during animation too
+    if (hoverIdx >= 0 && hoverIdx < N && hoverIdx !== N - 1) {
+      const hp = coords[hoverIdx];
+      ctx.strokeStyle = `rgba(${ACCENT_RGB}, 0.25)`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(hp.x, PADDING);
+      ctx.lineTo(hp.x, H - PADDING);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = `rgba(${ACCENT_RGB}, 0.85)`;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(hp.x, hp.y, 9, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = `rgba(${ACCENT_RGB}, 0.7)`;
+      ctx.beginPath();
+      ctx.arc(hp.x, hp.y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Tracer
+    drawTracer(coords[N - 1]);
+  }
+
+  function drawEmptyState() {
+    ctx.clearRect(0, 0, W, H);
+    drawGrid();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+    ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('awaiting input', W / 2, H / 2);
+  }
+
+  /* ===== Number formatting ===== */
+  function formatNumber(n) {
+    const s = n.toString();
+    let out = '';
+    for (let i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 === 0) out += ',';
+      out += s[i];
+    }
+    return out;
+  }
+
+  function flash(el) {
+    el.classList.add('flash');
+    clearTimeout(el._flashT);
+    el._flashT = setTimeout(() => el.classList.remove('flash'), 220);
+  }
+
+  /* ===== Tooltip =====
+     Optimized: innerHTML is only rebuilt when idx changes.
+     Position (CSS transform) is updated every call — cheap. */
+  function updateTooltip(idx, mx, my) {
+    const seq = collatz.sequence;
+    if (!seq || idx < 0 || idx >= seq.length) {
+      hideTooltip();
+      return;
+    }
+
+    // Step total changes during animation — update text but no layout-heavy innerHTML
+    const totalText = ' / ' + (seq.length - 1);
+    if (ttTotal.textContent !== totalText) {
+      ttTotal.textContent = totalText;
+    }
+
+    // Formula + step number + meta — only when idx changes (avoids reflow every frame)
+    if (idx !== lastTooltipIdx) {
+      const val = seq[idx];
+      ttStep.textContent = idx;
+
+      let formulaHTML, metaText;
+      if (idx === 0) {
+        formulaHTML = `<span class="res">${formatNumber(val)}</span>`;
+        metaText = 'starting number · no operation';
+      } else {
+        const prev = seq[idx - 1];
+        const prevStr = formatNumber(prev);
+        const valStr  = formatNumber(val);
+        if (prev % 2n === 0n) {
+          formulaHTML = `${prevStr}<span class="op">÷ 2</span><span class="eq">=</span><span class="res">${valStr}</span>`;
+          metaText = 'even · halved';
+        } else {
+          formulaHTML = `<span class="op">3 ×</span>${prevStr}<span class="op">+ 1</span><span class="eq">=</span><span class="res">${valStr}</span>`;
+          metaText = 'odd · tripled and added 1';
+        }
+      }
+
+      ttFormula.innerHTML = formulaHTML;
+      ttMeta.textContent = metaText;
+      lastTooltipIdx = idx;
+
+      // Re-measure tooltip size after content change
+      tooltipW = tooltip.offsetWidth  || 200;
+      tooltipH = tooltip.offsetHeight || 80;
+    }
+
+    // Position — always update (cheap transform, follows mouse not the moving point)
+    const margin = 16;
+    let left = mx + margin;
+    let top  = my + margin;
+    if (left + tooltipW > W - 8) left = mx - tooltipW - margin;
+    if (top  + tooltipH > H - 8) top  = my - tooltipH - margin;
+    left = Math.max(8, left);
+    top  = Math.max(8, top);
+
+    tooltip.style.transform = `translate(${left}px, ${top}px)`;
+    tooltip.classList.add('visible');
+    tooltip.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideTooltip() {
+    tooltip.classList.remove('visible');
+    tooltip.setAttribute('aria-hidden', 'true');
+    lastTooltipIdx = -2;
+  }
+
+  /* ===== Hover index computation =====
+     Maps mouse X to a sequence index. Called every animation frame
+     because the mapping shifts as the sequence grows (coords compress). */
+  function updateHoverIndex() {
+    if (!mouseInCanvas || isRolling || collatz.sequence.length < 2) {
+      if (hoverIdx !== -1) hoverIdx = -1;
+      return;
+    }
+
+    const mx = lastMouseX;
+    const my = lastMouseY;
+    const drawW = W - 2 * PADDING;
+
+    if (mx < PADDING - 4 || mx > W - PADDING + 4 || my < 0 || my > H) {
+      if (hoverIdx !== -1) hoverIdx = -1;
+      return;
+    }
+
+    let t = (mx - PADDING) / drawW;
+    t = Math.max(0, Math.min(1, t));
+    const idx = Math.round(t * (collatz.sequence.length - 1));
+    hoverIdx = idx;
+  }
+
+  function updateTooltipFromHover() {
+    if (hoverIdx < 0 || !mouseInCanvas) {
+      hideTooltip();
+      return;
+    }
+    updateTooltip(hoverIdx, lastMouseX, lastMouseY);
+  }
+
+  /* ===== Animation loop ===== */
+  function animate() {
+    if (collatz.done) return;
+    isAnimating = true;
+    btn.disabled = true;
+    diceBtn.disabled = true;
+    startEl.disabled = true;
+    currentStat.classList.remove('idle');
+    hintEl.textContent = 'computing...';
+    hintEl.classList.add('active');
+    hintEl.classList.remove('idle');
+
+    let stepsPerFrame = 1;
+    let lastPeak = collatz.peak;
+    let lastSteps = -1;
+    let lastCurrent = -1n;
+
+    function frame() {
+      const frameStart = performance.now();
+
+      // Compute steps
+      const target = Math.floor(stepsPerFrame);
+      for (let i = 0; i < target; i++) {
+        if (!stepCollatz()) break;
+      }
+
+      // Recompute coords (X compresses, Y rescales on new peaks)
+      updateCoords();
+
+      // Update hover index — the point under the cursor may have changed
+      // because the coords shifted, even though the mouse didn't move
+      updateHoverIndex();
+
+      // Draw (includes hover highlight if hoverIdx is set)
+      draw();
+
+      // Update tooltip text + position (follows mouse, not the moving point)
+      updateTooltipFromHover();
+
+      // Update stats
+      if (collatz.current !== lastCurrent) {
+        currentEl.textContent = formatNumber(collatz.current);
+        lastCurrent = collatz.current;
+      }
+      if (collatz.steps !== lastSteps) {
+        stepsEl.textContent = collatz.steps;
+        lastSteps = collatz.steps;
+      }
+      if (collatz.peak !== lastPeak) {
+        peakEl.textContent = formatNumber(collatz.peak);
+        flash(peakEl);
+        lastPeak = collatz.peak;
+      }
+
+      const computeMs = performance.now() - frameStart;
+
+      if (collatz.done) {
+        currentEl.textContent = formatNumber(collatz.current);
+        stepsEl.textContent = collatz.steps;
+        peakEl.textContent = formatNumber(collatz.peak);
+
+        isAnimating = false;
+        btn.disabled = false;
+        diceBtn.disabled = false;
+        startEl.disabled = false;
+        currentStat.classList.add('idle');
+
+        const reachedOne = collatz.current === 1n;
+        hintEl.textContent = reachedOne
+          ? 'reached 1 · hover · edit · roll'
+          : 'safety limit · try a smaller number';
+        hintEl.classList.remove('active');
+        hintEl.classList.add('idle');
+      } else {
+        if (computeMs < FRAME_BUDGET_MS) {
+          stepsPerFrame = Math.min(MAX_SPF, stepsPerFrame * SPF_GROWTH);
+        } else if (computeMs > 16) {
+          stepsPerFrame = Math.max(1, stepsPerFrame * SPF_DECAY);
+        }
+        animationId = requestAnimationFrame(frame);
+      }
+    }
+
+    animationId = requestAnimationFrame(frame);
+  }
+
+  /* ===== Start experiment ===== */
+  function startExperiment(startNum) {
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    isAnimating = false;
+    hoverIdx = -1;
+    hideTooltip();
+
+    btn.disabled = true;
+    diceBtn.disabled = true;
+    startEl.disabled = true;
+    canvas.style.opacity = '0';
+
+    experimentCount++;
+    const startNumVal = startNum !== undefined ? startNum : randomStart();
+    initCollatz(startNumVal);
+
+    expIdEl.textContent = 'EXP ' + experimentCount.toString().padStart(2, '0');
+    startEl.value = formatNumber(startNumVal);
+    autoResize();
+    stepsEl.textContent = '0';
+    peakEl.textContent = formatNumber(startNumVal);
+    currentEl.textContent = formatNumber(startNumVal);
+    hintEl.textContent = 'ready';
+    hintEl.classList.remove('idle');
+    currentStat.classList.remove('idle');
+    flash(startEl);
+    flash(peakEl);
+    flash(currentEl);
+
+    setTimeout(() => {
+      updateCoords();
+      draw();
+      canvas.style.opacity = '1';
+      setTimeout(animate, 200);
+    }, 220);
+  }
+
+  /* ===== Dice roll ===== */
+  function rollDiceAndStart() {
+    if (isRolling) return;
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+      isAnimating = false;
+    }
+    isRolling = true;
+
+    if (document.activeElement === startEl) startEl.blur();
+
+    diceBtn.classList.add('rolling');
+    diceBtn.disabled = true;
+    btn.disabled = true;
+    startEl.disabled = true;
+    hintEl.textContent = 'rolling...';
+    hintEl.classList.add('active');
+    hintEl.classList.remove('idle');
+
+    const totalDuration = 700;
+    const tickInterval = 70;
+    const startTime = performance.now();
+
+    function tick() {
+      const elapsed = performance.now() - startTime;
+      setDiceFace(Math.floor(Math.random() * 6));
+
+      const digits = 4 + Math.floor(Math.random() * 6);
+      let s = '';
+      for (let i = 0; i < digits; i++) s += Math.floor(Math.random() * 10);
+      startEl.value = s;
+      autoResize();
+
+      if (elapsed < totalDuration) {
+        setTimeout(tick, tickInterval);
+      } else {
+        setDiceFace(Math.floor(Math.random() * 6));
+        diceBtn.classList.remove('rolling');
+        isRolling = false;
+        startExperiment(randomStart());
+      }
+    }
+    tick();
+  }
+
+  /* ===== Manual input ===== */
+  function validateAndStart() {
+    const raw = startEl.value.replace(/[^0-9]/g, '');
+    if (!raw || raw === '0') {
+      shakeInput();
+      return false;
+    }
+    let n;
+    try { n = BigInt(raw); } catch { shakeInput(); return false; }
+    startEl.blur();
+    startExperiment(n);
+    return true;
+  }
+
+  function shakeInput() {
+    startEl.classList.add('shake');
+    setTimeout(() => startEl.classList.remove('shake'), 440);
+  }
+
+  startEl.addEventListener('focus', () => {
+    startEl.value = startEl.value.replace(/,/g, '');
+    autoResize();
+    requestAnimationFrame(() => {
+      try {
+        if (startEl.value.length < 30) startEl.select();
+        else {
+          const len = startEl.value.length;
+          startEl.setSelectionRange(len, len);
+        }
+      } catch {}
+    });
+  });
+
+  startEl.addEventListener('blur', () => {
+    const raw = startEl.value.replace(/[^0-9]/g, '');
+    if (raw && raw !== '0') {
+      try {
+        const n = BigInt(raw);
+        startEl.value = formatNumber(n);
+        autoResize();
+        return;
+      } catch {}
+    }
+    if (collatz.sequence.length > 0) startEl.value = formatNumber(collatz.sequence[0]);
+    else startEl.value = '';
+    autoResize();
+  });
+
+  startEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); validateAndStart(); }
+    else if (e.key === 'Escape') {
+      e.preventDefault();
+      if (collatz.sequence.length > 0) startEl.value = formatNumber(collatz.sequence[0]);
+      else startEl.value = '';
+      autoResize();
+      startEl.blur();
+    }
+  });
+
+  startEl.addEventListener('input', () => {
+    const raw = startEl.value;
+    const cleaned = raw.replace(/[^0-9]/g, '');
+    if (raw !== cleaned) {
+      const pos = startEl.selectionStart || 0;
+      const diff = raw.length - cleaned.length;
+      startEl.value = cleaned;
+      try {
+        const newPos = Math.max(0, pos - diff);
+        startEl.setSelectionRange(newPos, newPos);
+      } catch {}
+    }
+    autoResize();
+  });
+
+  /* ===== Wire up ===== */
+  diceBtn.addEventListener('click', rollDiceAndStart);
+
+  btn.addEventListener('click', () => {
+    if (isRolling) return;
+    if (document.activeElement === startEl) startEl.blur();
+    startExperiment(randomStart());
+  });
+
+  /* ===== Mouse interaction — works during animation ===== */
+  function handleMouseMove(e) {
+    if (isRolling) return;
+    const rect = canvas.getBoundingClientRect();
+    lastMouseX = e.clientX - rect.left;
+    lastMouseY = e.clientY - rect.top;
+    mouseInCanvas = true;
+
+    updateHoverIndex();
+    updateTooltipFromHover();
+    // Don't call draw() during animation — the animation loop handles it.
+    // Only redraw immediately when idle, for instant hover feedback.
+    if (!isAnimating) draw();
+  }
+
+  function handleMouseEnter(e) {
+    if (isRolling) return;
+    const rect = canvas.getBoundingClientRect();
+    lastMouseX = e.clientX - rect.left;
+    lastMouseY = e.clientY - rect.top;
+    mouseInCanvas = true;
+    updateHoverIndex();
+    updateTooltipFromHover();
+    if (!isAnimating) draw();
+  }
+
+  function handleMouseLeave() {
+    mouseInCanvas = false;
+    hoverIdx = -1;
+    hideTooltip();
+    if (!isAnimating && collatz.sequence.length > 0) draw();
+  }
+
+  canvas.addEventListener('mousemove', handleMouseMove);
+  canvas.addEventListener('mouseenter', handleMouseEnter);
+  canvas.addEventListener('mouseleave', handleMouseLeave);
+
+  let resizeRAF = null;
+  window.addEventListener('resize', () => {
+    dpr = window.devicePixelRatio || 1;
+    if (resizeRAF) cancelAnimationFrame(resizeRAF);
+    resizeRAF = requestAnimationFrame(() => {
+      resize();
+      resizeRAF = null;
+    });
+  });
+
+  /* ===== Init ===== */
+  setDiceFace(4);
+  requestAnimationFrame(() => {
+    resize();
+    drawEmptyState();
+    autoResize();
+    setTimeout(() => { startExperiment(randomStart()); }, 700);
+  });
+})();
+</script>
+</body>
+</html>
