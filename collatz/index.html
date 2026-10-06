@@ -363,7 +363,11 @@
     height: 100%;
     display: block;
     transition: opacity 0.22s ease;
-    cursor: crosshair;
+    cursor: grab;
+  }
+
+  #trail:active {
+    cursor: grabbing;
   }
 
   .canvas-axis {
@@ -572,7 +576,7 @@
 
       <div class="canvas-wrap">
         <canvas id="trail"></canvas>
-        <span class="canvas-axis">y = log₁₀(n) · x = step · scroll to zoom</span>
+        <span class="canvas-axis">y = log₁₀(n) · x = step · scroll to zoom · drag to pan</span>
 
         <div class="tooltip" id="tooltip" aria-hidden="true">
           <span class="tt-step">Step <span id="ttStep">0</span><span class="tt-total" id="ttTotal"></span></span>
@@ -653,20 +657,26 @@
   let experimentCount = 0;
   let hoverIdx = -1;
 
-  // Zoom State
+  // Zoom & Pan State
   let visibleStart = 0;
   let visibleEnd = 1;
   let isAutoTracking = true;
   let visibleMaxLog = 0.001;
   let visibleMinLog = 0;
 
-  // Mouse tracking — persists between frames so we can update hover during animation
+  // Mouse tracking
   let lastMouseX = -1;
   let lastMouseY = -1;
   let mouseInCanvas = false;
   let lastTooltipIdx = -2;
   let tooltipW = 200;
   let tooltipH = 80;
+
+  // Dragging state
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartVisibleStart = 0;
+  let dragStartVisibleEnd = 0;
 
   const collatz = {
     current: 0n,
@@ -676,7 +686,7 @@
     maxLog: 0.001,
     steps: 0,
     done: false,
-    estTotalSteps: 100 // Dynamic estimation for progress bar
+    estTotalSteps: 100
   };
 
   /* ===== Textarea auto-resize ===== */
@@ -742,7 +752,6 @@
     visibleMaxLog = collatz.maxLog;
     visibleMinLog = 0;
     
-    // Heuristic for Collatz stopping time: T(n) ≈ 6.95 * log2(n) ≈ 23.1 * log10(n)
     collatz.estTotalSteps = Math.max(50, startLog * 23.1);
   }
 
@@ -778,13 +787,12 @@
         visibleStart = 0;
         visibleEnd = Math.max(1, N - 1);
     } else if (isAnimating) {
-        // Adaptive pan: follow the tracer if it approaches the edge while zoomed in
-        const visibleRange = visibleEnd - visibleStart;
+        const visibleRange = Math.max(1, visibleEnd - visibleStart);
         const tracerIdx = N - 1;
-        const triggerThreshold = visibleEnd - visibleRange * 0.2; // 80% mark
         
-        if (tracerIdx > triggerThreshold) {
-            let newEnd = tracerIdx + visibleRange * 0.2;
+        // 100% right anchoring
+        if (tracerIdx >= visibleEnd) {
+            let newEnd = tracerIdx;
             let newStart = newEnd - visibleRange;
             
             if (newStart < 0) {
@@ -955,7 +963,7 @@
     }
     ctx.stroke();
 
-    // Hover highlight — works during animation too
+    // Hover highlight
     if (hoverIdx >= 0 && hoverIdx < N) {
       if (hoverIdx >= startIdx && hoverIdx <= endIdx) {
         const hp = coords[hoverIdx];
@@ -1014,9 +1022,7 @@
     el._flashT = setTimeout(() => el.classList.remove('flash'), 220);
   }
 
-  /* ===== Tooltip =====
-     Optimized: innerHTML is only rebuilt when idx changes.
-     Position (CSS transform) is updated every call — cheap. */
+  /* ===== Tooltip ===== */
   function updateTooltip(idx, mx, my) {
     const seq = collatz.sequence;
     if (!seq || idx < 0 || idx >= seq.length) {
@@ -1024,13 +1030,11 @@
       return;
     }
 
-    // Step total changes during animation — update text but no layout-heavy innerHTML
     const totalText = ' / ' + (seq.length - 1);
     if (ttTotal.textContent !== totalText) {
       ttTotal.textContent = totalText;
     }
 
-    // Formula + step number + meta — only when idx changes (avoids reflow every frame)
     if (idx !== lastTooltipIdx) {
       const val = seq[idx];
       ttStep.textContent = idx;
@@ -1056,12 +1060,10 @@
       ttMeta.textContent = metaText;
       lastTooltipIdx = idx;
 
-      // Re-measure tooltip size after content change
       tooltipW = tooltip.offsetWidth  || 200;
       tooltipH = tooltip.offsetHeight || 80;
     }
 
-    // Position — always update (cheap transform, follows mouse not the moving point)
     const margin = 16;
     let left = mx + margin;
     let top  = my + margin;
@@ -1081,11 +1083,9 @@
     lastTooltipIdx = -2;
   }
 
-  /* ===== Hover index computation =====
-     Maps mouse X to a sequence index. Called every animation frame
-     because the mapping shifts as the sequence grows (coords compress). */
+  /* ===== Hover index computation ===== */
   function updateHoverIndex() {
-    if (!mouseInCanvas || isRolling || collatz.sequence.length < 2) {
+    if (!mouseInCanvas || isRolling || isDragging || collatz.sequence.length < 2) {
       if (hoverIdx !== -1) hoverIdx = -1;
       return;
     }
@@ -1133,26 +1133,16 @@
     function frame() {
       const frameStart = performance.now();
 
-      // Compute steps
       const target = Math.floor(stepsPerFrame);
       for (let i = 0; i < target; i++) {
         if (!stepCollatz()) break;
       }
 
-      // Recompute coords (X compresses, Y rescales on new peaks)
       updateCoords();
-
-      // Update hover index — the point under the cursor may have changed
-      // because the coords shifted, even though the mouse didn't move
       updateHoverIndex();
-
-      // Draw (includes hover highlight if hoverIdx is set)
       draw();
-
-      // Update tooltip text + position (follows mouse, not the moving point)
       updateTooltipFromHover();
 
-      // Update stats
       if (collatz.current !== lastCurrent) {
         currentEl.textContent = formatNumber(collatz.current);
         lastCurrent = collatz.current;
@@ -1195,7 +1185,7 @@
 
         const reachedOne = collatz.current === 1n;
         hintEl.textContent = reachedOne
-          ? 'reached 1 · scroll to zoom · dbl-click to reset'
+          ? 'reached 1 · scroll to zoom · drag to pan'
           : 'computing...';
         hintEl.classList.remove('active');
         hintEl.classList.add('idle');
@@ -1384,6 +1374,11 @@
   /* ===== Mouse interaction — works during animation ===== */
   function handleMouseMove(e) {
     if (isRolling) return;
+    if (isDragging) {
+        handlePan(e);
+        return;
+    }
+    
     const rect = canvas.getBoundingClientRect();
     lastMouseX = e.clientX - rect.left;
     lastMouseY = e.clientY - rect.top;
@@ -1391,8 +1386,6 @@
 
     updateHoverIndex();
     updateTooltipFromHover();
-    // Don't call draw() during animation — the animation loop handles it.
-    // Only redraw immediately when idle, for instant hover feedback.
     if (!isAnimating) draw();
   }
 
@@ -1408,6 +1401,7 @@
   }
 
   function handleMouseLeave() {
+    if (isDragging) return; // keep panning even if mouse leaves canvas
     mouseInCanvas = false;
     hoverIdx = -1;
     hideTooltip();
@@ -1418,36 +1412,132 @@
   canvas.addEventListener('mouseenter', handleMouseEnter);
   canvas.addEventListener('mouseleave', handleMouseLeave);
 
+  /* ===== Drag to Pan ===== */
+  canvas.addEventListener('mousedown', (e) => {
+    if (collatz.sequence.length < 2) return;
+    e.preventDefault();
+    
+    isDragging = true;
+    const rect = canvas.getBoundingClientRect();
+    dragStartX = e.clientX - rect.left;
+    dragStartVisibleStart = visibleStart;
+    dragStartVisibleEnd = visibleEnd;
+    isAutoTracking = false;
+    canvas.style.cursor = 'grabbing';
+    hideTooltip();
+  });
+
+  function handlePan(e) {
+    if (!isDragging) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const drawW = Math.max(1, W - 2 * PADDING);
+    const dx = mx - dragStartX;
+    
+    const range = dragStartVisibleEnd - dragStartVisibleStart;
+    const stepDelta = (dx / drawW) * range;
+    
+    let newStart = dragStartVisibleStart - stepDelta;
+    let newEnd = dragStartVisibleEnd - stepDelta;
+    
+    const N = collatz.sequence.length;
+    
+    if (newStart < 0) {
+        newStart = 0;
+        newEnd = newStart + range;
+    }
+    
+    // Durante l'animazione non puoi spostarti a destra del punto corrente
+    if (isAnimating && newEnd < (N - 1)) {
+        newEnd = N - 1;
+        newStart = newEnd - range;
+        if (newStart < 0) newStart = 0;
+    } else if (!isAnimating && newEnd > N - 1) {
+        // A fine calcolo non puoi superare il limite destro
+        newEnd = N - 1;
+        newStart = newEnd - range;
+        if (newStart < 0) newStart = 0;
+    }
+    
+    visibleStart = newStart;
+    visibleEnd = newEnd;
+    
+    updateCoords();
+    draw();
+  }
+
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging) handlePan(e);
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDragging) {
+        isDragging = false;
+        canvas.style.cursor = 'grab';
+        // Aggiorna l'hover basandosi sulla posizione attuale del mouse
+        const rect = canvas.getBoundingClientRect();
+        // Controlla se il mouse è ancora dentro il canvas
+        if (lastMouseX >= 0 && lastMouseX <= W && lastMouseY >= 0 && lastMouseY <= H) {
+            mouseInCanvas = true;
+            updateHoverIndex();
+            updateTooltipFromHover();
+        }
+    }
+  });
+
   // Zoom functionality
   canvas.addEventListener('wheel', (e) => {
     if (collatz.sequence.length < 2) return;
     e.preventDefault();
     
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    
-    const drawW = Math.max(1, W - 2 * PADDING);
-    let t = (mx - PADDING) / drawW;
-    t = Math.max(0, Math.min(1, t));
-    
-    const currentStep = visibleStart + t * (visibleEnd - visibleStart);
-    
-    const zoomFactor = e.deltaY < 0 ? 0.8 : 1.25;
-    
-    let newStart = currentStep - (currentStep - visibleStart) * zoomFactor;
-    let newEnd = currentStep + (visibleEnd - currentStep) * zoomFactor;
-    
     const N = collatz.sequence.length;
+    const tracerIdx = N - 1;
+    const zoomFactor = e.deltaY < 0 ? 0.8 : 1.25;
+    const oldRange = Math.max(1, visibleEnd - visibleStart);
     
-    // Limit zoom in
-    if (newEnd - newStart < 2 && zoomFactor < 1) return;
+    let newStart, newEnd;
     
-    // Reset to auto-tracking if we zoom out beyond bounds
-    if (newStart <= 0 && newEnd >= N - 1) {
-        isAutoTracking = true;
-        updateCoords();
-        draw();
-        return;
+    if (isAnimating) {
+        // Durante l'animazione, zoom ancorato al 100% a destra (tracerIdx)
+        const tracerRatio = 1.0;
+        const newRange = oldRange * zoomFactor;
+        
+        if (newRange < 2 && zoomFactor < 1) return;
+        
+        newStart = tracerIdx - tracerRatio * newRange;
+        newEnd = tracerIdx;
+        
+        if (newStart <= 0) {
+            isAutoTracking = true;
+            updateCoords();
+            draw();
+            return;
+        }
+        isAutoTracking = false;
+    } else {
+        // A calcolo finito, zoom ancorato al mouse
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        
+        const drawW = Math.max(1, W - 2 * PADDING);
+        let t = (mx - PADDING) / drawW;
+        t = Math.max(0, Math.min(1, t));
+        
+        const currentStep = visibleStart + t * (visibleEnd - visibleStart);
+        
+        newStart = currentStep - (currentStep - visibleStart) * zoomFactor;
+        newEnd = currentStep + (visibleEnd - currentStep) * zoomFactor;
+        
+        if (newEnd - newStart < 2 && zoomFactor < 1) return;
+        
+        if (newStart <= 0 && newEnd >= N - 1) {
+            isAutoTracking = true;
+            updateCoords();
+            draw();
+            return;
+        }
+        isAutoTracking = false;
     }
     
     // Boundary clamping that preserves the zoom window
@@ -1455,14 +1545,15 @@
         newEnd -= newStart;
         newStart = 0;
     }
-    if (newEnd > N - 1) {
+    // Durante l'animazione non clampiamo newEnd a N-1, perché visibleEnd DEVE essere > N-1 
+    // per lasciare spazio a destra e mantenere il tracer all'80%.
+    if (!isAnimating && newEnd > N - 1) {
         newStart -= (newEnd - (N - 1));
         newEnd = N - 1;
     }
     if (newStart < 0) newStart = 0;
-    if (newEnd > N - 1) newEnd = N - 1;
+    if (!isAnimating && newEnd > N - 1) newEnd = N - 1;
     
-    isAutoTracking = false;
     visibleStart = newStart;
     visibleEnd = newEnd;
     
@@ -1470,7 +1561,7 @@
     draw();
   }, { passive: false });
 
-  // Double-click to reset zoom
+  // Double-click to reset zoom & pan
   canvas.addEventListener('dblclick', (e) => {
     e.preventDefault();
     if (collatz.sequence.length < 2) return;
