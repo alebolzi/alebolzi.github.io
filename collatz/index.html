@@ -387,7 +387,8 @@
     position: absolute;
     top: 0;
     left: 0;
-    background: rgba(10, 11, 14, 0.94);
+    /* Cambiato opacità per effetto trasparenza */
+    background: rgba(10, 11, 14, 0.55);
     border: 1px solid rgba(217, 164, 91, 0.4);
     border-radius: 3px;
     padding: 10px 14px;
@@ -539,9 +540,9 @@
 
   <main>
     <section class="hero">
-      <h1 class="title">Does It Always</br><em>Go Down</em>?</h1>
+      <h1 class="title">Does It Always<br><em>Go Down</em>?</h1>
       <p class="subtitle">
-        Pick any positive integer. If it's even, halve it. If it's odd, triple it and add one.</br>
+        Pick any positive integer. If it's even, halve it. If it's odd, triple it and add one.<br>
         The conjecture says every path eventually reaches <code>1</code>.
       </p>
     </section>
@@ -576,7 +577,7 @@
 
       <div class="canvas-wrap">
         <canvas id="trail"></canvas>
-        <span class="canvas-axis">y = log₁₀(n) · x = step · scroll to zoom · drag to pan</span>
+        <span class="canvas-axis">y = log₁₀(n) · x = step · scroll to zoom · drag to pan · press H for tooltip</span>
 
         <div class="tooltip" id="tooltip" aria-hidden="true">
           <span class="tt-step">Step <span id="ttStep">0</span><span class="tt-total" id="ttTotal"></span></span>
@@ -656,6 +657,9 @@
   let isRolling = false;
   let experimentCount = 0;
   let hoverIdx = -1;
+  
+  // Nuova variabile di stato per il toggle dell'hover
+  let hoverEnabled = true;
 
   // Zoom & Pan State
   let visibleStart = 0;
@@ -964,7 +968,7 @@
     ctx.stroke();
 
     // Hover highlight
-    if (hoverIdx >= 0 && hoverIdx < N) {
+    if (hoverEnabled && hoverIdx >= 0 && hoverIdx < N) {
       if (hoverIdx >= startIdx && hoverIdx <= endIdx) {
         const hp = coords[hoverIdx];
         ctx.strokeStyle = `rgba(${ACCENT_RGB}, 0.25)`;
@@ -1085,7 +1089,7 @@
 
   /* ===== Hover index computation ===== */
   function updateHoverIndex() {
-    if (!mouseInCanvas || isRolling || isDragging || collatz.sequence.length < 2) {
+    if (!hoverEnabled || !mouseInCanvas || isRolling || isDragging || collatz.sequence.length < 2) {
       if (hoverIdx !== -1) hoverIdx = -1;
       return;
     }
@@ -1106,7 +1110,7 @@
   }
 
   function updateTooltipFromHover() {
-    if (hoverIdx < 0 || !mouseInCanvas) {
+    if (!hoverEnabled || hoverIdx < 0 || !mouseInCanvas) {
       hideTooltip();
       return;
     }
@@ -1568,6 +1572,36 @@
     isAutoTracking = true;
     updateCoords();
     draw();
+  });
+
+  /* ===== Keyboard shortcuts ===== */
+  window.addEventListener('keydown', (e) => {
+    // Evita di interferire mentre si scrive nell'input
+    if (e.target === startEl) return;
+    
+    if (e.key.toLowerCase() === 'h') {
+      hoverEnabled = !hoverEnabled;
+      
+      if (!hoverEnabled) {
+        hideTooltip();
+      }
+      
+      // Mostra un feedback temporaneo nel hint text
+      const previousText = hintEl.textContent;
+      const wasIdle = hintEl.classList.contains('idle');
+      
+      hintEl.textContent = hoverEnabled ? 'hover enabled' : 'hover disabled';
+      hintEl.classList.add('active');
+      hintEl.classList.remove('idle');
+      
+      clearTimeout(hintEl._hoverTimeout);
+      hintEl._hoverTimeout = setTimeout(() => {
+        hintEl.textContent = previousText;
+        if (wasIdle) hintEl.classList.add('idle');
+        else hintEl.classList.remove('idle');
+        hintEl.classList.remove('active');
+      }, 1200);
+    }
   });
 
   let resizeRAF = null;
