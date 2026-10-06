@@ -572,7 +572,7 @@
 
       <div class="canvas-wrap">
         <canvas id="trail"></canvas>
-        <span class="canvas-axis">y = log₁₀(n) · x = step</span>
+        <span class="canvas-axis">y = log₁₀(n) · x = step · scroll to zoom</span>
 
         <div class="tooltip" id="tooltip" aria-hidden="true">
           <span class="tt-step">Step <span id="ttStep">0</span><span class="tt-total" id="ttTotal"></span></span>
@@ -620,7 +620,6 @@
   /* ===== Config ===== */
   const ACCENT_RGB = '217, 164, 91';
   const PADDING    = 30;
-  const MAX_STEPS  = 100000;
   const MAX_SPF    = 5000;
   const SPF_GROWTH = 1.08;
   const SPF_DECAY  = 0.6;
@@ -654,6 +653,13 @@
   let experimentCount = 0;
   let hoverIdx = -1;
 
+  // Zoom State
+  let visibleStart = 0;
+  let visibleEnd = 1;
+  let isAutoTracking = true;
+  let visibleMaxLog = 0.001;
+  let visibleMinLog = 0;
+
   // Mouse tracking — persists between frames so we can update hover during animation
   let lastMouseX = -1;
   let lastMouseY = -1;
@@ -669,7 +675,8 @@
     peak: 0n,
     maxLog: 0.001,
     steps: 0,
-    done: false
+    done: false,
+    estTotalSteps: 100 // Dynamic estimation for progress bar
   };
 
   /* ===== Textarea auto-resize ===== */
@@ -729,6 +736,14 @@
     collatz.steps = 0;
     collatz.done = (start === 1n);
     coords = [];
+    visibleStart = 0;
+    visibleEnd = 1;
+    isAutoTracking = true;
+    visibleMaxLog = collatz.maxLog;
+    visibleMinLog = 0;
+    
+    // Heuristic for Collatz stopping time: T(n) ≈ 6.95 * log2(n) ≈ 23.1 * log10(n)
+    collatz.estTotalSteps = Math.max(50, startLog * 23.1);
   }
 
   function stepCollatz() {
@@ -737,10 +752,7 @@
       collatz.done = true;
       return false;
     }
-    if (collatz.steps >= MAX_STEPS) {
-      collatz.done = true;
-      return false;
-    }
+    
     const next = (collatz.current % 2n === 0n)
       ? collatz.current / 2n
       : collatz.current * 3n + 1n;
@@ -762,11 +774,57 @@
     const N = collatz.sequence.length;
     if (N === 0) { coords.length = 0; return; }
 
+    if (isAutoTracking) {
+        visibleStart = 0;
+        visibleEnd = Math.max(1, N - 1);
+    } else if (isAnimating) {
+        // Adaptive pan: follow the tracer if it approaches the edge while zoomed in
+        const visibleRange = visibleEnd - visibleStart;
+        const tracerIdx = N - 1;
+        const triggerThreshold = visibleEnd - visibleRange * 0.2; // 80% mark
+        
+        if (tracerIdx > triggerThreshold) {
+            let newEnd = tracerIdx + visibleRange * 0.2;
+            let newStart = newEnd - visibleRange;
+            
+            if (newStart < 0) {
+                newStart = 0;
+                newEnd = newStart + visibleRange;
+            }
+            visibleStart = newStart;
+            visibleEnd = newEnd;
+        }
+    }
+
     const drawW = Math.max(1, W - 2 * PADDING);
     const drawH = Math.max(1, H - 2 * PADDING);
-    const denom = N > 1 ? N - 1 : 1;
-    const maxLogVal = collatz.maxLog;
+    const range = Math.max(1, visibleEnd - visibleStart);
+    
+    // Calculate visibleMinLog and visibleMaxLog to allow Y-axis auto-rescaling on zoom
+    // This makes the lowest point touch the bottom and the highest touch the top
+    visibleMaxLog = -Infinity;
+    visibleMinLog = Infinity;
+    
+    const startIdx = Math.max(0, Math.floor(visibleStart));
+    const endIdx = Math.min(N - 1, Math.ceil(visibleEnd));
+    
+    for (let i = startIdx; i <= endIdx; i++) {
+        if (collatz.logs[i] > visibleMaxLog) visibleMaxLog = collatz.logs[i];
+        if (collatz.logs[i] < visibleMinLog) visibleMinLog = collatz.logs[i];
+    }
+    
+    // Handle edge case where all visible values have the same log
+    if (visibleMaxLog === visibleMinLog) {
+        visibleMaxLog += 0.5;
+        visibleMinLog -= 0.5;
+    } else {
+        // Add a tiny 2% padding top and bottom so the line doesn't touch the extreme edges
+        const logRange = visibleMaxLog - visibleMinLog;
+        visibleMaxLog += logRange * 0.02;
+        visibleMinLog -= logRange * 0.02;
+    }
 
+    // Ensure coords array is large enough
     if (coords.length < N) {
       for (let i = coords.length; i < N; i++) {
         coords[i] = { x: 0, y: 0, val: 0n };
@@ -775,10 +833,17 @@
       coords.length = N;
     }
 
-    for (let i = 0; i < N; i++) {
+    // Only compute coordinates for the visible portion (+ margin for clean lines)
+    const margin = 2;
+    const compStart = Math.max(0, startIdx - margin);
+    const compEnd = Math.min(N - 1, endIdx + margin);
+    
+    for (let i = compStart; i <= compEnd; i++) {
       const c = coords[i];
-      c.x = PADDING + (i / denom) * drawW;
-      c.y = H - PADDING - (collatz.logs[i] / maxLogVal) * drawH;
+      if (!c) continue;
+      c.x = PADDING + ((i - visibleStart) / range) * drawW;
+      // Normalize Y between visibleMinLog and visibleMaxLog
+      c.y = H - PADDING - ((collatz.logs[i] - visibleMinLog) / (visibleMaxLog - visibleMinLog)) * drawH;
       c.val = collatz.sequence[i];
     }
   }
@@ -861,17 +926,20 @@
       return;
     }
 
+    const startIdx = Math.max(0, Math.floor(visibleStart) - 1);
+    const endIdx = Math.min(N - 1, Math.ceil(visibleEnd) + 1);
+
     // Fill area
     const grad = ctx.createLinearGradient(0, PADDING, 0, H - PADDING);
     grad.addColorStop(0, `rgba(${ACCENT_RGB}, 0.18)`);
     grad.addColorStop(1, `rgba(${ACCENT_RGB}, 0)`);
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.moveTo(coords[0].x, H - PADDING);
-    for (let i = 0; i < N; i++) {
+    ctx.moveTo(coords[startIdx].x, H - PADDING);
+    for (let i = startIdx; i <= endIdx; i++) {
       ctx.lineTo(coords[i].x, coords[i].y);
     }
-    ctx.lineTo(coords[N - 1].x, H - PADDING);
+    ctx.lineTo(coords[endIdx].x, H - PADDING);
     ctx.closePath();
     ctx.fill();
 
@@ -881,38 +949,42 @@
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(coords[0].x, coords[0].y);
-    for (let i = 1; i < N; i++) {
+    ctx.moveTo(coords[startIdx].x, coords[startIdx].y);
+    for (let i = startIdx + 1; i <= endIdx; i++) {
       ctx.lineTo(coords[i].x, coords[i].y);
     }
     ctx.stroke();
 
     // Hover highlight — works during animation too
-    if (hoverIdx >= 0 && hoverIdx < N && hoverIdx !== N - 1) {
-      const hp = coords[hoverIdx];
-      ctx.strokeStyle = `rgba(${ACCENT_RGB}, 0.25)`;
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 4]);
-      ctx.beginPath();
-      ctx.moveTo(hp.x, PADDING);
-      ctx.lineTo(hp.x, H - PADDING);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    if (hoverIdx >= 0 && hoverIdx < N) {
+      if (hoverIdx >= startIdx && hoverIdx <= endIdx) {
+        const hp = coords[hoverIdx];
+        ctx.strokeStyle = `rgba(${ACCENT_RGB}, 0.25)`;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.moveTo(hp.x, PADDING);
+        ctx.lineTo(hp.x, H - PADDING);
+        ctx.stroke();
+        ctx.setLineDash([]);
 
-      ctx.strokeStyle = `rgba(${ACCENT_RGB}, 0.85)`;
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.arc(hp.x, hp.y, 9, 0, Math.PI * 2);
-      ctx.stroke();
+        ctx.strokeStyle = `rgba(${ACCENT_RGB}, 0.85)`;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(hp.x, hp.y, 9, 0, Math.PI * 2);
+        ctx.stroke();
 
-      ctx.fillStyle = `rgba(${ACCENT_RGB}, 0.7)`;
-      ctx.beginPath();
-      ctx.arc(hp.x, hp.y, 2.5, 0, Math.PI * 2);
-      ctx.fill();
+        ctx.fillStyle = `rgba(${ACCENT_RGB}, 0.7)`;
+        ctx.beginPath();
+        ctx.arc(hp.x, hp.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     // Tracer
-    drawTracer(coords[N - 1]);
+    if (N - 1 >= startIdx && N - 1 <= endIdx) {
+      drawTracer(coords[N - 1]);
+    }
   }
 
   function drawEmptyState() {
@@ -1029,8 +1101,8 @@
 
     let t = (mx - PADDING) / drawW;
     t = Math.max(0, Math.min(1, t));
-    const idx = Math.round(t * (collatz.sequence.length - 1));
-    hoverIdx = idx;
+    const idx = Math.round(visibleStart + t * (visibleEnd - visibleStart));
+    hoverIdx = Math.max(0, Math.min(collatz.sequence.length - 1, idx));
   }
 
   function updateTooltipFromHover() {
@@ -1049,7 +1121,7 @@
     diceBtn.disabled = true;
     startEl.disabled = true;
     currentStat.classList.remove('idle');
-    hintEl.textContent = 'computing...';
+    hintEl.textContent = 'computing... 0%';
     hintEl.classList.add('active');
     hintEl.classList.remove('idle');
 
@@ -1095,6 +1167,19 @@
         lastPeak = collatz.peak;
       }
 
+      // Calculate dynamic progress percentage
+      let progress = 0;
+      if (collatz.done) {
+        progress = 100;
+      } else {
+        // If steps exceed the estimate, dynamically shift the target to prevent 100% from freezing before it's done
+        if (collatz.steps > collatz.estTotalSteps * 0.95) {
+            collatz.estTotalSteps = collatz.steps * 1.2 + 50;
+        }
+        progress = Math.min(99, Math.round((collatz.steps / collatz.estTotalSteps) * 100));
+      }
+      hintEl.textContent = `computing... ${progress}%`;
+
       const computeMs = performance.now() - frameStart;
 
       if (collatz.done) {
@@ -1110,8 +1195,8 @@
 
         const reachedOne = collatz.current === 1n;
         hintEl.textContent = reachedOne
-          ? 'reached 1 · hover · edit · roll'
-          : 'safety limit · try a smaller number';
+          ? 'reached 1 · scroll to zoom · dbl-click to reset'
+          : 'computing...';
         hintEl.classList.remove('active');
         hintEl.classList.add('idle');
       } else {
@@ -1332,6 +1417,67 @@
   canvas.addEventListener('mousemove', handleMouseMove);
   canvas.addEventListener('mouseenter', handleMouseEnter);
   canvas.addEventListener('mouseleave', handleMouseLeave);
+
+  // Zoom functionality
+  canvas.addEventListener('wheel', (e) => {
+    if (collatz.sequence.length < 2) return;
+    e.preventDefault();
+    
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    
+    const drawW = Math.max(1, W - 2 * PADDING);
+    let t = (mx - PADDING) / drawW;
+    t = Math.max(0, Math.min(1, t));
+    
+    const currentStep = visibleStart + t * (visibleEnd - visibleStart);
+    
+    const zoomFactor = e.deltaY < 0 ? 0.8 : 1.25;
+    
+    let newStart = currentStep - (currentStep - visibleStart) * zoomFactor;
+    let newEnd = currentStep + (visibleEnd - currentStep) * zoomFactor;
+    
+    const N = collatz.sequence.length;
+    
+    // Limit zoom in
+    if (newEnd - newStart < 2 && zoomFactor < 1) return;
+    
+    // Reset to auto-tracking if we zoom out beyond bounds
+    if (newStart <= 0 && newEnd >= N - 1) {
+        isAutoTracking = true;
+        updateCoords();
+        draw();
+        return;
+    }
+    
+    // Boundary clamping that preserves the zoom window
+    if (newStart < 0) {
+        newEnd -= newStart;
+        newStart = 0;
+    }
+    if (newEnd > N - 1) {
+        newStart -= (newEnd - (N - 1));
+        newEnd = N - 1;
+    }
+    if (newStart < 0) newStart = 0;
+    if (newEnd > N - 1) newEnd = N - 1;
+    
+    isAutoTracking = false;
+    visibleStart = newStart;
+    visibleEnd = newEnd;
+    
+    updateCoords();
+    draw();
+  }, { passive: false });
+
+  // Double-click to reset zoom
+  canvas.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    if (collatz.sequence.length < 2) return;
+    isAutoTracking = true;
+    updateCoords();
+    draw();
+  });
 
   let resizeRAF = null;
   window.addEventListener('resize', () => {
