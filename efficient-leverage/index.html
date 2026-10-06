@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Efficient Leverage</title>
+  <style>
+    :root {
+      --bg: #09090d;
+      --card: #111119;
+      --card2: #171721;
+      --text: #f5f5f7;
+      --muted: #8e8e9d;
+      --line: #282833;
+      --accent: #9d7cff;
+      --green: #55e6a5;
+      --gold: #ffd166;
+      --pink: #ff6fae;
+      --red: #ff7676;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 50% -10%, #211747 0, transparent 38%),
+        radial-gradient(circle at 10% 90%, #111b2b 0, transparent 28%),
+        var(--bg);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .wrap {
+      width: min(880px, 94vw);
+      margin: 0 auto;
+      padding: clamp(20px, 5vh, 60px) 0 60px;
+    }
+
+    /* HEADER */
+    header {
+      text-align: center;
+      margin-bottom: clamp(20px, 4vh, 40px);
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 6vw, 3.6rem);
+      line-height: .95;
+      margin: 14px 0 18px;
+      font-weight: 950;
+      letter-spacing: -.06em;
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: clamp(.95rem, 1.4vw, 1.08rem);
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.55;
+    }
+
+    /* PANEL */
+    .panel {
+      background: rgba(17, 17, 25, .88);
+      border: 1px solid var(--line);
+      border-radius: clamp(18px, 3vw, 28px);
+      padding: clamp(20px, 3vw, 36px);
+      box-shadow: 0 20px 80px #0008;
+      backdrop-filter: blur(16px);
+    }
+
+    /* CONTROLS */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .control {
+      background: var(--card2);
+      border: 1px solid var(--line);
+      padding: clamp(12px, 1.8vw, 20px);
+      border-radius: clamp(14px, 2vw, 20px);
+    }
+
+    .label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+
+    .value {
+      font-size: clamp(1.3rem, 2.4vw, 1.65rem);
+      font-weight: 900;
+      color: var(--text);
+      margin: 7px 0 14px;
+      letter-spacing: -.02em;
+    }
+
+    /* SLIDER */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 9px;
+      margin: 7px 0 3px;
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+      background: #1c1c27;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, .25), 0 0 14px rgba(139, 92, 246, .7);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+      box-shadow: 0 0 0 4px rgba(139, 92, 246, .18), 0 0 20px rgba(236, 72, 153, .8);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.28);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, .25), 0 0 14px rgba(139, 92, 246, .7);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 10px;
+      background: #1c1b29;
+      border-radius: 999px;
+    }
+
+    .range {
+      display: flex;
+      justify-content: space-between;
+      color: #666675;
+      font-size: .68rem;
+      margin-top: 5px;
+    }
+
+    /* RISULTATO */
+    .result {
+      text-align: center;
+      margin: clamp(28px, 5vh, 44px) 0 clamp(20px, 3vh, 30px);
+    }
+
+    .big {
+      font-size: clamp(4rem, 14vw, 8rem);
+      font-weight: 950;
+      line-height: 1.1;
+      letter-spacing: -.06em;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--pink) 55%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 10px;
+      filter: drop-shadow(0 6px 30px rgba(157, 124, 255, .25));
+    }
+
+    .big.bad {
+      background: linear-gradient(135deg, var(--red), #ff8e53);
+      -webkit-background-clip: text;
+      background-clip: text;
+      filter: drop-shadow(0 6px 30px rgba(255, 118, 118, .25));
+    }
+
+    .big.capped {
+      background: linear-gradient(135deg, var(--gold), #ff8e53);
+      -webkit-background-clip: text;
+      background-clip: text;
+      filter: drop-shadow(0 6px 30px rgba(255, 209, 102, .25));
+    }
+
+    .result-label {
+      color: var(--muted);
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    /* RENDIMENTO REALE (Grande) */
+    .real-return-box {
+      margin-top: 30px;
+      margin-bottom: 20px;
+    }
+
+    .real-return-box .label {
+      justify-content: center;
+      color: var(--muted);
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .big-mid {
+      font-size: clamp(2.5rem, 9vw, 5rem);
+      font-weight: 950;
+      line-height: 1.1;
+      letter-spacing: -.04em;
+      background: linear-gradient(135deg, var(--gold), #ff8e53);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 4px 20px rgba(255, 209, 102, .25));
+    }
+
+    /* METRICS BOX (I 2 CARDS rimanenti) */
+    .metrics {
+      margin-top: 35px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .metric {
+      background: var(--card2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 140px;
+    }
+
+    .metric .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-bottom: 8px;
+    }
+
+    .metric .dot.green { background: var(--green); box-shadow: 0 0 10px var(--green); }
+    .metric .dot.red { background: var(--red); box-shadow: 0 0 10px var(--red); }
+
+    .metric .m-label {
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .metric .m-val {
+      font-size: 1.4rem;
+      font-weight: 950;
+      letter-spacing: -0.02em;
+    }
+
+    .m-val.green { color: var(--green); }
+    .m-val.red { color: var(--red); }
+
+    /* MATH STEPS & TABLE */
+    .math-svolgimento {
+      margin-top: clamp(28px, 4vh, 36px);
+      background: var(--card2);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .math-steps {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      margin-bottom: 30px;
+    }
+
+    .math-steps .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .math-steps .frac {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      margin: 0 4px;
+    }
+
+    .math-steps .frac .num {
+      border-bottom: 1.5px solid var(--muted);
+      padding-bottom: 2px;
+      margin-bottom: 3px;
+    }
+
+    .math-steps .res {
+      font-weight: 800;
+    }
+
+    .math-steps .res.accent-res {
+      background: linear-gradient(135deg, var(--accent), var(--pink));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .math-steps .res.gold-res { color: var(--gold); }
+    .math-steps .res.red-res { color: var(--red); }
+    .math-steps .res.green-res { color: var(--green); }
+
+    .data-table {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .data-table th, .data-table td {
+      padding: 12px 8px;
+      text-align: right;
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table th {
+      color: var(--muted);
+      font-weight: 800;
+      text-align: center;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+    }
+
+    .data-table td:first-child {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    /* SPIEGAZIONE */
+    .explain {
+      border-top: 1px dashed var(--line);
+      padding-top: clamp(20px, 3vh, 28px);
+      margin-top: clamp(28px, 4vh, 36px);
+    }
+
+    /* TITOLI SEZIONI (Incluso .math-svolgimento h3) */
+    .explain h3,
+    .examples h3,
+    .chart-wrap h3,
+    .math-svolgimento h3 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -.01em;
+      text-align: left; /* Allineato a sinistra */
+    }
+
+    .explain p {
+      color: var(--muted);
+      margin: 0 0 16px;
+      line-height: 1.55;
+      font-size: .96rem;
+    }
+
+    /* ESEMPI */
+    .examples {
+      margin-top: clamp(28px, 4vh, 36px);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .buttons button {
+      background: var(--card2);
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 11px 20px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: .92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s ease;
+      letter-spacing: -.01em;
+    }
+
+    .buttons button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .buttons button.active {
+      background: linear-gradient(135deg, var(--accent), var(--pink));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(157, 124, 255, .35);
+    }
+
+    /* GRAFICO */
+    .chart-wrap {
+      margin-top: clamp(28px, 4vh, 36px);
+    }
+
+    .chart {
+      background: var(--card2);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px 12px 10px;
+      position: relative;
+    }
+
+    .chart svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .chart-tooltip {
+      position: absolute;
+      background: rgba(17, 17, 25, 0.95);
+      border: 1px solid var(--accent);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: Inter, sans-serif;
+      pointer-events: none;
+      transform: translate(-50%, -130%);
+      white-space: nowrap;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      text-align: center;
+    }
+
+    .chart-tooltip div {
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .chart-tooltip .t-rend { color: var(--gold); }
+    .chart-tooltip .t-leva { color: var(--text); }
+
+    .chart-caption {
+      text-align: center;
+      color: var(--muted);
+      font-size: .8rem;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    .chart-caption b { color: var(--gold); }
+
+    .note {
+      text-align: center;
+      color: #626270;
+      font-size: .72rem;
+      margin-top: 18px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 700px) {
+      .controls { gap: 8px; }
+      .control { padding: 10px; }
+      .label { font-size: .58rem; }
+      .value { font-size: 1rem; margin: 5px 0 8px; }
+      .range { display: none; }
+      .buttons button { padding: 9px 14px; font-size: .82rem; }
+      .math-svolgimento { padding: 16px; }
+      .math-steps { font-size: 0.85rem; }
+      .data-table { font-size: 0.8rem; }
+      .metric { padding: 10px 14px; min-width: 100px; }
+      .metric .m-val { font-size: 1.1rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">UN PICCOLO ESPERIMENTO MATEMATICO</div>
+      <h1>QUAL È LA LEVA<br><span>PIÙ EFFICIENTE?</span></h1>
+      <div class="sub">Troppa leva ti mangia di volatility drag.<br>Troppo poca ti lascia rendimento sul tavolo.</div>
+    </header>
+
+    <main class="panel">
+      <!-- INPUT -->
+      <section class="controls">
+        <div class="control">
+          <div class="label"><span>RENDIMENTO ATTESO</span><span>annuo</span></div>
+          <div class="value" id="returnValue">14,0%</div>
+          <input id="rend" type="range" min="0" max="30" step="0.1" value="14">
+          <div class="range"><span>0%</span><span>30%</span></div>
+        </div>
+        <div class="control">
+          <div class="label"><span>COSTO DELLA LEVA</span><span>annuo</span></div>
+          <div class="value" id="costValue">3,0%</div>
+          <input id="cost" type="range" min="0" max="10" step="0.1" value="3">
+          <div class="range"><span>0%</span><span>10%</span></div>
+        </div>
+        <div class="control">
+          <div class="label"><span>VOLATILITÀ</span><span>σ</span></div>
+          <div class="value" id="volValue">19,0%</div>
+          <input id="vol" type="range" min="0" max="40" step="0.1" value="19">
+          <div class="range"><span>0%</span><span>40%</span></div>
+        </div>
+      </section>
+
+      <!-- RISULTATO -->
+      <section class="result">
+        <div class="big" id="bigResult">3,05×</div>
+        <div class="result-label">leva teoricamente ottimale</div>
+
+        <!-- NUOVO BLOCCO RENDIMENTO REALE -->
+        <div class="real-return-box" id="realReturnBox">
+          <div class="big-mid" id="bigRealReturn">19,8%</div>
+          <div class="result-label">Rendimento reale</div>
+        </div>
+
+        <!-- METRICS BOX (I 2 CARDS rimanenti) -->
+        <div class="metrics" id="metricsBox">
+          <div class="metric">
+            <div class="dot green"></div>
+            <div class="m-label">Rendimento teorico</div>
+            <div class="m-val green" id="metricR1">36,5%</div>
+          </div>
+          <div class="metric">
+            <div class="dot red"></div>
+            <div class="m-label">Volatility drag</div>
+            <div class="m-val red" id="metricDrag">-16,8%</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GRAFICO -->
+      <section class="chart-wrap">
+        <h3>Come varia il rendimento</h3>
+        <div class="chart">
+          <svg id="chart" viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" style="overflow: visible;"></svg>
+          <div id="tooltip" class="chart-tooltip">
+            <div class="t-leva" id="tooltipLeva"></div>
+            <div class="t-rend" id="tooltipRendimento"></div>
+          </div>
+        </div>
+        <div class="chart-caption">Il punto <b style="color:var(--gold)">⭐</b> è il massimo teorico. Il punto <b style="color:var(--green)">●</b> è il tuo rendimento iniziale (1×).</div>
+      </section>
+
+      <!-- ESEMPI -->
+      <section class="examples">
+        <h3>Esempi</h3>
+        <div class="buttons">
+          <button data-r="8" data-rb="3" data-sigma="13">ACWI</button>
+          <button data-r="9" data-rb="3" data-sigma="12">MSCI WORLD</button>
+          <button data-r="9" data-rb="3" data-sigma="20">EMERGING</button>
+          <button data-r="10" data-rb="3" data-sigma="13">S&P 500</button>
+          <button data-r="14" data-rb="3" data-sigma="19" class="active">NASDAQ-100</button>
+          <button data-r="9" data-rb="3" data-sigma="12">GOLD</button>
+        </div>
+      </section>
+
+      <!-- MATH SVOLGIMENTO & TABELLA -->
+      <section class="math-svolgimento" id="mathSvolgimento">
+        <h3>Conti</h3>
+        <div class="math-steps" id="mathSteps"></div>
+        
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>1×</th>
+              <th id="thLstar">3,05×</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Rendimento asset</td>
+              <td id="r_asset_1">14,0%</td>
+              <td id="r_asset_L">42,7%</td>
+            </tr>
+            <tr>
+              <td>Costo leva</td>
+              <td id="cost_1">0,0%</td>
+              <td id="cost_L">6,1%</td>
+            </tr>
+            <tr>
+              <td>Rendimento prima del drag</td>
+              <td id="pre_drag_1">14,0%</td>
+              <td id="pre_drag_L">36,5%</td>
+            </tr>
+            <tr>
+              <td>Volatilità</td>
+              <td id="vol_1">19,0%</td>
+              <td id="vol_L">57,9%</td>
+            </tr>
+            <tr>
+              <td>Volatility drag</td>
+              <td id="drag_1">-1,8%</td>
+              <td id="drag_L">-16,8%</td>
+            </tr>
+            <tr>
+              <td>Rendimento geometrico stimato</td>
+              <td id="geom_1">12,2%</td>
+              <td id="geom_L">19,8%</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- SPIEGAZIONE -->
+      <section class="explain">
+        <h3>Perché?</h3>
+        <p>La leva aumenta il rendimento, ma il volatility drag cresce con il quadrato della leva. Da qualche parte, in mezzo, c'è un massimo.</p>
+      </section>
+
+      <div class="note">Modello semplificato: R(L) = L·R − (L−1)·R<sub>B</sub> − ½·(L·σ)². Il volatility drag è approssimato a −½(L·σ)². Non è consulenza finanziaria, solo un gioco di matematica.</div>
+    </main>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const rend = $("rend"), cost = $("cost"), vol = $("vol");
+
+    // Formattazione
+    const fmt = (n, d = 2) => n.toLocaleString("it-IT", { minimumFractionDigits: d, maximumFractionDigits: d });
+    const fmtPct = (n, d = 1) => fmt(n, d) + "%";
+    const fmtDec = (n) => n.toLocaleString("it-IT", { maximumFractionDigits: 6 }).replace(/^0(?=,)/, "0");
+
+    // Aggiorna il gradiente dello slider
+    function updateSlider(slider) {
+      const min = +slider.min, max = +slider.max, val = +slider.value;
+      const pct = ((val - min) / (max - min)) * 100;
+      slider.style.background = `linear-gradient(90deg, var(--accent) 0%, var(--pink) ${pct}%, #1c1c27 ${pct}%, #1c1c27 100%)`;
+    }
+
+    // Calcola il punto in cui il rendimento tocca lo zero (per limitare il grafico X)
+    function calculateLZero(R, RB, sigma) {
+      if (sigma === 0) return 10;
+      // R(L) = L*R - (L-1)*RB - 0.5*(L*sigma)^2 = 0
+      const root = ( (R - RB) + Math.sqrt( (R - RB)**2 + 2 * sigma**2 * RB ) ) / (sigma**2);
+      if (!Number.isFinite(root) || root <= 1) return 5;
+      return root;
+    }
+
+    function compute() {
+      const R = +rend.value / 100;
+      const RB = +cost.value / 100;
+      const sigma = +vol.value / 100;
+
+      updateSlider(rend);
+      updateSlider(cost);
+      updateSlider(vol);
+
+      $("returnValue").textContent = fmtPct(+rend.value);
+      $("costValue").textContent = fmtPct(+cost.value);
+      $("volValue").textContent = fmtPct(+vol.value);
+
+      const big = $("bigResult");
+      const bigRealReturn = $("bigRealReturn");
+      const realReturnBox = $("realReturnBox");
+      const mathSvolgimento = $("mathSvolgimento");
+      const metricsBox = $("metricsBox");
+
+      let Lstar_raw;
+      let isCapped = false;
+
+      if (sigma === 0) {
+        Lstar_raw = (R > RB) ? Infinity : 0;
+      } else {
+        Lstar_raw = (R - RB) / (sigma * sigma);
+      }
+
+      let Lstar = Lstar_raw;
+      if (Lstar < 1) {
+        Lstar = 1;
+        isCapped = true;
+      }
+
+      // Calcoli per 1× e L*
+      const calcMetrics = (L) => {
+        const r_asset = L * R;
+        const cost_leva = (L - 1) * RB;
+        const pre_drag = r_asset - cost_leva;
+        const vol_L = L * sigma;
+        const drag = -0.5 * (vol_L * vol_L);
+        const geom = pre_drag + drag;
+        return { r_asset, cost_leva, pre_drag, vol_L, drag, geom };
+      };
+
+      const m1 = calcMetrics(1);
+      const mL = calcMetrics(Lstar);
+
+      // Gestione visiva del risultato
+      big.classList.remove("bad", "capped");
+
+      let metricLstarText = fmt(Lstar, 2) + "×";
+
+      if (Lstar_raw === Infinity) {
+        big.textContent = "∞";
+        big.classList.add("bad");
+        metricLstarText = "∞";
+        mathSvolgimento.style.display = "none";
+        metricsBox.style.display = "none";
+        realReturnBox.style.display = "none";
+      } else if (isCapped) {
+        big.textContent = "1,00×";
+        metricLstarText = "1,00×";
+        mathSvolgimento.style.display = "none";
+        metricsBox.style.display = "none";
+        realReturnBox.style.display = "block";
+        bigRealReturn.textContent = fmtPct(m1.geom*100, 1);
+        
+        if (R <= RB) {
+          big.classList.add("bad");
+        } else {
+          big.classList.add("capped");
+        }
+      } else {
+        big.textContent = fmt(Lstar, 2) + "×";
+        mathSvolgimento.style.display = "block";
+        metricsBox.style.display = "flex";
+        realReturnBox.style.display = "block";
+        bigRealReturn.textContent = fmtPct(mL.geom*100, 1);
+        
+        // Aggiorna passaggi matematici con i colori esatti
+        const L_2 = Lstar.toFixed(2);
+        $("mathSteps").innerHTML = `
+          <div class="step">
+            <span class="frac">
+              <span class="num">${fmtPct(R*100, 1)} − ${fmtPct(RB*100, 1)}</span>
+              <span class="den">(${fmtPct(sigma*100, 1)})²</span>
+            </span>
+            <span>=</span>
+            <span class="frac">
+              <span class="num">${fmtDec(R - RB)}</span>
+              <span class="den">${fmtDec(sigma * sigma)}</span>
+            </span>
+            <span>=</span>
+            <span class="res accent-res">${fmt(Lstar, 2)}×</span>
+          </div>
+          <div class="step">
+            <span>${L_2} × ${fmtPct(R*100, 1)} − (${L_2} − 1) × ${fmtPct(RB*100, 1)}</span>
+            <span>=</span>
+            <span>${fmtPct(mL.r_asset*100, 1)} − ${fmtPct(mL.cost_leva*100, 1)}</span>
+            <span>=</span>
+            <span class="res green-res">${fmtPct(mL.pre_drag*100, 1)}</span>
+          </div>
+          <div class="step">
+            <span>− ½ × (${L_2} × ${fmtPct(sigma*100, 1)})²</span>
+            <span>=</span>
+            <span class="res red-res">${fmtPct(mL.drag*100, 1)}</span>
+          </div>
+          <div class="step">
+            <span>${fmtPct(mL.pre_drag*100, 1)} ${fmtPct(mL.drag*100, 1)}</span>
+            <span>=</span>
+            <span class="res gold-res">${fmtPct(mL.geom*100, 1)}</span>
+          </div>
+        `;
+
+        // Aggiorna Tabella (senza colori)
+        $("thLstar").textContent = metricLstarText;
+        $("r_asset_1").textContent = fmtPct(m1.r_asset*100, 1);
+        $("r_asset_L").textContent = fmtPct(mL.r_asset*100, 1);
+        $("cost_1").textContent = fmtPct(m1.cost_leva*100, 1);
+        $("cost_L").textContent = fmtPct(mL.cost_leva*100, 1);
+        $("pre_drag_1").textContent = fmtPct(m1.pre_drag*100, 1);
+        $("pre_drag_L").textContent = fmtPct(mL.pre_drag*100, 1);
+        $("vol_1").textContent = fmtPct(m1.vol_L*100, 1);
+        $("vol_L").textContent = fmtPct(mL.vol_L*100, 1);
+        $("drag_1").textContent = fmtPct(m1.drag*100, 1);
+        $("drag_L").textContent = fmtPct(mL.drag*100, 1);
+        $("geom_1").textContent = fmtPct(m1.geom*100, 1);
+        $("geom_L").textContent = fmtPct(mL.geom*100, 1);
+
+        // Aggiorna i 2 Cards rimanenti
+        $("metricR1").textContent = fmtPct(mL.pre_drag*100, 1); // Verde: Rendimento teorico con leva
+        $("metricDrag").textContent = fmtPct(mL.drag*100, 1); // Rosso: Drag subito
+      }
+
+      drawChart(R, RB, sigma, Lstar, mL.geom, isCapped);
+    }
+
+    // Step "bello" per i tick dell'asse Y e X
+    function niceStep(raw) {
+      if (raw <= 0) return 0.01;
+      const exp = Math.floor(Math.log10(raw));
+      const f = raw / Math.pow(10, exp);
+      let nice;
+      if (f < 1.5) nice = 1;
+      else if (f < 3) nice = 2;
+      else if (f < 7) nice = 5;
+      else nice = 10;
+      return nice * Math.pow(10, exp);
+    }
+
+    function drawChart(R, RB, sigma, Lstar, Rmax, isCapped) {
+      const svg = $("chart");
+      const W = 800, H = 380;
+      const padL = 64, padR = 30, padT = 28, padB = 48;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      const Lmin = 1;
+
+      let Lmax = calculateLZero(R, RB, sigma);
+      Lmax = Math.min(Lmax * 1.05, 15);
+      if (Lmax <= Lmin) Lmax = Lmin + 1.5; 
+      if (Number.isFinite(Lstar) && Lstar > Lmax) {
+         Lmax = Lstar * 1.05;
+      }
+
+      // Genera punti curva
+      const points = [];
+      for (let L = Lmin; L <= Lmax + 0.0001; L += (Lmax - Lmin) / 200) {
+        let r;
+        if (sigma === 0) {
+          r = L * R - (L - 1) * RB;
+        } else {
+          r = L * R - (L - 1) * RB - 0.5 * (L * sigma) ** 2;
+        }
+        points.push([L, r]);
+      }
+
+      // Range Y
+      let ymin = Infinity, ymax = -Infinity;
+      points.forEach(([_, r]) => {
+        ymin = Math.min(ymin, r);
+        ymax = Math.max(ymax, r);
+      });
+      
+      const R1_geom = R - 0.5 * sigma * sigma;
+      
+      ymin = Math.min(ymin, 0);
+      ymax = Math.max(ymax, Rmax, R1_geom);
+      const yrange = (ymax - ymin) || 1;
+      ymin -= yrange * 0.12;
+      ymax += yrange * 0.12;
+
+      const xScale = L => padL + ((L - Lmin) / (Lmax - Lmin)) * plotW;
+      const yScale = r => padT + (1 - (r - ymin) / (ymax - ymin)) * plotH;
+
+      let path = "";
+      points.forEach(([L, r], i) => {
+        const x = xScale(L);
+        const y = yScale(r);
+        path += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
+      });
+
+      const y0 = yScale(Math.max(ymin, 0));
+      let areaPath = path + ` L${xScale(Lmax).toFixed(1)},${y0.toFixed(1)} L${xScale(Lmin).toFixed(1)},${y0.toFixed(1)} Z`;
+
+      // Ticks Y
+      const yTicks = [];
+      const yStep = niceStep((ymax - ymin) / 5);
+      for (let v = Math.ceil(ymin / yStep) * yStep; v <= ymax + 1e-9; v += yStep) {
+        yTicks.push(v);
+      }
+
+      // Ticks X
+      const xTicks = [];
+      let xStep = niceStep((Lmax - Lmin) / 5);
+      if (xStep <= 0) xStep = (Lmax - Lmin) / 5;
+      for (let v = Lmin; v <= Lmax + 1e-9; v += xStep) {
+        xTicks.push(v);
+      }
+
+      const xAxisY = padT + plotH;
+      let s = "";
+
+      // DEFS
+      s += `<defs>
+        <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#9d7cff"/>
+          <stop offset="55%" stop-color="#ff6fae"/>
+          <stop offset="100%" stop-color="#ffd166"/>
+        </linearGradient>
+        <linearGradient id="areaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#9d7cff" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#9d7cff" stop-opacity="0"/>
+        </linearGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="6" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>`;
+
+      // Labels Assi
+      s += `<text x="${padL}" y="${padT - 12}" text-anchor="start" fill="#8e8e9d" font-size="10" font-weight="800" letter-spacing="2" font-family="Inter, sans-serif">RENDIMENTO</text>`;
+      s += `<text x="${(padL + W - padR) / 2}" y="${xAxisY + 42}" text-anchor="middle" fill="#8e8e9d" font-size="10" font-weight="800" letter-spacing="2" font-family="Inter, sans-serif">LEVA</text>`;
+
+      // Grid Y
+      yTicks.forEach(v => {
+        const y = yScale(v);
+        s += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#23232e" stroke-width="1" stroke-dasharray="2,5"/>`;
+        s += `<text x="${padL - 10}" y="${y + 4}" text-anchor="end" fill="#8e8e9d" font-size="11" font-family="Inter, sans-serif">${fmt(v * 100, 0)}%</text>`;
+      });
+
+      if (ymin < 0 && ymax > 0) {
+        s += `<line x1="${padL}" y1="${yScale(0)}" x2="${W - padR}" y2="${yScale(0)}" stroke="#3a3a48" stroke-width="1.5"/>`;
+      }
+
+      // Asse X
+      s += `<line x1="${padL}" y1="${xAxisY}" x2="${W - padR}" y2="${xAxisY}" stroke="#3a3a48" stroke-width="1.5"/>`;
+      xTicks.forEach(t => {
+        const x = xScale(t);
+        s += `<line x1="${x}" y1="${xAxisY}" x2="${x}" y2="${xAxisY + 6}" stroke="#3a3a48" stroke-width="1.5"/>`;
+        const label = Number.isInteger(t) ? t : t.toFixed(1);
+        s += `<text x="${x}" y="${xAxisY + 22}" text-anchor="middle" fill="#8e8e9d" font-size="11" font-family="Inter, sans-serif">${label}×</text>`;
+      });
+
+      // Area
+      s += `<path d="${areaPath}" fill="url(#areaGrad)"/>`;
+
+      // PUNTO VERDE (1×, R_geometrico_1)
+      const x1 = xScale(1);
+      const y1 = yScale(R1_geom);
+      s += `<line x1="${x1}" y1="${y1}" x2="${x1}" y2="${xAxisY}" stroke="#55e6a5" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6"/>`;
+      s += `<line x1="${padL}" y1="${y1}" x2="${x1}" y2="${y1}" stroke="#55e6a5" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6"/>`;
+      s += `<rect x="${x1 - 30}" y="${xAxisY + 28}" width="60" height="20" rx="6" fill="#55e6a5" opacity="0.12"/>`;
+      s += `<text x="${x1}" y="${xAxisY + 42}" text-anchor="middle" fill="#55e6a5" font-size="11.5" font-weight="800" font-family="Inter, sans-serif">1×</text>`;
+      s += `<rect x="${padL - 58}" y="${y1 - 11}" width="52" height="22" rx="6" fill="#55e6a5" opacity="0.12"/>`;
+      s += `<text x="${padL - 32}" y="${y1 + 4}" text-anchor="middle" fill="#55e6a5" font-size="11.5" font-weight="800" font-family="Inter, sans-serif">${fmt(R1_geom * 100, 1)}%</text>`;
+
+      // PUNTO ORO (L*, Rmax)
+      const xMax = xScale(Math.min(Lstar, Lmax));
+      const yMax = yScale(Rmax);
+      if (Lstar > 1 && Lstar <= Lmax) {
+        s += `<line x1="${xMax}" y1="${yMax}" x2="${xMax}" y2="${xAxisY}" stroke="#ffd166" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.75"/>`;
+        s += `<line x1="${padL}" y1="${yMax}" x2="${xMax}" y2="${yMax}" stroke="#ffd166" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.75"/>`;
+        s += `<rect x="${xMax - 34}" y="${xAxisY + 28}" width="68" height="20" rx="6" fill="#ffd166" opacity="0.16"/>`;
+        s += `<text x="${xMax}" y="${xAxisY + 42}" text-anchor="middle" fill="#ffd166" font-size="11.5" font-weight="800" font-family="Inter, sans-serif">${fmt(Lstar, 2)}×</text>`;
+        s += `<rect x="${padL - 58}" y="${yMax - 11}" width="52" height="22" rx="6" fill="#ffd166" opacity="0.16"/>`;
+        s += `<text x="${padL - 32}" y="${yMax + 4}" text-anchor="middle" fill="#ffd166" font-size="11.5" font-weight="800" font-family="Inter, sans-serif">${fmt(Rmax * 100, 1)}%</text>`;
+      }
+
+      // Curva
+      s += `<path d="${path}" fill="none" stroke="url(#curveGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>`;
+
+      // Disegna Punti
+      if (Lstar > 1 && Lstar <= Lmax) {
+        s += `<circle cx="${xMax}" cy="${yMax}" r="18" fill="#ffd166" opacity="0.18" filter="url(#glowStrong)"/>`;
+        s += `<circle cx="${xMax}" cy="${yMax}" r="9" fill="#09090d" stroke="#ffd166" stroke-width="3"/>`;
+        s += `<circle cx="${xMax}" cy="${yMax}" r="3.5" fill="#ffd166"/>`;
+      }
+      s += `<circle cx="${x1}" cy="${y1}" r="16" fill="#55e6a5" opacity="0.18" filter="url(#glowStrong)"/>`;
+      s += `<circle cx="${x1}" cy="${y1}" r="8" fill="#09090d" stroke="#55e6a5" stroke-width="3"/>`;
+      s += `<circle cx="${x1}" cy="${y1}" r="3.5" fill="#55e6a5"/>`;
+
+      // HOVER LAYER
+      s += `<rect id="plotHover" x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" pointer-events="all"/>`;
+      s += `<circle id="hoverPoint" r="6" fill="#09090d" stroke="#fff" stroke-width="2.5" style="opacity:0; pointer-events:none;"/>`;
+
+      svg.innerHTML = s;
+
+      // Logica Tooltip Hover
+      const plotHover = $("plotHover");
+      const tooltip = $("tooltip");
+      const chartContainer = document.querySelector('.chart');
+      
+      if (plotHover) {
+        plotHover.addEventListener("mousemove", (e) => {
+          const pt = new DOMPoint(e.clientX, e.clientY);
+          const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+          let L = (svgP.x - padL) / plotW * (Lmax - Lmin) + Lmin;
+          L = Math.max(Lmin, Math.min(L, Lmax));
+
+          let R_val;
+          if (sigma === 0) {
+            R_val = L * R - (L - 1) * RB;
+          } else {
+            R_val = L * R - (L - 1) * RB - 0.5 * (L * sigma) ** 2;
+          }
+
+          const exactX = xScale(L);
+          const exactY = yScale(R_val);
+
+          $("hoverPoint").setAttribute("cx", exactX);
+          $("hoverPoint").setAttribute("cy", exactY);
+          $("hoverPoint").style.opacity = 1;
+
+          const svgRect = svg.getBoundingClientRect();
+          const wrapRect = chartContainer.getBoundingClientRect();
+          
+          const xPx = svgRect.left - wrapRect.left + (exactX / W) * svgRect.width;
+          const yPx = svgRect.top - wrapRect.top + (exactY / H) * svgRect.height;
+
+          tooltip.style.left = `${xPx}px`;
+          tooltip.style.top = `${yPx}px`;
+          tooltip.style.opacity = 1;
+
+          $("tooltipLeva").textContent = `Leva: ${fmt(L, 2)}×`;
+          $("tooltipRendimento").textContent = `Rendimento: ${fmt(R_val * 100, 2)}%`;
+        });
+
+        plotHover.addEventListener("mouseleave", () => {
+          $("hoverPoint").style.opacity = 0;
+          tooltip.style.opacity = 0;
+        });
+      }
+    }
+
+    // Eventi
+    [rend, cost, vol].forEach(slider => {
+      slider.addEventListener("input", () => {
+        document.querySelectorAll(".buttons button").forEach(b => b.classList.remove("active"));
+        compute();
+      });
+    });
+
+    document.querySelectorAll(".buttons button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        rend.value = btn.dataset.r;
+        cost.value = btn.dataset.rb;
+        vol.value = btn.dataset.sigma;
+        document.querySelectorAll(".buttons button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        compute();
+      });
+    });
+
+    compute();
+  </script>
+</body>
+
+</html>
