@@ -387,20 +387,19 @@
     position: absolute;
     top: 0;
     left: 0;
-    /* Cambiato opacità per effetto trasparenza */
     background: rgba(10, 11, 14, 0.55);
     border: 1px solid rgba(217, 164, 91, 0.4);
     border-radius: 3px;
     padding: 10px 14px;
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    pointer-events: none;
+    pointer-events: none; /* Il tooltip in generale non blocca il mouse */
     z-index: 10;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 8px 28px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.3);
     opacity: 0;
     transition: opacity 0.15s ease;
-    max-width: 360px;
+    max-width: 320px;
     will-change: transform, opacity;
   }
 
@@ -421,13 +420,21 @@
 
   .tt-formula {
     color: var(--fg);
-    font-size: 14px;
+    font-size: 11px; /* Font ridotto per numeri grandi */
     font-variant-numeric: tabular-nums;
     line-height: 1.4;
     margin-bottom: 6px;
-    max-width: 320px;
+    max-width: 260px;
+    max-height: 100px; /* Altezza massima per attivare lo scroll */
+    overflow-y: auto;  /* Scorre se troppo lungo */
     overflow-wrap: anywhere;
+    padding-right: 4px;
+    pointer-events: auto; /* PERMETTE di usare lo scroll del testo */
   }
+
+  .tt-formula::-webkit-scrollbar { width: 4px; }
+  .tt-formula::-webkit-scrollbar-track { background: transparent; }
+  .tt-formula::-webkit-scrollbar-thumb { background: rgba(217,164,91,0.4); border-radius: 2px; }
 
   .tt-formula .op { color: var(--accent); margin: 0 4px; }
   .tt-formula .eq { color: var(--fg-mute); margin: 0 6px; }
@@ -513,7 +520,7 @@
     .canvas-wrap { height: 340px; }
     .btn { padding: 13px 32px; letter-spacing: 0.18em; }
     .subtitle { font-size: 13.5px; }
-    .tt-formula { font-size: 12px; }
+    .tt-formula { font-size: 10px; max-width: 180px; max-height: 80px; }
     .hint { font-size: 10px; }
   }
 
@@ -577,7 +584,7 @@
 
       <div class="canvas-wrap">
         <canvas id="trail"></canvas>
-        <span class="canvas-axis">y = log₁₀(n) · x = step · scroll to zoom · drag to pan · press H for tooltip</span>
+        <span class="canvas-axis">y = log₁₀(n) · x = step · scroll: zoom · drag: pan · click: pin · H: toggle</span>
 
         <div class="tooltip" id="tooltip" aria-hidden="true">
           <span class="tt-step">Step <span id="ttStep">0</span><span class="tt-total" id="ttTotal"></span></span>
@@ -661,6 +668,12 @@
   // Nuova variabile di stato per il toggle dell'hover
   let hoverEnabled = true;
 
+  // Variabili per il Pin del Tooltip
+  let isTooltipPinned = false;
+  let pinnedIdx = -1;
+  let pinnedX = 0;
+  let pinnedY = 0;
+
   // Zoom & Pan State
   let visibleStart = 0;
   let visibleEnd = 1;
@@ -678,9 +691,11 @@
 
   // Dragging state
   let isDragging = false;
+  let dragOccurred = false;
   let dragStartX = 0;
   let dragStartVisibleStart = 0;
   let dragStartVisibleEnd = 0;
+  let clickTimer = null;
 
   const collatz = {
     current: 0n,
@@ -756,6 +771,10 @@
     visibleMaxLog = collatz.maxLog;
     visibleMinLog = 0;
     
+    // Reset pin state
+    isTooltipPinned = false;
+    pinnedIdx = -1;
+    
     collatz.estTotalSteps = Math.max(50, startLog * 23.1);
   }
 
@@ -812,8 +831,6 @@
     const drawH = Math.max(1, H - 2 * PADDING);
     const range = Math.max(1, visibleEnd - visibleStart);
     
-    // Calculate visibleMinLog and visibleMaxLog to allow Y-axis auto-rescaling on zoom
-    // This makes the lowest point touch the bottom and the highest touch the top
     visibleMaxLog = -Infinity;
     visibleMinLog = Infinity;
     
@@ -825,18 +842,15 @@
         if (collatz.logs[i] < visibleMinLog) visibleMinLog = collatz.logs[i];
     }
     
-    // Handle edge case where all visible values have the same log
     if (visibleMaxLog === visibleMinLog) {
         visibleMaxLog += 0.5;
         visibleMinLog -= 0.5;
     } else {
-        // Add a tiny 2% padding top and bottom so the line doesn't touch the extreme edges
         const logRange = visibleMaxLog - visibleMinLog;
         visibleMaxLog += logRange * 0.02;
         visibleMinLog -= logRange * 0.02;
     }
 
-    // Ensure coords array is large enough
     if (coords.length < N) {
       for (let i = coords.length; i < N; i++) {
         coords[i] = { x: 0, y: 0, val: 0n };
@@ -845,7 +859,6 @@
       coords.length = N;
     }
 
-    // Only compute coordinates for the visible portion (+ margin for clean lines)
     const margin = 2;
     const compStart = Math.max(0, startIdx - margin);
     const compEnd = Math.min(N - 1, endIdx + margin);
@@ -854,7 +867,6 @@
       const c = coords[i];
       if (!c) continue;
       c.x = PADDING + ((i - visibleStart) / range) * drawW;
-      // Normalize Y between visibleMinLog and visibleMaxLog
       c.y = H - PADDING - ((collatz.logs[i] - visibleMinLog) / (visibleMaxLog - visibleMinLog)) * drawH;
       c.val = collatz.sequence[i];
     }
@@ -1089,6 +1101,10 @@
 
   /* ===== Hover index computation ===== */
   function updateHoverIndex() {
+    if (isTooltipPinned) {
+      hoverIdx = pinnedIdx;
+      return;
+    }
     if (!hoverEnabled || !mouseInCanvas || isRolling || isDragging || collatz.sequence.length < 2) {
       if (hoverIdx !== -1) hoverIdx = -1;
       return;
@@ -1110,7 +1126,15 @@
   }
 
   function updateTooltipFromHover() {
-    if (!hoverEnabled || hoverIdx < 0 || !mouseInCanvas) {
+    if (!hoverEnabled) {
+      hideTooltip();
+      return;
+    }
+    if (isTooltipPinned) {
+      updateTooltip(pinnedIdx, pinnedX, pinnedY);
+      return;
+    }
+    if (hoverIdx < 0 || !mouseInCanvas) {
       hideTooltip();
       return;
     }
@@ -1161,12 +1185,10 @@
         lastPeak = collatz.peak;
       }
 
-      // Calculate dynamic progress percentage
       let progress = 0;
       if (collatz.done) {
         progress = 100;
       } else {
-        // If steps exceed the estimate, dynamically shift the target to prevent 100% from freezing before it's done
         if (collatz.steps > collatz.estTotalSteps * 0.95) {
             collatz.estTotalSteps = collatz.steps * 1.2 + 50;
         }
@@ -1214,6 +1236,7 @@
     }
     isAnimating = false;
     hoverIdx = -1;
+    isTooltipPinned = false; // Reset pin on new experiment
     hideTooltip();
 
     btn.disabled = true;
@@ -1407,8 +1430,10 @@
   function handleMouseLeave() {
     if (isDragging) return; // keep panning even if mouse leaves canvas
     mouseInCanvas = false;
-    hoverIdx = -1;
-    hideTooltip();
+    if (!isTooltipPinned) {
+      hoverIdx = -1;
+      hideTooltip();
+    }
     if (!isAnimating && collatz.sequence.length > 0) draw();
   }
 
@@ -1416,11 +1441,12 @@
   canvas.addEventListener('mouseenter', handleMouseEnter);
   canvas.addEventListener('mouseleave', handleMouseLeave);
 
-  /* ===== Drag to Pan ===== */
+  /* ===== Drag to Pan & Click to Pin ===== */
   canvas.addEventListener('mousedown', (e) => {
     if (collatz.sequence.length < 2) return;
     e.preventDefault();
     
+    dragOccurred = false; // reset flag
     isDragging = true;
     const rect = canvas.getBoundingClientRect();
     dragStartX = e.clientX - rect.left;
@@ -1428,11 +1454,18 @@
     dragStartVisibleEnd = visibleEnd;
     isAutoTracking = false;
     canvas.style.cursor = 'grabbing';
-    hideTooltip();
+    
+    // Se stiamo per trascinare, togliamo il pin così il tooltip segue il mouse o scompare
+    if (isTooltipPinned) {
+        isTooltipPinned = false;
+        pinnedIdx = -1;
+        hideTooltip();
+    }
   });
 
   function handlePan(e) {
     if (!isDragging) return;
+    dragOccurred = true; // mark as drag
     
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
@@ -1452,13 +1485,11 @@
         newEnd = newStart + range;
     }
     
-    // Durante l'animazione non puoi spostarti a destra del punto corrente
     if (isAnimating && newEnd < (N - 1)) {
         newEnd = N - 1;
         newStart = newEnd - range;
         if (newStart < 0) newStart = 0;
     } else if (!isAnimating && newEnd > N - 1) {
-        // A fine calcolo non puoi superare il limite destro
         newEnd = N - 1;
         newStart = newEnd - range;
         if (newStart < 0) newStart = 0;
@@ -1479,15 +1510,51 @@
     if (isDragging) {
         isDragging = false;
         canvas.style.cursor = 'grab';
-        // Aggiorna l'hover basandosi sulla posizione attuale del mouse
-        const rect = canvas.getBoundingClientRect();
-        // Controlla se il mouse è ancora dentro il canvas
         if (lastMouseX >= 0 && lastMouseX <= W && lastMouseY >= 0 && lastMouseY <= H) {
             mouseInCanvas = true;
             updateHoverIndex();
             updateTooltipFromHover();
         }
     }
+  });
+
+  // Click logic with delay to distinguish from dblclick
+  canvas.addEventListener('click', (e) => {
+    if (dragOccurred) {
+        dragOccurred = false; // consume event
+        return;
+    }
+    
+    clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => {
+        if (!hoverEnabled || collatz.sequence.length < 2) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        if (isTooltipPinned) {
+            // Unpin
+            isTooltipPinned = false;
+            pinnedIdx = -1;
+            // Restore hover based on current mouse pos
+            lastMouseX = mx;
+            lastMouseY = my;
+            mouseInCanvas = true;
+            updateHoverIndex();
+            updateTooltipFromHover();
+        } else {
+            // Pin
+            if (hoverIdx >= 0) {
+                isTooltipPinned = true;
+                pinnedIdx = hoverIdx;
+                pinnedX = mx;
+                pinnedY = my;
+                updateTooltip(pinnedIdx, pinnedX, pinnedY);
+            }
+        }
+        if (!isAnimating) draw();
+    }, 200); // 200ms wait to see if a dblclick happens
   });
 
   // Zoom functionality
@@ -1503,7 +1570,6 @@
     let newStart, newEnd;
     
     if (isAnimating) {
-        // Durante l'animazione, zoom ancorato al 100% a destra (tracerIdx)
         const tracerRatio = 1.0;
         const newRange = oldRange * zoomFactor;
         
@@ -1520,7 +1586,6 @@
         }
         isAutoTracking = false;
     } else {
-        // A calcolo finito, zoom ancorato al mouse
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         
@@ -1544,13 +1609,10 @@
         isAutoTracking = false;
     }
     
-    // Boundary clamping that preserves the zoom window
     if (newStart < 0) {
         newEnd -= newStart;
         newStart = 0;
     }
-    // Durante l'animazione non clampiamo newEnd a N-1, perché visibleEnd DEVE essere > N-1 
-    // per lasciare spazio a destra e mantenere il tracer all'80%.
     if (!isAnimating && newEnd > N - 1) {
         newStart -= (newEnd - (N - 1));
         newEnd = N - 1;
@@ -1568,6 +1630,7 @@
   // Double-click to reset zoom & pan
   canvas.addEventListener('dblclick', (e) => {
     e.preventDefault();
+    clearTimeout(clickTimer); // cancel the pin click logic
     if (collatz.sequence.length < 2) return;
     isAutoTracking = true;
     updateCoords();
@@ -1576,17 +1639,17 @@
 
   /* ===== Keyboard shortcuts ===== */
   window.addEventListener('keydown', (e) => {
-    // Evita di interferire mentre si scrive nell'input
     if (e.target === startEl) return;
     
     if (e.key.toLowerCase() === 'h') {
       hoverEnabled = !hoverEnabled;
       
       if (!hoverEnabled) {
+        isTooltipPinned = false; // also unpin when disabling
+        pinnedIdx = -1;
         hideTooltip();
       }
       
-      // Mostra un feedback temporaneo nel hint text
       const previousText = hintEl.textContent;
       const wasIdle = hintEl.classList.contains('idle');
       
