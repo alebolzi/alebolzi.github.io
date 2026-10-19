@@ -605,11 +605,11 @@
 
             <div class="comparison-item magnetic" data-rotate="0">
                 <div class="comparison-left">
-                    <div class="comparison-name">🍎 TIM COOK</div>
-                    <div class="comparison-desc">CEO Apple</div>
+                    <div class="comparison-name">🎬 MRBEAST</div>
+                    <div class="comparison-desc">YouTuber e imprenditore</div>
                 </div>
                 <div class="comparison-right">
-                    <div class="comparison-value" id="timCookCounter">€0.00</div>
+                    <div class="comparison-value" id="mrBeastCounter">€0.00</div>
                     <div class="comparison-unit">accumulati</div>
                 </div>
             </div>
@@ -650,7 +650,7 @@
         // ============================================
 
         const CR7_PER_SECOND = 7;
-        const TIMCOOK_PER_SECOND = 2.35;
+        const MRBEAST_PER_SECOND = 21;
         const ELON_PER_SECOND = 3170;
 
         // ELEMENTI DOM
@@ -831,7 +831,7 @@
 
             // LORO accumulano in tempo reale!
             document.getElementById('cr7Counter').textContent = formatCurrency(elapsedSeconds * CR7_PER_SECOND, 2);
-            document.getElementById('timCookCounter').textContent = formatCurrency(elapsedSeconds * TIMCOOK_PER_SECOND, 2);
+            document.getElementById('mrBeastCounter').textContent = formatCurrency(elapsedSeconds * MRBEAST_PER_SECOND, 2);
             document.getElementById('elonCounter').textContent = formatCurrency(elapsedSeconds * ELON_PER_SECOND, 2);
 
             // Timer
@@ -925,7 +925,7 @@
 
             // Resetta LORO a zero!
             document.getElementById('cr7Counter').textContent = '€0.00';
-            document.getElementById('timCookCounter').textContent = '€0.00';
+            document.getElementById('mrBeastCounter').textContent = '€0.00';
             document.getElementById('elonCounter').textContent = '€0.00';
 
             if (intervalId) {
