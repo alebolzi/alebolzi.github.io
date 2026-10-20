@@ -114,7 +114,15 @@
       -webkit-text-fill-color: transparent;
     }
 
-    .sub { color: var(--muted); font-size: clamp(.95rem, 1.6vw, 1.08rem); max-width: 560px; margin: 0 auto; }
+    .sub { color: var(--muted); font-size: clamp(.95rem, 1.6vw, 1.08rem); max-width: 620px; margin: 0 auto; line-height: 1.55; }
+    .sub-highlight {
+      font-weight: 800;
+      background: linear-gradient(120deg, var(--accent) 0%, var(--pink) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -.01em;
+    }
 
     /* CONTROLS */
     .controls {
@@ -339,11 +347,12 @@
 
     .sub-stats {
       display: flex;
-      gap: clamp(14px, 3vw, 26px);
+      gap: clamp(10px, 2vw, 18px);
       margin-top: 14px;
       flex-wrap: wrap;
-      font-size: .85rem;
+      font-size: .88rem;
       color: var(--muted);
+      align-items: center;
     }
     .sub-stats b {
       color: var(--text);
@@ -534,7 +543,7 @@
     <header>
       <div class="eyebrow">Calcolatore · Plusvalenze</div>
       <h1>Break-even <span>fiscale</span></h1>
-      <p class="sub">Vuoi trasferirti per pagare meno tasse? Confronta la tua plusvalenza con il break-even per capire se il trasferimento vale la pena!</p>
+      <p class="sub"><span class="sub-highlight">Vuoi trasferirti per pagare meno tasse?</span><br>Confronta la tua plusvalenza con il break-even per capire se il trasferimento vale la pena!</p>
     </header>
 
     <section class="controls" aria-label="Controlli">
@@ -585,7 +594,7 @@
 
     <section class="result" aria-live="polite">
       <div class="result-top">
-        <div class="result-label">Surplus rispetto al break-even</div>
+        <div class="result-label">Guadagno netto</div>
         <div class="status positive" id="status">Scenario conveniente</div>
       </div>
       <div id="result">+22.000 €</div>
@@ -593,6 +602,8 @@
         <span>Break-even: <b id="beVal">178.571 €</b></span>
         <span class="sep">·</span>
         <span>La tua plusvalenza: <b id="yourVal">200.000 €</b></span>
+        <span class="sep">·</span>
+        <span>Surplus: <b id="surplusVal">+22.000 €</b></span>
       </div>
 
       <div class="meter">
@@ -635,6 +646,7 @@
     const resultCard = document.querySelector('.result');
     const beValEl = document.querySelector('#beVal');
     const yourValEl = document.querySelector('#yourVal');
+    const surplusValEl = document.querySelector('#surplusVal');
     const fillEl = document.querySelector('#fill');
     const beMarkerEl = document.querySelector('#beMarker');
     const meterMaxEl = document.querySelector('#meterMax');
@@ -681,18 +693,26 @@
 
       if (diff <= 0) {
         // Nessun break-even possibile
-        resultEl.textContent = 'Nessun break-even';
+        // Calcoli fiscali comunque utili: tasse origine vs estero sulla plusvalenza
+        const taxInOrigin = yourVal * (it / 100);
+        const taxInForeign = yourVal * (ext / 100);
+        const netGain = taxInOrigin - taxInForeign - c; // guadagno netto
+
+        resultEl.textContent = euroSign(netGain);
         resultEl.classList.add('negative');
         resultCard.classList.add('negative');
         statusEl.textContent = 'Scenario non conveniente';
         statusEl.classList.add('negative');
         beValEl.textContent = '—';
         yourValEl.textContent = euro(yourVal);
+        surplusValEl.textContent = '—';
+
         fillEl.className = 'fill negative';
         fillEl.style.width = '0%';
         beMarkerEl.style.left = '100%';
         beMarkerEl.classList.add('inverted');
         meterMaxEl.textContent = euro(yourVal || 100000);
+        pop(resultEl, 'res', resultEl.textContent);
         return;
       }
 
@@ -700,14 +720,21 @@
       const surplus = yourVal - be;    // positivo = sopra il BE, negativo = sotto
       const surplusPct = surplus / be; // margine rispetto al BE
 
+      // TAX: guadagno netto = risparmio fiscale - costo trasferimento
+      const taxInOrigin = yourVal * (it / 100);
+      const taxInForeign = yourVal * (ext / 100);
+      const taxSaving = taxInOrigin - taxInForeign;
+      const netGain = taxSaving - c;   // <-- questo è il dato principale mostrato in grande
+
       beValEl.textContent = euro(be);
       yourValEl.textContent = euro(yourVal);
+      surplusValEl.textContent = euroSign(surplus);
 
-      // Numero principale: surplus/deficit firmato
-      resultEl.textContent = euroSign(surplus);
+      // Numero principale: GUADAGNO NETTO (firmato)
+      resultEl.textContent = euroSign(netGain);
 
-      // Stati
-      if (surplus < 0) {
+      // Stati basati sul guadagno netto
+      if (netGain < 0) {
         resultEl.classList.add('negative');
         resultCard.classList.add('negative');
         statusEl.textContent = 'Scenario non conveniente';
