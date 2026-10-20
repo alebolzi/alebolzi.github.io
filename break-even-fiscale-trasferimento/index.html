@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Break-even fiscale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900;950&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090d;
+      --card: #111119;
+      --card2: #171721;
+      --card3: #1c1c28;
+      --text: #f5f5f7;
+      --muted: #8e8e9d;
+      --line: #282833;
+      --line2: #34343f;
+      --accent: #9d7cff;
+      --accent-2: #b79bff;
+      --green: #55e6a5;
+      --gold: #ffd166;
+      --pink: #ff6fae;
+      --red: #ff5d6c;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; min-height: 100%; margin: 0; }
+
+    body {
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 50% -10%, #211747 0, transparent 38%),
+        radial-gradient(circle at 10% 90%, #111b2b 0, transparent 28%),
+        radial-gradient(circle at 90% 10%, #1a0e2b 0, transparent 30%),
+        var(--bg);
+      background-attachment: fixed;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      padding: 24px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    body::before, body::after {
+      content: "";
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: .35;
+      animation: float 18s ease-in-out infinite;
+    }
+    body::before { width: 360px; height: 360px; background: var(--accent); top: -120px; right: -100px; }
+    body::after { width: 320px; height: 320px; background: var(--pink); bottom: -120px; left: -100px; animation-delay: -9s; opacity: .22; }
+    @keyframes float {
+      0%,100% { transform: translate(0,0) scale(1); }
+      50% { transform: translate(30px, -30px) scale(1.08); }
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      width: min(940px, 100%);
+      background: rgba(13, 13, 20, .82);
+      border: 1px solid var(--line);
+      border-radius: clamp(20px, 3vw, 30px);
+      padding: clamp(22px, 3.2vw, 40px);
+      box-shadow: 0 30px 100px #000a, inset 0 1px 0 rgba(255,255,255,.04);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    header { text-align: center; margin-bottom: clamp(20px, 3vh, 32px); }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .5; transform: scale(.7); }
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 6.5vw, 4.2rem);
+      line-height: .92;
+      margin: 14px 0 10px;
+      font-weight: 950;
+      letter-spacing: -.06em;
+    }
+    h1 span {
+      background: linear-gradient(120deg, var(--accent) 0%, var(--pink) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sub { color: var(--muted); font-size: clamp(.95rem, 1.6vw, 1.08rem); max-width: 560px; margin: 0 auto; }
+
+    /* CONTROLS */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: clamp(22px, 3vh, 30px);
+    }
+
+    .control {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, var(--card2) 0%, var(--card) 100%);
+      border: 1px solid var(--line);
+      padding: clamp(12px, 1.6vw, 20px);
+      border-radius: clamp(16px, 2vw, 22px);
+      transition: border-color .25s ease, transform .25s ease;
+    }
+    .control:hover { border-color: var(--line2); transform: translateY(-2px); }
+    .control::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -60px auto;
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: .06;
+      filter: blur(20px);
+      pointer-events: none;
+    }
+    .control.highlight {
+      border-color: rgba(157,124,255,.45);
+      box-shadow: 0 0 0 1px rgba(157,124,255,.15), 0 0 30px rgba(157,124,255,.15);
+    }
+
+    .label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: 700;
+      letter-spacing: .01em;
+      gap: 6px;
+    }
+    .label .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .62rem;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(157,124,255,.12);
+      color: var(--accent-2);
+      border: 1px solid rgba(157,124,255,.25);
+      white-space: nowrap;
+    }
+
+    .value {
+      font-size: clamp(1.25rem, 2vw, 1.65rem);
+      font-weight: 900;
+      color: var(--text);
+      margin: 8px 0 14px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.02em;
+      transition: color .2s ease;
+    }
+
+    /* SLIDER */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 9px;
+      margin: 7px 0 3px;
+      background: transparent;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 9px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--pink) var(--pct, 50%), #1c1c27 var(--pct, 50%), #1c1c27 100%);
+    }
+    input[type="range"]::-moz-range-track {
+      height: 9px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--pink) var(--pct, 50%), #1c1c27 var(--pct, 50%), #1c1c27 100%);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 0 2px rgba(157,124,255,.25), 0 0 14px rgba(157,124,255,.7);
+      transition: transform .15s ease, box-shadow .15s ease;
+      margin-top: -5px;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+      box-shadow: 0 0 0 4px rgba(157,124,255,.18), 0 0 22px rgba(255,111,174,.85);
+    }
+    input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.28); }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 0 2px rgba(157,124,255,.25), 0 0 14px rgba(157,124,255,.7);
+      cursor: pointer;
+    }
+
+    .range {
+      display: flex;
+      justify-content: space-between;
+      color: #666675;
+      font-size: .65rem;
+      margin-top: 5px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .hint { color: #6b6b7a; font-size: .7rem; margin: 8px 0 0; line-height: 1.45; }
+
+    /* RESULT CARD */
+    .result {
+      position: relative;
+      margin-top: clamp(24px, 3vh, 32px);
+      padding: clamp(20px, 3vw, 30px);
+      border-radius: clamp(20px, 2.5vw, 26px);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(157,124,255,.18) 0, transparent 50%),
+        radial-gradient(circle at 0% 100%, rgba(255,111,174,.12) 0, transparent 50%),
+        linear-gradient(180deg, #1a1726 0%, #110f1c 100%);
+      border: 1px solid #40315e;
+      overflow: hidden;
+      transition: border-color .3s ease;
+    }
+    .result.low { border-color: rgba(255,209,102,.35); }
+    .result.negative { border-color: rgba(255,93,108,.4); }
+    .result::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.04) 50%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .result-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .result-label {
+      color: #c7b8f7;
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .74rem;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 999px;
+      letter-spacing: .04em;
+      transition: all .3s ease;
+    }
+    .status::before {
+      content: "";
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      box-shadow: 0 0 10px currentColor;
+    }
+    .status.positive {
+      background: rgba(85,230,165,.12);
+      color: var(--green);
+      border: 1px solid rgba(85,230,165,.3);
+    }
+    .status.positive::before { background: var(--green); }
+    .status.low {
+      background: rgba(255,209,102,.12);
+      color: var(--gold);
+      border: 1px solid rgba(255,209,102,.35);
+    }
+    .status.low::before { background: var(--gold); }
+    .status.negative {
+      background: rgba(255,93,108,.12);
+      color: var(--red);
+      border: 1px solid rgba(255,93,108,.3);
+    }
+    .status.negative::before { background: var(--red); }
+
+    #result {
+      font-size: clamp(2.8rem, 9vw, 4.5rem);
+      font-weight: 950;
+      letter-spacing: -.05em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      background: linear-gradient(120deg, #fff 0%, #b8f5d8 60%, var(--green) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      transition: filter .3s ease;
+    }
+    #result.low {
+      background: linear-gradient(120deg, #fff 0%, #ffe8b0 60%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    #result.negative {
+      background: linear-gradient(120deg, #fff 0%, #ffb8c0 60%, var(--red) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sub-stats {
+      display: flex;
+      gap: clamp(14px, 3vw, 26px);
+      margin-top: 14px;
+      flex-wrap: wrap;
+      font-size: .85rem;
+      color: var(--muted);
+    }
+    .sub-stats b {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+    }
+    .sub-stats .sep { color: #3a3a48; }
+
+    /* COMPARISON METER */
+    .meter {
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px dashed rgba(157,124,255,.2);
+    }
+    .meter-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .meter-top strong { font-size: .95rem; font-weight: 800; }
+
+    .track {
+      position: relative;
+      height: 22px;
+      background: #08080c;
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      overflow: visible;
+    }
+    .track-inner {
+      position: absolute;
+      inset: 0;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .fill {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--pink) 100%);
+      transition: width .45s cubic-bezier(.2,.7,.3,1), background .3s ease;
+      box-shadow: 0 0 20px rgba(157,124,255,.5);
+    }
+    .fill.low {
+      background: linear-gradient(90deg, var(--gold) 0%, var(--accent) 100%);
+      box-shadow: 0 0 20px rgba(255,209,102,.45);
+    }
+    .fill.negative {
+      background: linear-gradient(90deg, var(--red) 0%, var(--gold) 100%);
+      box-shadow: 0 0 20px rgba(255,93,108,.4);
+    }
+
+    /* BE marker */
+    .be-marker {
+      position: absolute;
+      top: -4px;
+      bottom: -4px;
+      width: 3px;
+      background: linear-gradient(180deg, var(--green), var(--accent));
+      border-radius: 99px;
+      transform: translateX(-50%);
+      box-shadow: 0 0 12px rgba(85,230,165,.7);
+      transition: left .45s cubic-bezier(.2,.7,.3,1);
+      z-index: 2;
+    }
+    .be-marker::before {
+      content: "BE";
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .62rem;
+      font-weight: 700;
+      color: var(--green);
+      background: var(--bg);
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(85,230,165,.3);
+      white-space: nowrap;
+    }
+    .be-marker.inverted::before { color: var(--red); border-color: rgba(255,93,108,.3); }
+
+    .moneyline {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: .74rem;
+      margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* FORMULA */
+    .formula {
+      margin-top: 22px;
+      padding: clamp(22px, 3vw, 32px);
+      border-radius: clamp(18px, 2vw, 22px);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(157,124,255,.15) 0, transparent 55%),
+        radial-gradient(circle at 100% 100%, rgba(255,111,174,.12) 0, transparent 55%),
+        linear-gradient(180deg, #14121f 0%, #0d0c14 100%);
+      border: 1px solid #382a52;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .formula::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.03) 50%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .formula-title {
+      font-size: clamp(1.5rem, 3.2vw, 2.1rem);
+      font-weight: 950;
+      letter-spacing: -.04em;
+      background: linear-gradient(120deg, var(--accent) 0%, var(--pink) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+    .formula-eq {
+      color: var(--muted);
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .fraction {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+      font-weight: 800;
+    }
+    .numerator {
+      padding: 0 18px 8px;
+      border-bottom: 2px solid;
+      border-image: linear-gradient(90deg, var(--accent), var(--pink)) 1;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .denominator {
+      padding: 8px 18px 0;
+      background: linear-gradient(120deg, var(--accent-2) 0%, var(--pink) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+    }
+
+    .value.pop, #result.pop { animation: pop .35s ease; }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+
+    @media (max-width: 900px) {
+      .controls { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 720px) {
+      .controls { grid-template-columns: 1fr; gap: 12px; }
+      .result-top { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 420px) {
+      body { padding: 14px 8px; }
+      .control { padding: 14px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">Calcolatore · Plusvalenze</div>
+      <h1>Break-even <span>fiscale</span></h1>
+      <p class="sub">Vuoi trasferirti per pagare meno tasse? Confronta la tua plusvalenza con il break-even per capire se il trasferimento vale la pena!</p>
+    </header>
+
+    <section class="controls" aria-label="Controlli">
+      <div class="control">
+        <div class="label">
+          <span>Aliquota di origine</span>
+          <span class="badge">IT</span>
+        </div>
+        <div class="value" id="italianOut">28%</div>
+        <input id="italian" type="range" min="0" max="60" step="1" value="28" aria-label="Aliquota di origine">
+        <div class="range"><span>0%</span><span>60%</span></div>
+        <p class="hint">Tasse attuali sulle plusvalenze nel paese di origine.</p>
+      </div>
+
+      <div class="control">
+        <div class="label">
+          <span>Costo trasferimento</span>
+          <span class="badge">1 anno</span>
+        </div>
+        <div class="value" id="costOut">50.000 €</div>
+        <input id="cost" type="range" min="0" max="100000" step="1000" value="50000" aria-label="Costo trasferimento">
+        <div class="range"><span>0 €</span><span>100.000 €</span></div>
+        <p class="hint">Viaggi, alloggio, consulenza fiscale e altri costi che non avresti pagato restando.</p>
+      </div>
+
+      <div class="control">
+        <div class="label">
+          <span>Aliquota estera</span>
+          <span class="badge">EST</span>
+        </div>
+        <div class="value" id="foreignOut">0%</div>
+        <input id="foreign" type="range" min="0" max="60" step="1" value="0" aria-label="Aliquota estera">
+        <div class="range"><span>0%</span><span>60%</span></div>
+        <p class="hint">Tasse estere sulle plusvalenze nel paese di destinazione.</p>
+      </div>
+
+      <div class="control highlight">
+        <div class="label">
+          <span>La mia plusvalenza</span>
+          <span class="badge">YOU</span>
+        </div>
+        <div class="value" id="refOut">200.000 €</div>
+        <input id="ref" type="range" min="0" max="1000000" step="10000" value="200000" aria-label="La mia plusvalenza">
+        <div class="range"><span>0 €</span><span>1.000.000 €</span></div>
+        <p class="hint">La plusvalenza che ti aspetti di realizzare. Confrontala col break-even.</p>
+      </div>
+    </section>
+
+    <section class="result" aria-live="polite">
+      <div class="result-top">
+        <div class="result-label">Surplus rispetto al break-even</div>
+        <div class="status positive" id="status">Scenario conveniente</div>
+      </div>
+      <div id="result">+22.000 €</div>
+      <div class="sub-stats">
+        <span>Break-even: <b id="beVal">178.571 €</b></span>
+        <span class="sep">·</span>
+        <span>La tua plusvalenza: <b id="yourVal">200.000 €</b></span>
+      </div>
+
+      <div class="meter">
+        <div class="meter-top">
+          <strong>Confronto: la tua plusvalenza vs break-even</strong>
+        </div>
+        <div class="track">
+          <div class="track-inner">
+            <div class="fill" id="fill"></div>
+          </div>
+          <div class="be-marker" id="beMarker"></div>
+        </div>
+        <div class="moneyline">
+          <span>0 €</span>
+          <span id="meterMax">300.000 €</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="formula">
+      <div class="formula-title">Break-Even</div>
+      <div class="formula-eq">=</div>
+      <div class="fraction">
+        <div class="numerator">Costo trasferimento</div>
+        <div class="denominator">Aliquota origine − Aliquota estera</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const italian = document.querySelector('#italian');
+    const cost = document.querySelector('#cost');
+    const foreign = document.querySelector('#foreign');
+    const ref = document.querySelector('#ref');
+    const euro = n => n.toLocaleString('it-IT', { style:'currency', currency:'EUR', maximumFractionDigits:0 });
+    const euroSign = n => (n >= 0 ? '+' : '−') + euro(Math.abs(n));
+
+    const resultEl = document.querySelector('#result');
+    const statusEl = document.querySelector('#status');
+    const resultCard = document.querySelector('.result');
+    const beValEl = document.querySelector('#beVal');
+    const yourValEl = document.querySelector('#yourVal');
+    const fillEl = document.querySelector('#fill');
+    const beMarkerEl = document.querySelector('#beMarker');
+    const meterMaxEl = document.querySelector('#meterMax');
+
+    function setSliderPct(el) {
+      const min = Number(el.min), max = Number(el.max), val = Number(el.value);
+      const pct = ((val - min) / (max - min)) * 100;
+      el.style.setProperty('--pct', pct + '%');
+    }
+
+    let prev = {};
+    function pop(el, key, val) {
+      if (prev[key] !== val) {
+        el.classList.remove('pop');
+        void el.offsetWidth;
+        el.classList.add('pop');
+        prev[key] = val;
+      }
+    }
+
+    function update() {
+      const it = Number(italian.value);
+      const c = Number(cost.value);
+      const ext = Number(foreign.value);
+      const yourVal = Number(ref.value);
+
+      setSliderPct(italian);
+      setSliderPct(cost);
+      setSliderPct(foreign);
+      setSliderPct(ref);
+
+      document.querySelector('#italianOut').textContent = `${it}%`;
+      document.querySelector('#costOut').textContent = euro(c);
+      document.querySelector('#foreignOut').textContent = `${ext}%`;
+      document.querySelector('#refOut').textContent = euro(yourVal);
+
+      const diff = (it - ext) / 100;
+
+      // Reset classes
+      resultEl.classList.remove('low', 'negative');
+      resultCard.classList.remove('low', 'negative');
+      statusEl.classList.remove('positive', 'low', 'negative');
+      beMarkerEl.classList.remove('inverted');
+
+      if (diff <= 0) {
+        // Nessun break-even possibile
+        resultEl.textContent = 'Nessun break-even';
+        resultEl.classList.add('negative');
+        resultCard.classList.add('negative');
+        statusEl.textContent = 'Scenario non conveniente';
+        statusEl.classList.add('negative');
+        beValEl.textContent = '—';
+        yourValEl.textContent = euro(yourVal);
+        fillEl.className = 'fill negative';
+        fillEl.style.width = '0%';
+        beMarkerEl.style.left = '100%';
+        beMarkerEl.classList.add('inverted');
+        meterMaxEl.textContent = euro(yourVal || 100000);
+        return;
+      }
+
+      const be = c / diff;             // break-even in € di plusvalenza
+      const surplus = yourVal - be;    // positivo = sopra il BE, negativo = sotto
+      const surplusPct = surplus / be; // margine rispetto al BE
+
+      beValEl.textContent = euro(be);
+      yourValEl.textContent = euro(yourVal);
+
+      // Numero principale: surplus/deficit firmato
+      resultEl.textContent = euroSign(surplus);
+
+      // Stati
+      if (surplus < 0) {
+        resultEl.classList.add('negative');
+        resultCard.classList.add('negative');
+        statusEl.textContent = 'Scenario non conveniente';
+        statusEl.classList.add('negative');
+      } else if (surplusPct < 0.10) {
+        resultEl.classList.add('low');
+        resultCard.classList.add('low');
+        statusEl.textContent = 'Scenario poco conveniente';
+        statusEl.classList.add('low');
+      } else {
+        statusEl.textContent = 'Scenario conveniente';
+        statusEl.classList.add('positive');
+      }
+
+      // Meter: scala da 0 a max(yourVal, be) * 1.15
+      const maxScale = Math.max(yourVal, be) * 1.15;
+      const yourPct = (yourVal / maxScale) * 100;
+      const bePct = (be / maxScale) * 100;
+
+      fillEl.style.width = yourPct + '%';
+      beMarkerEl.style.left = bePct + '%';
+
+      if (surplus < 0) {
+        fillEl.className = 'fill negative';
+      } else if (surplusPct < 0.10) {
+        fillEl.className = 'fill low';
+      } else {
+        fillEl.className = 'fill';
+      }
+
+      meterMaxEl.textContent = euro(maxScale);
+
+      pop(resultEl, 'res', resultEl.textContent);
+    }
+
+    [italian, cost, foreign, ref].forEach(el => el.addEventListener('input', update));
+    update();
+  </script>
+</body>
+</html>
