@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="it" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galton Board - Simulatore Fisico & Statistico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bgdark: '#07070C', cardbg: '#0F0F1A',
+                        glowpurple: '#A855F7', glowcyan: '#06B6D4', glowpink: '#EC4899'
+                    },
+                    fontFamily: { mono: ['JetBrains Mono', 'Courier New', 'monospace'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #07070C; color: #E2E8F0; font-family: 'JetBrains Mono', monospace; overflow-x: hidden; }
+        .border-glow { border: 1px solid rgba(168, 85, 247, 0.25); box-shadow: 0 0 15px rgba(168, 85, 247, 0.15); }
+        canvas { display: block; border-radius: 1rem; }
+        .kbd { display: inline-block; padding: 1px 6px; border-radius: 4px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.35); font-size: 10px; color: #C4B5FD; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-6 flex flex-col justify-between items-center">
+
+    <header class="w-full max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center pb-4 mb-4 border-b border-purple-900/40 gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-wider bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent uppercase">GALTON BOARD</h1>
+            <p class="text-xs text-purple-300/70 mt-1">Macchina della Probabilità & Distribuzione Binomiale B(12, 0.5)</p>
+        </div>
+        <div id="quoteDisplay" class="text-xs italic text-cyan-300/80 bg-purple-950/40 border border-purple-500/30 px-4 py-2 rounded-xl transition-opacity duration-500 text-center max-w-md">
+            «Ogni pallina improvvisa. La folla fa matematica.»
+        </div>
+    </header>
+
+    <main class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="lg:col-span-8 flex flex-col gap-4">
+            <div class="relative bg-cardbg border-glow p-4 rounded-2xl flex flex-col items-center shadow-2xl">
+                <div class="absolute top-3 left-4 text-xs font-bold text-cyan-400 tracking-widest uppercase flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    Simulazione Fisica 2D
+                </div>
+                <div class="absolute top-3 right-4 text-xs font-bold text-purple-400 font-mono" id="fpsCounter">60 FPS</div>
+                <canvas id="galtonCanvas" class="w-full h-auto bg-black/60 border border-purple-900/40 mt-6"></canvas>
+            </div>
+
+            <div class="bg-cardbg border-glow p-4 rounded-2xl flex flex-col items-center shadow-2xl">
+                <div class="w-full flex justify-between items-center mb-2 px-2">
+                    <span class="text-xs font-bold text-pink-400 tracking-widest uppercase">Istogramma Simmetrico vs Curva Teorica</span>
+                    <span class="text-[10px] text-gray-400 font-mono">■ Osservato &nbsp; <span class="text-pink-400">― Teorico P(X=k)</span></span>
+                </div>
+                <canvas id="histogramCanvas" class="w-full h-auto bg-black/60 border border-purple-900/40"></canvas>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4 flex flex-col gap-4">
+            <div class="bg-cardbg border-glow p-5 rounded-2xl backdrop-blur-md shadow-2xl flex flex-col gap-4">
+                <h2 class="text-sm font-extrabold tracking-widest text-purple-300 uppercase border-b border-purple-800/40 pb-2 flex justify-between items-center">
+                    <span>Lancio Palline</span>
+                    <span id="capacityBadge" class="text-[10px] text-cyan-400 font-bold bg-cyan-950/60 border border-cyan-500/30 px-2.5 py-1 rounded-full">CAP: 500 MAX</span>
+                </h2>
+
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center text-xs text-gray-400 font-semibold">
+                        <span>Palline in Campo:</span>
+                        <span id="capacityStatusText" class="text-cyan-400 font-bold">0 / 500</span>
+                    </div>
+                    <div class="w-full bg-gray-900 rounded-full h-2.5 overflow-hidden border border-purple-900/50 flex">
+                        <div id="capacityFillBar" class="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 h-full transition-all duration-300" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2 pt-2">
+                    <label class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Lancia Palline:</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button id="btnDrop1" onclick="dropCustomAmount(1)" class="py-2.5 rounded-xl border border-cyan-500/50 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer">+1</button>
+                        <button id="btnDrop10" onclick="dropCustomAmount(10)" class="py-2.5 rounded-xl border border-cyan-500/50 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer">+10</button>
+                        <button id="btnDrop100" onclick="dropCustomAmount(100)" class="py-2.5 rounded-xl border border-cyan-500/50 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer">+100</button>
+                        <button id="btnDrop500" onclick="dropCustomAmount(500)" class="py-2.5 rounded-xl border border-cyan-500/50 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer">+500</button>
+                    </div>
+                    <button id="mainDropBtn" onclick="dropCustomAmount(10)" class="w-full py-3.5 mt-1 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-500 text-black font-extrabold text-sm tracking-wider uppercase shadow-lg shadow-purple-600/30 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+                        DROP BALLS (+10)
+                    </button>
+                </div>
+
+                <button onclick="resetSimulation()" class="w-full py-2 rounded-xl border border-red-500/40 bg-red-950/20 text-red-300 text-xs font-bold hover:bg-red-900/30 hover:border-red-400 transition-all cursor-pointer uppercase tracking-wider">
+                    RESET SIMULAZIONE
+                </button>
+            </div>
+
+            <div class="bg-cardbg border-glow p-5 rounded-2xl backdrop-blur-md shadow-2xl flex flex-col gap-3">
+                <h2 class="text-sm font-extrabold tracking-widest text-cyan-300 uppercase border-b border-purple-800/40 pb-2 flex justify-between items-center">
+                    <span>Fisica Parametrica</span>
+                    <button onclick="resetPhysicsDefaults()" class="text-[10px] text-purple-400 hover:text-cyan-300 underline">Reset</button>
+                </h2>
+
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400 font-semibold">Gravità:</span>
+                        <span id="paramGravityVal" class="text-cyan-400 font-bold">0.40</span>
+                    </div>
+                    <input type="range" id="paramGravity" min="0.10" max="0.70" step="0.02" value="0.40" class="w-full accent-cyan-400 bg-purple-950 h-1.5 rounded-lg cursor-pointer" oninput="updatePhysicsParams()">
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400 font-semibold">Elasticità Rimbalzo (Pioli):</span>
+                        <span id="paramElasticityVal" class="text-cyan-400 font-bold">0.50</span>
+                    </div>
+                    <input type="range" id="paramElasticity" min="0.10" max="0.85" step="0.05" value="0.50" class="w-full accent-cyan-400 bg-purple-950 h-1.5 rounded-lg cursor-pointer" oninput="updatePhysicsParams()">
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400 font-semibold">Variabilità Angolo / Micro-Caos:</span>
+                        <span id="paramJitterVal" class="text-cyan-400 font-bold">0.50</span>
+                    </div>
+                    <input type="range" id="paramJitter" min="0.00" max="0.80" step="0.05" value="0.50" class="w-full accent-cyan-400 bg-purple-950 h-1.5 rounded-lg cursor-pointer" oninput="updatePhysicsParams()">
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400 font-semibold">Attrito Aria (Smorzamento):</span>
+                        <span id="paramDragVal" class="text-cyan-400 font-bold">0.87</span>
+                    </div>
+                    <input type="range" id="paramDrag" min="0.50" max="0.99" step="0.01" value="0.87" class="w-full accent-cyan-400 bg-purple-950 h-1.5 rounded-lg cursor-pointer" oninput="updatePhysicsParams()">
+                </div>
+
+                <div class="flex flex-col gap-1 opacity-70">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400 font-semibold">Compattazione Accumulo Scomparti:</span>
+                        <span id="paramDensityVal" class="text-cyan-400 font-bold">1.0px (Fisso)</span>
+                    </div>
+                    <div class="w-full bg-purple-950/40 h-1.5 rounded-lg border border-purple-800/40 relative overflow-hidden">
+                        <div class="bg-cyan-500/50 h-full w-1/3"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-2 border-t border-purple-800/40">
+                    <button id="scaleToggleBtn" onclick="toggleScaleMode()" class="px-2 py-1 rounded-md border border-purple-500/40 text-[10px] font-bold bg-purple-950/50 text-purple-300 hover:text-cyan-300 transition-all">
+                        SCALA: %
+                    </button>
+                    <button id="soundToggle" onclick="toggleSound()" class="px-2 py-1 rounded-md border border-purple-500/40 text-[10px] font-bold bg-purple-950/50 text-purple-300 hover:text-cyan-300 transition-all">
+                        AUDIO: OFF
+                    </button>
+                    <button id="pauseToggle" onclick="togglePause()" class="px-2 py-1 rounded-md border border-purple-500/40 text-[10px] font-bold bg-purple-950/50 text-purple-300 hover:text-cyan-300 transition-all">
+                        PAUSA
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-cardbg border-glow p-5 rounded-2xl backdrop-blur-md shadow-2xl flex flex-col gap-4">
+                <h2 class="text-sm font-extrabold tracking-widest text-cyan-300 uppercase border-b border-purple-800/40 pb-2 flex justify-between items-center">
+                    <span>Statistiche Live</span>
+                    <span class="text-xs text-purple-400/60 font-normal">Data Engine</span>
+                </h2>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="bg-black/40 border border-purple-900/50 p-3 rounded-xl flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] text-purple-300/70 font-semibold uppercase tracking-wider">BALLS DROPPED</p>
+                            <p id="metricTotalBalls" class="text-2xl font-extrabold text-white">0</p>
+                        </div>
+                        <div class="text-purple-400 text-xl font-bold">🎯</div>
+                    </div>
+
+                    <div class="bg-black/40 border border-purple-900/50 p-3 rounded-xl flex flex-col gap-1">
+                        <div class="flex justify-between items-center">
+                            <p class="text-[10px] text-purple-300/70 font-semibold uppercase tracking-wider">LEFT / RIGHT (Deviazioni)</p>
+                            <p id="metricLeftRightPct" class="text-xs font-bold text-cyan-400">50.0% / 50.0%</p>
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                            <span id="metricLeftCount" class="text-lg font-extrabold text-cyan-300">L: 0</span>
+                            <span id="metricRightCount" class="text-lg font-extrabold text-pink-300">R: 0</span>
+                        </div>
+                        <div class="w-full bg-pink-950/60 rounded-full h-1.5 overflow-hidden flex">
+                            <div id="metricLRBar" class="bg-cyan-400 h-full transition-all duration-300" style="width: 50%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-black/40 border border-purple-900/50 p-3 rounded-xl flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] text-purple-300/70 font-semibold uppercase tracking-wider">MOST POPULATED BIN</p>
+                            <p id="metricMaxBin" class="text-2xl font-extrabold text-yellow-300">N/D</p>
+                        </div>
+                        <div id="metricMaxBinCount" class="text-xs text-yellow-400/80 font-bold bg-yellow-950/50 px-2 py-1 rounded-md border border-yellow-500/30">
+                            0 palline
+                        </div>
+                    </div>
+
+                    <div class="bg-black/40 border border-purple-900/50 p-3 rounded-xl flex flex-col gap-1">
+                        <div class="flex justify-between items-center">
+                            <p class="text-[10px] text-purple-300/70 font-semibold uppercase tracking-wider">DISTRIBUTION ERROR (MAE & χ²)</p>
+                            <span title="Errore medio assoluto sui 13 bin centrali (normalizzati) rispetto alla binomiale" class="cursor-help text-purple-400 text-xs">ⓘ</span>
+                        </div>
+                        <div class="flex items-baseline justify-between">
+                            <p id="metricError" class="text-2xl font-extrabold text-pink-400">0.000%</p>
+                            <span id="metricErrorLabel" class="text-[10px] text-gray-400">Nessun dato</span>
+                        </div>
+                        <p id="metricChiSquare" class="text-[11px] text-purple-300/80 font-mono pt-0.5">Chi-Square (χ²): 0.00</p>
+                        <p id="metricMeanStd" class="text-[10px] text-gray-400 font-mono">μ=6.00 σ=1.732 (teorici)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full max-w-7xl mx-auto text-center mt-6 pt-4 border-t border-purple-900/30 text-xs text-purple-400/50 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <span>GALTON BOARD © 2026 • Simulatore Fisico & Statistico Simmetrico</span>
+        <span class="text-cyan-400/60 font-mono">B(n=12, p=0.5) • 13 Scomparti Centrali</span>
+        <span class="text-purple-400/60">
+            <span class="kbd">SPACE</span> drop
+            <span class="kbd">R</span> reset
+            <span class="kbd">S</span> audio
+            <span class="kbd">F</span> scala
+            <span class="kbd">P</span> pausa
+        </span>
+    </footer>
+
+    <script>
+        /* =========================================================
+           GALTON BOARD ENGINE v2
+           - Fixed-timestep physics (framerate independent)
+           - Slot reservation to prevent ball overlap in bins
+           - Core-only normalized statistics
+           - Particle & audio feedback
+           ========================================================= */
+
+        // --- STATISTICAL CONSTANTS ---
+        const NUM_ROWS = 12;
+        const COL_SPACING = 30;
+        const CANVAS_WIDTH = 700;
+        const CANVAS_HEIGHT = 520;
+        const HIST_HEIGHT = 200;
+
+        const CORE_BINS = NUM_ROWS + 1;
+        const EXTRA_SIDE_BINS = 2;
+        const NUM_BINS = CORE_BINS + (EXTRA_SIDE_BINS * 2);
+        const CENTER_X = CANVAS_WIDTH / 2;
+
+        const PEG_RADIUS = 4.5;
+        const BALL_RADIUS = 3.6;
+
+        const funnelY = 30;
+        const startPegY = 75;
+        const rowSpacingY = 26;
+        const binTopY = startPegY + (NUM_ROWS * rowSpacingY) + 15;
+        const binBottomY = CANVAS_HEIGHT - 5;
+
+        // --- PHYSICS (fixed 60Hz simulation, 3 substeps/step = original 60fps behavior) ---
+        const FIXED_DT = 1 / 60;
+        const MAX_STEPS_PER_FRAME = 5;
+        const SUBSTEPS = 3;
+
+        // --- STATE ---
+        let binCounts = new Array(NUM_BINS).fill(0);
+        let binReserved = new Array(NUM_BINS).fill(0);
+        let stackedBallsInBins = Array.from({ length: NUM_BINS }, () => []);
+        let totalBallsDropped = 0;
+        const maxAllowedCapacity = 500;
+        let totalLeftTurns = 0;
+        let totalRightTurns = 0;
+        let displayScaleMode = 'relative';
+        let isPaused = false;
+
+        let PHYS = { gravity: 0.40, elasticity: 0.50, jitter: 0.50, drag: 0.87, densityY: 1.0 };
+
+        let activeBalls = [];
+        let particles = [];
+        let pegs = [];
+        let binXCoords = [];
+        let pendingTimeouts = [];
+
+        // --- CANVAS ---
+        let boardCanvas, boardCtx, histCanvas, histCtx;
+
+        // --- THEORETICAL PMF ---
+        const theoreticalPMF = new Array(NUM_BINS).fill(0);
+        function combinations(n, k) {
+            if (k < 0 || k > n) return 0;
+            let res = 1;
+            for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
+            return res;
+        }
+        function calculateTheoreticalPMF() {
+            const totalOutcomes = Math.pow(2, NUM_ROWS);
+            for (let k = 0; k <= NUM_ROWS; k++) {
+                theoreticalPMF[k + EXTRA_SIDE_BINS] = combinations(NUM_ROWS, k) / totalOutcomes;
+            }
+        }
+        calculateTheoreticalPMF();
+
+        function getBinLabel(idx) {
+            if (idx < EXTRA_SIDE_BINS) return `L${EXTRA_SIDE_BINS - idx}`;
+            if (idx >= EXTRA_SIDE_BINS + CORE_BINS) return `R${idx - EXTRA_SIDE_BINS - CORE_BINS + 1}`;
+            return `${idx - EXTRA_SIDE_BINS}`;
+        }
+
+        function getBinColor(binIdx) {
+            const t = Math.max(0, Math.min(1, (binIdx - EXTRA_SIDE_BINS) / (CORE_BINS - 1)));
+            const hue = 187 + t * 143;
+            return `hsl(${hue}, 85%, 60%)`;
+        }
+
+        // --- PEG GRID & BINS ---
+        function createPegGrid() {
+            pegs = [];
+            for (let row = 0; row < NUM_ROWS; row++) {
+                const count = row + 1;
+                const startX = CENTER_X - ((count - 1) * COL_SPACING) / 2;
+                const y = startPegY + row * rowSpacingY;
+                for (let col = 0; col < count; col++) {
+                    pegs.push({ x: startX + col * COL_SPACING, y, row, col, hitGlow: 0 });
+                }
+            }
+        }
+
+        function createBins() {
+            binXCoords = [];
+            const firstDividerX = CENTER_X - (NUM_BINS / 2) * COL_SPACING;
+            for (let i = 0; i <= NUM_BINS; i++) binXCoords.push(firstDividerX + i * COL_SPACING);
+        }
+
+        // --- CAPACITY UI ---
+        function updateCapacityUI() {
+            const fillBar = document.getElementById('capacityFillBar');
+            const dropBtn = document.getElementById('mainDropBtn');
+            const statusText = document.getElementById('capacityStatusText');
+
+            const remaining = maxAllowedCapacity - totalBallsDropped;
+            const pct = Math.min(100, (totalBallsDropped / maxAllowedCapacity) * 100);
+            if (fillBar) fillBar.style.width = `${pct}%`;
+            if (statusText) statusText.innerText = `${totalBallsDropped} / ${maxAllowedCapacity}`;
+
+            const btns = ['btnDrop1', 'btnDrop10', 'btnDrop100', 'btnDrop500'].map(id => document.getElementById(id));
+
+            if (remaining <= 0) {
+                if (dropBtn) {
+                    dropBtn.disabled = true;
+                    dropBtn.innerText = "CAPACITÀ MASSIMA RAGGIUNTA (500/500)";
+                    dropBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                }
+                btns.forEach(b => b && (b.disabled = true, b.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none')));
+            } else {
+                if (dropBtn) {
+                    dropBtn.disabled = false;
+                    dropBtn.innerText = `DROP BALLS (+${Math.min(10, remaining)})`;
+                    dropBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                }
+                btns.forEach(b => b && (b.disabled = false, b.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none')));
+                if (btns[0]) btns[0].innerText = `+${Math.min(1, remaining)}`;
+                if (btns[1]) btns[1].innerText = `+${Math.min(10, remaining)}`;
+                if (btns[2]) btns[2].innerText = `+${Math.min(100, remaining)}`;
+                if (btns[3]) btns[3].innerText = `+${Math.min(500, remaining)}`;
+            }
+        }
+
+        // --- PARAMETRIC UI ---
+        function updatePhysicsParams() {
+            PHYS.gravity = parseFloat(document.getElementById('paramGravity').value);
+            PHYS.elasticity = parseFloat(document.getElementById('paramElasticity').value);
+            PHYS.jitter = parseFloat(document.getElementById('paramJitter').value);
+            PHYS.drag = parseFloat(document.getElementById('paramDrag').value);
+
+            document.getElementById('paramGravityVal').innerText = PHYS.gravity.toFixed(2);
+            document.getElementById('paramElasticityVal').innerText = PHYS.elasticity.toFixed(2);
+            document.getElementById('paramJitterVal').innerText = PHYS.jitter.toFixed(2);
+            document.getElementById('paramDragVal').innerText = PHYS.drag.toFixed(2);
+        }
+
+        function resetPhysicsDefaults() {
+            document.getElementById('paramGravity').value = 0.40;
+            document.getElementById('paramElasticity').value = 0.50;
+            document.getElementById('paramJitter').value = 0.50;
+            document.getElementById('paramDrag').value = 0.87;
+            updatePhysicsParams();
+        }
+
+        function toggleScaleMode() {
+            displayScaleMode = displayScaleMode === 'relative' ? 'absolute' : 'relative';
+            document.getElementById('scaleToggleBtn').innerText =
+                displayScaleMode === 'relative' ? "SCALA: %" : "SCALA: N";
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('pauseToggle');
+            btn.innerText = isPaused ? "RIPRENDI" : "PAUSA";
+            btn.classList.toggle('text-cyan-300', isPaused);
+            btn.classList.toggle('border-cyan-400', isPaused);
+            if (!isPaused) accumulator = 0;
+        }
+
+        // --- QUOTES ---
+        const quotes = [
+            "«Ogni pallina improvvisa. La folla fa matematica.»",
+            "«Il caos ha appena disegnato una curva.»",
+            "«Nessuna pallina conosce la distribuzione finale.»",
+            "«La probabilità non promette il risultato. Descrive il pattern.»",
+            "«Dalla casualità pura emerge un ordine inesorabile.»",
+            "«Un singolo rimbalzo è imprevedibile, un milione è certezza.»"
+        ];
+        let currentQuoteIdx = 0;
+        setInterval(() => {
+            currentQuoteIdx = (currentQuoteIdx + 1) % quotes.length;
+            const qEl = document.getElementById('quoteDisplay');
+            if (qEl) {
+                qEl.style.opacity = '0';
+                setTimeout(() => { qEl.innerText = quotes[currentQuoteIdx]; qEl.style.opacity = '1'; }, 300);
+            }
+        }, 7000);
+
+        // --- AUDIO ---
+        let audioCtx = null;
+        let soundEnabled = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (AC) audioCtx = new AC();
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            if (soundEnabled) initAudio();
+            const btn = document.getElementById('soundToggle');
+            btn.innerText = soundEnabled ? "AUDIO: ON" : "AUDIO: OFF";
+            btn.classList.toggle('text-cyan-300', soundEnabled);
+            btn.classList.toggle('border-cyan-400', soundEnabled);
+        }
+
+        function playBounceSound(pitch = 1.0) {
+            if (!soundEnabled || !audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime((320 + Math.random() * 180) * pitch, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(70, audioCtx.currentTime + 0.035);
+                gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.035);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.035);
+            } catch (e) {}
+        }
+
+        function playLandSound() {
+            if (!soundEnabled || !audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(70, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) {}
+        }
+
+        // --- PARTICLES ---
+        class SparkParticle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4 - 1;
+                this.life = 1.0;
+                this.decay = 0.07 + Math.random() * 0.05;
+                this.color = color || (Math.random() > 0.5 ? '#06B6D4' : '#A855F7');
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.vy += 0.15; this.life -= this.decay; }
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color; ctx.shadowBlur = 4;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 1.8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // --- BALL ---
+        class Ball {
+            constructor() {
+                this.x = CANVAS_WIDTH / 2 + (Math.random() - 0.5) * 3;
+                this.y = funnelY;
+                this.vx = (Math.random() - 0.5) * 0.2;
+                this.vy = 1.0 + Math.random() * 0.5;
+                this.currentRowHit = -1;
+                this.landed = false;
+                this.binAssignment = null;
+                this.reservedSlot = null;
+                this.color = '#06B6D4';
+            }
+
+            update() {
+                if (this.landed) return;
+
+                for (let s = 0; s < SUBSTEPS; s++) {
+                    const dt = 1 / SUBSTEPS;
+
+                    this.vy += PHYS.gravity * dt;
+                    this.vx *= Math.pow(PHYS.drag, dt);
+                    this.x += this.vx * dt;
+                    this.y += this.vy * dt;
+
+                    // Walls
+                    if (this.x < 15) { this.x = 15; this.vx = Math.abs(this.vx) * 0.5; }
+                    else if (this.x > CANVAS_WIDTH - 15) { this.x = CANVAS_WIDTH - 15; this.vx = -Math.abs(this.vx) * 0.5; }
+
+                    // Peg collisions
+                    for (let i = 0; i < pegs.length; i++) {
+                        const peg = pegs[i];
+                        const dx = this.x - peg.x, dy = this.y - peg.y;
+                        const distSq = dx * dx + dy * dy;
+                        const minDist = BALL_RADIUS + PEG_RADIUS;
+                        if (distSq < minDist * minDist) {
+                            const dist = Math.sqrt(distSq) || 0.001;
+                            const nx = dx / dist, ny = dy / dist;
+                            this.x = peg.x + nx * minDist;
+                            this.y = peg.y + ny * minDist;
+
+                            const dot = this.vx * nx + this.vy * ny;
+                            this.vx = (this.vx - (1 + PHYS.elasticity) * dot * nx);
+                            this.vy = Math.max(0.6, (this.vy - (1 + PHYS.elasticity) * dot * ny));
+
+                            if (peg.row > this.currentRowHit) {
+                                this.currentRowHit = peg.row;
+                                const goRight = Math.random() < 0.5;
+                                const impulse = (1.0 + Math.random() * PHYS.jitter) * (goRight ? 1 : -1);
+                                this.vx += impulse;
+
+                                if (goRight) totalRightTurns++; else totalLeftTurns++;
+                                peg.hitGlow = 1.0;
+
+                                if (Math.random() < 0.4) {
+                                    playBounceSound(1.0 + peg.row * 0.08);
+                                    for (let p = 0; p < 2; p++) particles.push(new SparkParticle(peg.x, peg.y));
+                                }
+                            }
+                        }
+                    }
+
+                    // Bin entry & landing
+                    if (this.binAssignment === null && this.y >= binTopY - 20) {
+                        let bIdx = 0;
+                        for (let i = 0; i < NUM_BINS; i++) {
+                            if (this.x >= binXCoords[i] && this.x < binXCoords[i + 1]) { bIdx = i; break; }
+                        }
+                        if (this.x < binXCoords[0]) bIdx = 0;
+                        if (this.x >= binXCoords[NUM_BINS]) bIdx = NUM_BINS - 1;
+
+                        this.binAssignment = bIdx;
+                        this.reservedSlot = binCounts[bIdx] + binReserved[bIdx];
+                        binReserved[bIdx]++;
+                        this.color = getBinColor(bIdx);
+                    }
+
+                    if (this.binAssignment !== null) {
+                        const bIdx = this.binAssignment;
+                        const leftWall = binXCoords[bIdx] + BALL_RADIUS + 1;
+                        const rightWall = binXCoords[bIdx + 1] - BALL_RADIUS - 1;
+                        if (this.x < leftWall) { this.x = leftWall; this.vx = Math.abs(this.vx) * 0.3; }
+                        else if (this.x > rightWall) { this.x = rightWall; this.vx = -Math.abs(this.vx) * 0.3; }
+
+                        const slotY = binBottomY - Math.min(200, this.reservedSlot * PHYS.densityY);
+                        if (this.y >= slotY) {
+                            this.y = slotY;
+                            this.landed = true;
+                            binReserved[bIdx]--;
+                            recordLandedBall(bIdx, this.x, this.y, this.color);
+                            if (particles.length < 300) {
+                                for (let p = 0; p < 4; p++) particles.push(new SparkParticle(this.x, this.y, '#FACC15'));
+                            }
+                            if (Math.random() < 0.12) playLandSound();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.shadowColor = this.color; ctx.shadowBlur = 6;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, BALL_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // --- DROP & LANDING ---
+        function dropCustomAmount(amount) {
+            const remaining = maxAllowedCapacity - totalBallsDropped;
+            if (remaining <= 0) return;
+            const actual = Math.min(amount, remaining);
+
+            for (let i = 0; i < actual; i++) {
+                const t = setTimeout(() => {
+                    if (totalBallsDropped < maxAllowedCapacity) {
+                        activeBalls.push(new Ball());
+                        totalBallsDropped++;
+                        updateCapacityUI();
+                    }
+                    // cleanup: remove this timeout from tracking
+                    const idx = pendingTimeouts.indexOf(t);
+                    if (idx !== -1) pendingTimeouts.splice(idx, 1);
+                }, i * 35);
+                pendingTimeouts.push(t);
+            }
+        }
+
+        function recordLandedBall(binIndex, finalX, finalY, color) {
+            if (binIndex >= 0 && binIndex < NUM_BINS) {
+                binCounts[binIndex]++;
+                stackedBallsInBins[binIndex].push({ x: finalX, y: finalY, color: color || '#06B6D4' });
+                updateLiveStatistics();
+            }
+        }
+
+        // --- STATISTICS ---
+        function updateLiveStatistics() {
+            document.getElementById('metricTotalBalls').innerText = totalBallsDropped.toString();
+
+            const totalTurns = totalLeftTurns + totalRightTurns;
+            if (totalTurns > 0) {
+                const leftPct = ((totalLeftTurns / totalTurns) * 100).toFixed(1);
+                const rightPct = ((totalRightTurns / totalTurns) * 100).toFixed(1);
+                document.getElementById('metricLeftRightPct').innerText = `${leftPct}% / ${rightPct}%`;
+                document.getElementById('metricLeftCount').innerText = `L: ${totalLeftTurns}`;
+                document.getElementById('metricRightCount').innerText = `R: ${totalRightTurns}`;
+                document.getElementById('metricLRBar').style.width = `${leftPct}%`;
+            }
+
+            // Max bin
+            let maxCount = -1, maxBinIdx = -1;
+            for (let i = 0; i < NUM_BINS; i++) {
+                if (binCounts[i] > maxCount) { maxCount = binCounts[i]; maxBinIdx = i; }
+            }
+            if (maxBinIdx !== -1 && totalBallsDropped > 0) {
+                document.getElementById('metricMaxBin').innerText = getBinLabel(maxBinIdx);
+                document.getElementById('metricMaxBinCount').innerText = `${maxCount} palline`;
+            } else {
+                document.getElementById('metricMaxBin').innerText = 'N/D';
+                document.getElementById('metricMaxBinCount').innerText = '0 palline';
+            }
+
+            // Core-only normalized MAE / chi-square / mean / std
+            const coreStart = EXTRA_SIDE_BINS;
+            const coreEnd = EXTRA_SIDE_BINS + CORE_BINS;
+            let totalInCore = 0;
+            for (let i = coreStart; i < coreEnd; i++) totalInCore += binCounts[i];
+
+            if (totalInCore > 0) {
+                let sumAbsErr = 0, chiSq = 0;
+                let mean = 0, variance = 0;
+
+                for (let i = 0; i < CORE_BINS; i++) {
+                    const idx = coreStart + i;
+                    const obsFreq = binCounts[idx] / totalInCore;
+                    const theoFreq = theoreticalPMF[idx];
+                    sumAbsErr += Math.abs(obsFreq - theoFreq);
+
+                    const expected = theoFreq * totalInCore;
+                    if (expected > 0.5) {
+                        const diff = binCounts[idx] - expected;
+                        chiSq += (diff * diff) / expected;
+                    }
+                    mean += i * obsFreq;
+                }
+                for (let i = 0; i < CORE_BINS; i++) {
+                    const idx = coreStart + i;
+                    const obsFreq = binCounts[idx] / totalInCore;
+                    variance += (i - mean) ** 2 * obsFreq;
+                }
+                const mae = (sumAbsErr / CORE_BINS) * 100;
+                const stdDev = Math.sqrt(variance);
+
+                document.getElementById('metricError').innerText = `${mae.toFixed(3)}%`;
+                document.getElementById('metricErrorLabel').innerText = 'Scostamento medio MAE';
+                document.getElementById('metricChiSquare').innerText = `Chi-Square (χ²): ${chiSq.toFixed(2)}`;
+                document.getElementById('metricMeanStd').innerText =
+                    `μ=${mean.toFixed(2)} (teo 6.00) • σ=${stdDev.toFixed(3)} (teo 1.732)`;
+            } else {
+                document.getElementById('metricError').innerText = '0.000%';
+                document.getElementById('metricErrorLabel').innerText = 'Nessun dato';
+                document.getElementById('metricChiSquare').innerText = 'Chi-Square (χ²): 0.00';
+                document.getElementById('metricMeanStd').innerText = 'μ=6.00 σ=1.732 (teorici)';
+            }
+        }
+
+        // --- RESET ---
+        function resetSimulation() {
+            // 1. Cancel queued drops
+            pendingTimeouts.forEach(clearTimeout);
+            pendingTimeouts = [];
+
+            // 2. Clear physical state
+            activeBalls = [];
+            particles = [];
+            binCounts.fill(0);
+            binReserved.fill(0);
+            stackedBallsInBins = Array.from({ length: NUM_BINS }, () => []);
+            totalBallsDropped = 0;
+            totalLeftTurns = 0;
+            totalRightTurns = 0;
+
+            for (const p of pegs) p.hitGlow = 0;
+
+            updateCapacityUI();
+            updateLiveStatistics();
+        }
+
+        // --- PHYSICS STEP (called at fixed 60Hz via accumulator) ---
+        function stepSimulation() {
+            for (let i = activeBalls.length - 1; i >= 0; i--) {
+                const ball = activeBalls[i];
+                ball.update();
+                if (ball.landed) activeBalls.splice(i, 1);
+            }
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                if (particles[i].life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        // --- BOARD RENDER ---
+        function drawGaltonBoard(now) {
+            boardCtx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Funnel with pulsing glow
+            const pulse = 8 + 5 * Math.sin(now / 300);
+            boardCtx.save();
+            boardCtx.strokeStyle = 'rgba(168, 85, 247, 0.6)';
+            boardCtx.lineWidth = 3;
+            boardCtx.shadowColor = '#A855F7'; boardCtx.shadowBlur = pulse;
+            boardCtx.beginPath();
+            boardCtx.moveTo(CENTER_X - 50, 10); boardCtx.lineTo(CENTER_X - 12, funnelY + 15);
+            boardCtx.moveTo(CENTER_X + 50, 10); boardCtx.lineTo(CENTER_X + 12, funnelY + 15);
+            boardCtx.stroke();
+            boardCtx.restore();
+
+            // Pegs
+            for (const peg of pegs) {
+                boardCtx.save();
+                if (peg.hitGlow > 0) {
+                    boardCtx.shadowColor = '#06B6D4';
+                    boardCtx.shadowBlur = 15 * peg.hitGlow;
+                    boardCtx.fillStyle = '#06B6D4';
+                    peg.hitGlow = Math.max(0, peg.hitGlow - 0.05);
+                } else {
+                    boardCtx.shadowColor = '#A855F7';
+                    boardCtx.shadowBlur = 4;
+                    boardCtx.fillStyle = '#A855F7';
+                }
+                boardCtx.beginPath();
+                boardCtx.arc(peg.x, peg.y, PEG_RADIUS, 0, Math.PI * 2);
+                boardCtx.fill();
+                boardCtx.restore();
+            }
+
+            // Dividers
+            boardCtx.save();
+            boardCtx.strokeStyle = 'rgba(168, 85, 247, 0.45)';
+            boardCtx.lineWidth = 2;
+            for (let i = 0; i <= NUM_BINS; i++) {
+                boardCtx.beginPath();
+                boardCtx.moveTo(binXCoords[i], binTopY - 20);
+                boardCtx.lineTo(binXCoords[i], binBottomY);
+                boardCtx.stroke();
+            }
+            boardCtx.strokeStyle = 'rgba(168, 85, 247, 0.25)';
+            boardCtx.beginPath();
+            boardCtx.moveTo(binXCoords[0], startPegY); boardCtx.lineTo(binXCoords[0], binBottomY);
+            boardCtx.moveTo(binXCoords[NUM_BINS], startPegY); boardCtx.lineTo(binXCoords[NUM_BINS], binBottomY);
+            boardCtx.stroke();
+            boardCtx.restore();
+
+            // Particles
+            for (const p of particles) p.draw(boardCtx);
+
+            // Stacked landed balls
+            boardCtx.save();
+            for (let b = 0; b < NUM_BINS; b++) {
+                const stack = stackedBallsInBins[b];
+                for (const sb of stack) {
+                    boardCtx.fillStyle = sb.color;
+                    boardCtx.beginPath();
+                    boardCtx.arc(sb.x, sb.y, BALL_RADIUS - 0.5, 0, Math.PI * 2);
+                    boardCtx.fill();
+                }
+            }
+            boardCtx.restore();
+
+            // Active balls
+            for (const ball of activeBalls) ball.draw(boardCtx);
+
+            // Pause overlay
+            if (isPaused) {
+                boardCtx.save();
+                boardCtx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+                boardCtx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                boardCtx.fillStyle = '#06B6D4';
+                boardCtx.font = 'bold 42px JetBrains Mono, monospace';
+                boardCtx.textAlign = 'center';
+                boardCtx.shadowColor = '#06B6D4'; boardCtx.shadowBlur = 20;
+                boardCtx.fillText('PAUSA', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+                boardCtx.font = '14px JetBrains Mono, monospace';
+                boardCtx.fillStyle = '#A855F7';
+                boardCtx.fillText('Premi P per riprendere', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 40);
+                boardCtx.restore();
+            }
+        }
+
+        // --- HISTOGRAM RENDER ---
+        function drawHistogram() {
+            histCtx.clearRect(0, 0, CANVAS_WIDTH, HIST_HEIGHT);
+
+            const marginBottom = 25, marginTop = 20;
+            const drawHeight = HIST_HEIGHT - marginBottom - marginTop;
+            const firstBinX = binXCoords[0];
+            const lastBinX = binXCoords[NUM_BINS];
+
+            let maxObservedFreq = 0;
+            if (totalBallsDropped > 0) {
+                for (let i = 0; i < NUM_BINS; i++) {
+                    const f = binCounts[i] / totalBallsDropped;
+                    if (f > maxObservedFreq) maxObservedFreq = f;
+                }
+            }
+            const maxTheoreticalPMF = Math.max(...theoreticalPMF);
+            const yMax = Math.max(maxTheoreticalPMF, maxObservedFreq) * 1.15 || 0.25;
+
+            // Grid
+            histCtx.save();
+            histCtx.strokeStyle = 'rgba(168, 85, 247, 0.15)';
+            histCtx.lineWidth = 1;
+            for (let g = 0; g <= 4; g++) {
+                const yVal = marginTop + drawHeight * (1 - g / 4);
+                histCtx.beginPath();
+                histCtx.moveTo(firstBinX, yVal); histCtx.lineTo(lastBinX, yVal);
+                histCtx.stroke();
+
+                histCtx.fillStyle = 'rgba(168, 85, 247, 0.5)';
+                histCtx.font = '9px "JetBrains Mono", monospace';
+                histCtx.textAlign = 'right';
+                if (displayScaleMode === 'relative') {
+                    histCtx.fillText((yMax * (g / 4) * 100).toFixed(1) + '%', firstBinX - 5, yVal + 3);
+                } else {
+                    histCtx.fillText(Math.round(yMax * (g / 4) * totalBallsDropped).toString(), firstBinX - 5, yVal + 3);
+                }
+            }
+            histCtx.restore();
+
+            // Bars
+            for (let i = 0; i < NUM_BINS; i++) {
+                const xLeft = binXCoords[i], xRight = binXCoords[i + 1];
+                const barWidth = xRight - xLeft;
+                const freq = totalBallsDropped > 0 ? binCounts[i] / totalBallsDropped : 0;
+                const barHeight = (freq / yMax) * drawHeight;
+                const y = marginTop + drawHeight - barHeight;
+
+                const grad = histCtx.createLinearGradient(0, y, 0, marginTop + drawHeight);
+                grad.addColorStop(0, '#06B6D4');
+                grad.addColorStop(1, 'rgba(168, 85, 247, 0.2)');
+                histCtx.fillStyle = grad;
+                histCtx.fillRect(xLeft + 1, y, barWidth - 2, barHeight);
+                histCtx.strokeStyle = '#06B6D4'; histCtx.lineWidth = 1;
+                histCtx.strokeRect(xLeft + 1, y, barWidth - 2, barHeight);
+
+                histCtx.fillStyle = '#E2E8F0';
+                histCtx.font = '9px "JetBrains Mono", monospace';
+                histCtx.textAlign = 'center';
+                histCtx.fillText(getBinLabel(i), xLeft + barWidth / 2, HIST_HEIGHT - 8);
+            }
+
+            // Theoretical curve
+            histCtx.save();
+            const curvePoints = [];
+            for (let i = 0; i < NUM_BINS; i++) {
+                const x = (binXCoords[i] + binXCoords[i + 1]) / 2;
+                const pmf = theoreticalPMF[i];
+                const y = marginTop + drawHeight - (pmf / yMax) * drawHeight;
+                curvePoints.push({ x, y });
+            }
+            histCtx.beginPath();
+            histCtx.moveTo(curvePoints[0].x, curvePoints[0].y);
+            for (let i = 0; i < curvePoints.length - 1; i++) {
+                const xc = (curvePoints[i].x + curvePoints[i + 1].x) / 2;
+                const yc = (curvePoints[i].y + curvePoints[i + 1].y) / 2;
+                histCtx.quadraticCurveTo(curvePoints[i].x, curvePoints[i].y, xc, yc);
+            }
+            histCtx.lineTo(curvePoints[curvePoints.length - 1].x, curvePoints[curvePoints.length - 1].y);
+            histCtx.strokeStyle = '#EC4899';
+            histCtx.lineWidth = 2.5;
+            histCtx.shadowColor = '#EC4899'; histCtx.shadowBlur = 8;
+            histCtx.stroke();
+
+            for (const p of curvePoints) {
+                if (theoreticalPMF[curvePoints.indexOf(p)] > 0) {
+                    histCtx.fillStyle = '#FACC15';
+                    histCtx.beginPath();
+                    histCtx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+                    histCtx.fill();
+                }
+            }
+            histCtx.restore();
+        }
+
+        // --- ANIMATION LOOP (fixed timestep accumulator) ---
+        let accumulator = 0;
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsStart = performance.now();
+
+        function animateLoop(nowMs) {
+            frameCount++;
+            if (nowMs - fpsStart >= 1000) {
+                const fpsEl = document.getElementById('fpsCounter');
+                if (fpsEl) fpsEl.innerText = `${frameCount} FPS`;
+                frameCount = 0;
+                fpsStart = nowMs;
+            }
+
+            // framerate-independent physics
+            if (!isPaused) {
+                const dtSec = Math.min(0.1, (nowMs - lastTime) / 1000);
+                accumulator += dtSec;
+                let steps = 0;
+                while (accumulator >= FIXED_DT && steps < MAX_STEPS_PER_FRAME) {
+                    stepSimulation();
+                    accumulator -= FIXED_DT;
+                    steps++;
+                }
+                if (steps >= MAX_STEPS_PER_FRAME) accumulator = 0;
+            }
+            lastTime = nowMs;
+
+            drawGaltonBoard(nowMs);
+            drawHistogram();
+            requestAnimationFrame(animateLoop);
+        }
+
+        // --- KEYBOARD SHORTCUTS ---
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            const k = e.key.toLowerCase();
+            if (k === ' ' || e.code === 'Space') {
+                e.preventDefault();
+                dropCustomAmount(10);
+            } else if (k === 'r') {
+                resetSimulation();
+            } else if (k === 's') {
+                toggleSound();
+            } else if (k === 'f') {
+                toggleScaleMode();
+            } else if (k === 'p') {
+                togglePause();
+            } else if (k === '1') dropCustomAmount(1);
+            else if (k === '2') dropCustomAmount(10);
+            else if (k === '3') dropCustomAmount(100);
+        });
+
+        // --- INIT ---
+        window.onload = function () {
+            boardCanvas = document.getElementById('galtonCanvas');
+            boardCtx = boardCanvas.getContext('2d');
+            histCanvas = document.getElementById('histogramCanvas');
+            histCtx = histCanvas.getContext('2d');
+
+            boardCanvas.width = CANVAS_WIDTH;
+            boardCanvas.height = CANVAS_HEIGHT;
+            histCanvas.width = CANVAS_WIDTH;
+            histCanvas.height = HIST_HEIGHT;
+
+            createPegGrid();
+            createBins();
+            updatePhysicsParams();
+            updateCapacityUI();
+            updateLiveStatistics();
+
+            lastTime = performance.now();
+            fpsStart = lastTime;
+            requestAnimationFrame(animateLoop);
+        };
+    </script>
+</body>
+</html>
